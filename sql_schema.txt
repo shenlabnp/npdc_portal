@@ -1,0 +1,61 @@
+BEGIN TRANSACTION;
+DROP TABLE IF EXISTS "gdnas";
+CREATE TABLE IF NOT EXISTS "gdnas" (
+	"gdna_id"	TEXT NOT NULL UNIQUE,
+	"npdc_id"	INTEGER,
+	"plate"	TEXT NOT NULL,
+	"well"	TEXT NOT NULL,
+	"isolation_date"	TEXT NOT NULL,
+	"nanodrop_conc"	REAL,
+	"nanodrop_a260_280"	REAL,
+	"nanodrop_a260_230"	REAL,
+	"quantus_ng_ul"	REAL,
+	"person_in_charge"	TEXT NOT NULL,
+	"comment"	TEXT,
+	PRIMARY KEY("gdna_id")
+);
+DROP TABLE IF EXISTS "original_archives";
+CREATE TABLE IF NOT EXISTS "original_archives" (
+	"npdc_id"	INTEGER NOT NULL,
+	"location"	TEXT NOT NULL
+);
+DROP TABLE IF EXISTS "sequencing_batches";
+CREATE TABLE IF NOT EXISTS "sequencing_batches" (
+	"batch_id"	INTEGER NOT NULL UNIQUE,
+	"project_id"	TEXT NOT NULL,
+	"submission_date"	TEXT NOT NULL,
+	"person_in_charge"	TEXT NOT NULL,
+	PRIMARY KEY("batch_id" AUTOINCREMENT)
+);
+DROP TABLE IF EXISTS "sequencing_projects";
+CREATE TABLE IF NOT EXISTS "sequencing_projects" (
+	"project_id"	TEXT NOT NULL UNIQUE,
+	"project_desc"	TEXT NOT NULL,
+	PRIMARY KEY("project_id")
+);
+DROP TABLE IF EXISTS "sequencing_samples";
+CREATE TABLE IF NOT EXISTS "sequencing_samples" (
+	"sequencing_id"	TEXT NOT NULL UNIQUE,
+	"batch_id"	INTEGER NOT NULL,
+	"gdna_source"	TEXT NOT NULL,
+	"is_partial"	INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY("sequencing_id")
+);
+DROP TABLE IF EXISTS "strains";
+CREATE TABLE IF NOT EXISTS "strains" (
+	"npdc_id"	INTEGER NOT NULL UNIQUE,
+	"source_library"	TEXT,
+	"alt_id"	TEXT,
+	"collection_date"	TEXT,
+	"collection_country"	TEXT,
+	"collection_region"	TEXT,
+	"empirical_category"	TEXT,
+	"empirical_genus"	TEXT,
+	"empirical_species"	TEXT,
+	"comment_preprocessing"	TEXT,
+	"comment_production"	TEXT,
+	"comment_general"	TEXT,
+	"comment_type_strains"	TEXT,
+	PRIMARY KEY("npdc_id" AUTOINCREMENT)
+);
+COMMIT;
