@@ -12,12 +12,14 @@ CREATE TABLE IF NOT EXISTS "gdnas" (
 	"quantus_ng_ul"	REAL,
 	"person_in_charge"	TEXT NOT NULL,
 	"comment"	TEXT,
-	PRIMARY KEY("gdna_id")
+	PRIMARY KEY("gdna_id"),
+	FOREIGN KEY("npdc_id") REFERENCES strains("npdc_id")
 );
 DROP TABLE IF EXISTS "original_archives";
 CREATE TABLE IF NOT EXISTS "original_archives" (
 	"npdc_id"	INTEGER NOT NULL,
-	"location"	TEXT NOT NULL
+	"location"	TEXT NOT NULL,
+	FOREIGN KEY("npdc_id") REFERENCES strains("npdc_id")
 );
 DROP TABLE IF EXISTS "sequencing_batches";
 CREATE TABLE IF NOT EXISTS "sequencing_batches" (
@@ -25,7 +27,8 @@ CREATE TABLE IF NOT EXISTS "sequencing_batches" (
 	"project_id"	TEXT NOT NULL,
 	"submission_date"	TEXT NOT NULL,
 	"person_in_charge"	TEXT NOT NULL,
-	PRIMARY KEY("batch_id" AUTOINCREMENT)
+	PRIMARY KEY("batch_id" AUTOINCREMENT),
+	FOREIGN KEY("project_id") REFERENCES sequencing_projects("project_id")
 );
 DROP TABLE IF EXISTS "sequencing_projects";
 CREATE TABLE IF NOT EXISTS "sequencing_projects" (
@@ -39,7 +42,9 @@ CREATE TABLE IF NOT EXISTS "sequencing_samples" (
 	"batch_id"	INTEGER NOT NULL,
 	"gdna_source"	TEXT NOT NULL,
 	"is_partial"	INTEGER NOT NULL DEFAULT 0,
-	PRIMARY KEY("sequencing_id")
+	PRIMARY KEY("sequencing_id"),
+	FOREIGN KEY("batch_id") REFERENCES sequencing_batches("batch_id"),
+	FOREIGN KEY("gdna_source") REFERENCES gdnas("gdna_id")
 );
 DROP TABLE IF EXISTS "strains";
 CREATE TABLE IF NOT EXISTS "strains" (
@@ -56,6 +61,6 @@ CREATE TABLE IF NOT EXISTS "strains" (
 	"comment_production"	TEXT,
 	"comment_general"	TEXT,
 	"comment_type_strains"	TEXT,
-	PRIMARY KEY("npdc_id" AUTOINCREMENT)
+	PRIMARY KEY("npdc_id")
 );
 COMMIT;
