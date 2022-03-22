@@ -30,6 +30,78 @@ def page_strains():
 
 
 
+@blueprint.route("/api/strains/get_years_data")
+def get_years_data():
+    """ for strain years pie chart """
+    result = {}
+
+    with sqlite3.connect(conf["db_path"]) as con:
+        cur = con.cursor()
+
+        query_result = (pd.read_sql_query((
+            "select collection_date"
+            " from strains"
+        ), con).iloc[:, 0])
+        query_result = query_result.map(
+            lambda x: (x[2] + "0s" if x[0] == "1" else "20" + x[2] + "0s") if x != "" else "Unknown"
+        ).value_counts().sort_index()
+
+        result["data"] = list(query_result)
+        result["labels"] = list(query_result.index)
+
+    return result
+
+
+
+@blueprint.route("/api/strains/get_genus_data")
+def get_genus_data():
+    """ for strain genus pie chart """
+    result = {}
+
+    with sqlite3.connect(conf["db_path"]) as con:
+        cur = con.cursor()
+
+        query_result = (pd.read_sql_query((
+            "select empirical_genus"
+            " from strains"
+        ), con).iloc[:, 0])
+        query_result = query_result.value_counts()
+        query_result = pd.concat([
+            query_result.iloc[:9],
+            pd.Series([query_result.iloc[10:].sum()], index=["Others"])
+        ])
+
+        result["data"] = list(query_result)
+        result["labels"] = list(query_result.index)
+
+    return result
+
+
+@blueprint.route("/api/strains/get_sequencing_data")
+def get_sequencing_data():
+    """ for strain sequencing pie chart """
+    result = {}
+
+    result["data"] = list([
+        120000,
+        7000,
+        7600,
+        750,
+        350,
+        1300,
+    ])
+    result["labels"] = list([
+        "archive",
+        "gDNA extracted",
+        "sent for sequencing",
+        "sequenced - on progress",
+        "sequenced - failed QC",
+        "sequenced - annotated",
+    ])
+
+    return result
+
+
 @blueprint.route("/api/strains/get_overview")
 def get_overview():
     """ for strain overview tables """

@@ -1,10 +1,191 @@
-<div class="row mt-4">
+<div class="row mt-2">
 	<div class="col">
 		<div class="h3 btn-info text-center mb-2">Overview</div>
 	</div>
 </div>
-
+<div class="row flex-nowrap mb-3">
+    <div class="col">
+		<div class="btn-secondary text-center">Collection years</div>
+		<div class="" id="pie_strain_years"></div>
+    </div>
+    <div class="col">
+		<div class="btn-secondary text-center">Taxonomy (genus)</div>
+    	<div class="" id="pie_strain_genus"></div>
+    </div>
+    <div class="col">
+		<div class="btn-secondary text-center">Sequencing</div>
+    	<div class="" id="pie_strain_sequencing"></div>
+    </div>
+</div>
+<div class="row flex-nowrap mb-3">
+    <div class="col">
+		<div class="btn-secondary text-center">Collection locations</div>
+		<div class="" id="map_location"></div>
+    </div>
+</div>
 <script type="text/javascript">
 	$(document).ready(function(){
+
+		// fetch and render years pie chart
+		$.get({
+			url: "{{ url_for('root.page') }}api/strains/get_years_data",
+			data: {
+			},
+			dataType: "json",
+			success: function(response) {
+				let container_id = "pie_strain_years";
+				
+				// hide spinner
+				$("#" + container_id + " .spinner-border").addClass("d-none");
+
+				let width_col = ($(".row.flex-nowrap .col").width()) * 0.9;
+				let height_col = width_col * 0.9;
+				let data = [{
+				  values: response["data"],
+				  labels: response["labels"],
+				  type: 'pie'
+				}];
+				let layout = {
+					margin: {
+					    l: 0,
+					    r: 0,
+					    b: 0,
+					    t: 5,
+					    pad: 0
+					},
+					showlegend: true,
+					  legend: {
+					    x: 1,
+					    yanchor: 'bottom',
+					    y: 0
+					},
+					autosize: false,
+					width: width_col,
+					height: height_col,
+					sort: false
+				};
+
+				Plotly.newPlot(container_id, data, layout);
+			}
+		});
+
+		// fetch and render genus pie chart
+		$.get({
+			url: "{{ url_for('root.page') }}api/strains/get_genus_data",
+			data: {
+			},
+			dataType: "json",
+			success: function(response) {
+				let container_id = "pie_strain_genus";
+				
+				// hide spinner
+				$("#" + container_id + " .spinner-border").addClass("d-none");
+
+				let width_col = ($(".row.flex-nowrap .col").width()) * 0.9;
+				let height_col = width_col * 0.9;
+				let data = [{
+				  values: response["data"],
+				  labels: response["labels"],
+				  type: 'pie'
+				}];
+				let layout = {
+					margin: {
+					    l: 0,
+					    r: 0,
+					    b: 0,
+					    t: 5,
+					    pad: 0
+					},
+					showlegend: true,
+					  legend: {
+					    x: 1,
+					    yanchor: 'bottom',
+					    y: 0
+					},
+					autosize: false,
+					width: width_col,
+					height: height_col
+				};
+
+				Plotly.newPlot(container_id, data, layout);
+			}
+		});
+
+		// fetch and render sequencing pie chart
+		$.get({
+			url: "{{ url_for('root.page') }}api/strains/get_sequencing_data",
+			data: {
+			},
+			dataType: "json",
+			success: function(response) {
+				let container_id = "pie_strain_sequencing";
+				
+				// hide spinner
+				$("#" + container_id + " .spinner-border").addClass("d-none");
+
+				let width_col = ($(".row.flex-nowrap .col").width()) * 0.9;
+				let height_col = width_col * 0.9;
+				let data = [{
+				  values: response["data"],
+				  labels: response["labels"],
+				  type: 'pie'
+				}];
+				let layout = {
+					margin: {
+					    l: 0,
+					    r: 0,
+					    b: 0,
+					    t: 5,
+					    pad: 0
+					},
+					showlegend: true,
+					  legend: {
+					    x: 1,
+					    yanchor: 'bottom',
+					    y: 0
+					},
+					autosize: false,
+					width: width_col,
+					height: height_col,
+					sort: false
+				};
+
+				Plotly.newPlot(container_id, data, layout);
+			}
+		});
+
+
+		// fetch and render geo map
+		let width_col = ($(".row.flex-nowrap").width()) * 0.9;
+		let height_col = width_col * 0.9;
+		var data = [{
+		    type: 'scattergeo',
+		    mode: 'markers',
+		    locations: ['FRA', 'DEU', 'RUS', 'ESP'],
+		    marker: {
+		        size: [20, 30, 15, 10],
+		        line: {
+		            color: 'black'
+		        }
+		    },
+		    name: 'europe data'
+		}];
+
+		var layout = {
+		    'geo': {
+		        'scope': 'world',
+		        'resolution': 50
+		    },
+		    margin: {
+			    l: 0,
+			    r: 0,
+			    b: 0,
+			    t: 5,
+			    pad: 0
+			},
+		};
+
+		Plotly.newPlot("map_location", data, layout);
+
 	});
 </script>
