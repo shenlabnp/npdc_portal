@@ -3,7 +3,11 @@
     <a href="/">
       <img src="{{ url_for('static', filename='img/logo_npdc_dashboard.png') }}" class="img-fluid">
     </a>
-    <div class="list-group-item {{'list-group-item-danger' if last_updated_days > 30 else 'list-group-item-success'}}">last updated:<br \>{{ last_updated }}<br \><b>({{ last_updated_days }} days ago)</b></div>
+    <div class="list-group-item {{'list-group-item-danger' if last_updated_days > 30 else 'list-group-item-success'}}">
+      last updated:<br \>
+      {{ last_updated }}<br \>
+      <b>({{ last_updated_days_wording }})</b>
+    </div>
   </div>
   <div class="list-group panel">
     {% for nav_item in nav_items %}
@@ -20,7 +24,7 @@
     {% endfor %}
   </div>
   <div class="text-center mt-4">
-    Database version: {{ gbal["version"] }}
+    Database version: <a href="https://github.com/shenlabnp/npdc_dashboard">{{ gbal["version"] }}</a>
     <br />
     <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img class="mt-2 mb-2" alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a>
     <br />

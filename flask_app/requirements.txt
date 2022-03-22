@@ -2,3 +2,4 @@ flask
 pysqlite3
 gunicorn
 werkzeug
+pandas

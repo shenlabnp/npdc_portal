@@ -44,7 +44,7 @@ def dashboard():
         }
 
         # get last db update stats
-        last_updated = datetime.datetime(2022, 3, 1)
+        last_updated = datetime.datetime(2022, 2, 1)
         now_date = datetime.datetime.now()
         last_updated_days = (now_date - last_updated).days
 
@@ -60,7 +60,12 @@ def dashboard():
             gbal=gbal,
             nav_items=nav_items,
             last_updated=last_updated.strftime("%x"),
-            last_updated_days=last_updated_days
+            last_updated_days=last_updated_days,
+            last_updated_days_wording="{} days ago".format(last_updated_days) if last_updated_days > 1 else (
+                "yesterday" if last_updated_days == 1 else (
+                    "today" if last_updated_days == 0 else "???"
+                )
+            )
         )
 
     return app
