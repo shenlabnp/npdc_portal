@@ -1,0 +1,43 @@
+#layout-topbar {
+	border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+	padding-bottom: 1em;
+}
+
+#layout-sidebar {
+	border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+#page_title {
+	font-weight:  bold;
+	font-style: italic;
+	font-size: xx-large;
+}
+
+#page_subtitle {
+	font-weight: normal;
+	font-style: italic;
+	font-size: large;
+}
+
+.popover-taxonomy {
+	width: 300px;
+}
+
+/* overriding bootstrap css */
+
+.popover {
+    max-width: 100% !important;
+}
+
+/* overriding datatables */
+
+.dataTables_processing {
+    background-color: #ff9b9b;
+    font-weight: bold;
+}
+
+/* overriding tagsinput */
+.tt-menu {
+    max-height: 10em;
+    overflow-y: auto;
+}

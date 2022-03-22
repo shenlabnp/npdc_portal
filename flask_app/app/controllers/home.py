@@ -15,9 +15,9 @@ blueprint = Blueprint('home', __name__)
 def page_home():
 
     # page title
-    page_title = "Welcome to the NPDC database!"
+    page_title = "Summary"
     page_subtitle = (
-        ""
+        "of strains, gDNAs and sequenced genomes"
     )
 
     # fetch data (test)

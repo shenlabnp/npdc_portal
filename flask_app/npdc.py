@@ -6,16 +6,17 @@ import sqlite3
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.serving import run_simple
 from sys import argv
+import datetime
 
 # import global config
 from app.config import conf
 
 # import controllers
 from app.controllers import root
-from app.controllers import home
+from app.controllers import home, analysis, sequencing, gdnas, strains
 
 
-def npdc():
+def dashboard():
 
 
     # initiate app
@@ -30,21 +31,36 @@ def npdc():
     # register controllers
     app.register_blueprint(root.blueprint)
     app.register_blueprint(home.blueprint)
+    app.register_blueprint(analysis.blueprint)
+    app.register_blueprint(sequencing.blueprint)
+    app.register_blueprint(gdnas.blueprint)
+    app.register_blueprint(strains.blueprint)
 
     # app-specific contexts #
     @app.context_processor
     def inject_global():
-        g = {
+        gbal = {
             "version": "1.0.0"
         }
 
+        # get last db update stats
+        last_updated = datetime.datetime(2022, 3, 1)
+        now_date = datetime.datetime.now()
+        last_updated_days = (now_date - last_updated).days
+
         # for navigations
         nav_items = []
-        nav_items.append(("Home", url_for("home.page_home")))
+        nav_items.append(("Summary", url_for("home.page_home")))
+        nav_items.append(("Analysis", url_for("analysis.page_analysis")))
+        nav_items.append(("Sequencing", url_for("sequencing.page_sequencing")))
+        nav_items.append(("gDNAs", url_for("gdnas.page_gdnas")))
+        nav_items.append(("Strains", url_for("strains.page_strains")))
 
         return dict(
-            g=g,
-            nav_items=nav_items
+            gbal=gbal,
+            nav_items=nav_items,
+            last_updated=last_updated.strftime("%x"),
+            last_updated_days=last_updated_days
         )
 
     return app
@@ -68,10 +84,10 @@ if __name__ == "__main__":
 
         app = DispatcherMiddleware(
             create_dummy_app(argv[2]), {
-                "/" + argv[2]: npdc()
+                "/" + argv[2]: dashboard()
             })
     else:
-        app = npdc()
+        app = dashboard()
 
     run_simple(
         hostname="0.0.0.0",
