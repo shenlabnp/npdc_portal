@@ -44,9 +44,12 @@ def dashboard():
         }
 
         # get last db update stats
-        last_updated = datetime.datetime(2022, 2, 1)
-        now_date = datetime.datetime.now()
-        last_updated_days = (now_date - last_updated).days
+        with sqlite3.connect(conf["db_path"]) as con:
+            cur = con.cursor()
+            last_updated, = cur.execute("select logs.time from logs where message like 'START' limit 1").fetchone()
+            last_updated = datetime.datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S")
+            now_date = datetime.datetime.now()
+            last_updated_days = (now_date - last_updated).days
 
         # for navigations
         nav_items = []
