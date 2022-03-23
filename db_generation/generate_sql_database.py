@@ -6,6 +6,7 @@ from sys import argv
 from os import path
 import glob
 from tqdm import tqdm
+import datetime
 
 def main():
     input_tables_folder = argv[1]
@@ -21,34 +22,46 @@ output the SQLite database file to "output_database_path"
 """
 def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_database_path):
 
+    # initiate logs recording
+    logs = []
+    def write_log(text, print_msg=True):
+        logs.append({
+            "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "message": text
+        })
+        if print_msg:
+            print(text)
+        
+    write_log("START", False)
+
     # check if file exists
 
     if path.exists(output_database_path):
-        print("SQL database exists! {}".format(output_database_path))
+        write_log("SQL database exists! {}".format(output_database_path))
         return 1
 
     # first, initiate the sqlite database schema
 
-    print("initiating database..")
+    write_log("initiating database..")
     with sqlite3.connect(output_database_path) as con:
         cur = con.cursor()
         with open(path.join(path.dirname(__file__), "sql_schema.txt")) as fp:
             con.executescript(fp.read())
-
+            
     # parse strains data
 
     def parse_strains_data():
-        print("parsing strains data..")
+        write_log("parsing strains data..")
         strains_data_files = list(
             glob.iglob(path.join(input_tables_folder, "npdc_db-strains-*.tsv"))
         )
 
-        print("found {} files".format(len(strains_data_files)))
+        write_log("found {} files".format(len(strains_data_files)))
         all_strains_data = pd.concat([
             pd.read_csv(filepath, sep="\t").fillna("") for filepath in strains_data_files
         ])
 
-        print("inserting {} rows".format(all_strains_data.shape[0]))
+        write_log("inserting {} rows".format(all_strains_data.shape[0]))
         with sqlite3.connect(output_database_path) as con:
             all_strains_data.to_sql("strains", con, if_exists='append', index=False)
 
@@ -58,17 +71,17 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
 
     def parse_locations_data():
 
-        print("parsing strains location data..")
+        write_log("parsing strains location data..")
         strains_archive_files = list(
             glob.iglob(path.join(input_tables_folder, "npdc_db-stocks-*.tsv"))
         )
 
-        print("found {} files".format(len(strains_archive_files)))
+        write_log("found {} files".format(len(strains_archive_files)))
         all_strains_archives = pd.concat([
             pd.read_csv(filepath, sep="\t").fillna("") for filepath in strains_archive_files
         ])
 
-        print("inserting {} rows".format(all_strains_archives.shape[0]))
+        write_log("inserting {} rows".format(all_strains_archives.shape[0]))
         with sqlite3.connect(output_database_path) as con:
             all_strains_archives.to_sql("stocks", con, if_exists='append', index=False)
 
@@ -78,17 +91,17 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
 
     def parse_gdna_data():
 
-        print("parsing gdna data..")
+        write_log("parsing gdna data..")
         gdna_files = list(
             glob.iglob(path.join(input_tables_folder, "npdc_db-gdnas-*.tsv"))
         )
 
-        print("found {} files".format(len(gdna_files)))
+        write_log("found {} files".format(len(gdna_files)))
         all_gdnas = pd.concat([
             pd.read_csv(filepath, sep="\t").fillna("") for filepath in gdna_files
         ])
 
-        print("inserting {} rows".format(all_gdnas.shape[0]))
+        write_log("inserting {} rows".format(all_gdnas.shape[0]))
         with sqlite3.connect(output_database_path) as con:
             all_gdnas.to_sql("gdnas", con, if_exists='append', index=False)
 
@@ -98,17 +111,17 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
 
     def parse_projects_data():
 
-        print("parsing projects data..")
+        write_log("parsing projects data..")
         projects_files = list(
             glob.iglob(path.join(input_tables_folder, "npdc_db-projects-*.tsv"))
         )
 
-        print("found {} files".format(len(projects_files)))
+        write_log("found {} files".format(len(projects_files)))
         projects_data = pd.concat([
             pd.read_csv(filepath, sep="\t").fillna("") for filepath in projects_files
         ])
 
-        print("inserting {} rows".format(projects_data.shape[0]))
+        write_log("inserting {} rows".format(projects_data.shape[0]))
         with sqlite3.connect(output_database_path) as con:
             projects_data.to_sql("sequencing_projects", con, if_exists='append', index=False)
 
@@ -118,17 +131,17 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
 
     def parse_batches_data():
 
-        print("parsing sequencing batches data..")
+        write_log("parsing sequencing batches data..")
         batches_files = list(
             glob.iglob(path.join(input_tables_folder, "npdc_db-batches-*.tsv"))
         )
 
-        print("found {} files".format(len(batches_files)))
+        write_log("found {} files".format(len(batches_files)))
         batches_data = pd.concat([
             pd.read_csv(filepath, sep="\t").fillna("") for filepath in batches_files
         ])
 
-        print("inserting {} rows".format(batches_data.shape[0]))
+        write_log("inserting {} rows".format(batches_data.shape[0]))
         with sqlite3.connect(output_database_path) as con:
             batches_data.to_sql("sequencing_batches", con, if_exists='append', index=False)
 
@@ -138,17 +151,17 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
 
     def parse_samples_data():
 
-        print("parsing sequencing samples data..")
+        write_log("parsing sequencing samples data..")
         samples_files = list(
             glob.iglob(path.join(input_tables_folder, "npdc_db-samples-*.tsv"))
         )
 
-        print("found {} files".format(len(samples_files)))
+        write_log("found {} files".format(len(samples_files)))
         samples_data = pd.concat([
             pd.read_csv(filepath, sep="\t").fillna("") for filepath in samples_files
         ])
 
-        print("inserting {} rows".format(samples_data.shape[0]))
+        write_log("inserting {} rows".format(samples_data.shape[0]))
         with sqlite3.connect(output_database_path) as con:
             samples_data.to_sql("sequencing_samples", con, if_exists='append', index=False)
 
@@ -156,19 +169,19 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
     
     def scan_sequencing_folder():
 
-        print("scanning raw reads...")
+        write_log("scanning raw reads...")
         read_indices = set([(x.split("/")[-3], x.split("/")[-2]) for x in glob.iglob(path.join(
             genome_sequencing_folder, "filtered_reads", "*", "*", "*.R1.fastq.gz"
         )) if x.split("/")[-2] == x.split("/")[-1].split(".R1.fastq.gz")[0]])
 
-        print("scanning assembled genomes...")
+        write_log("scanning assembled genomes...")
         genome_indices = set([(x.split("/")[-4], x.split("/")[-2]) for x in glob.iglob(path.join(
             genome_sequencing_folder, "genomes", "per_batches", "*", "all_genomes", "*", "*.fna"
         )) if x.split("/")[-2] == x.split("/")[-1].split(".fna")[0]])
 
         merged_indices = sorted(read_indices.union(genome_indices))
 
-        print("found {:,} total sequences, parsing...".format(len(merged_indices)))
+        write_log("found {:,} total sequences, parsing...".format(len(merged_indices)))
 
         result = []
         for dataset, name in tqdm(merged_indices):
@@ -188,7 +201,7 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
                 # check assembly-stats
                 stats_file = path.join(data["read_file_folder"], data["name"] + ".stats.txt")
                 if not path.exists(stats_file):
-                    print("WARNING: {} missing stats.txt (skipped)".format(data["read_file_folder"]))
+                    write_log("WARNING: {} missing stats.txt (skipped)".format(data["read_file_folder"]))
                     continue
                 with open(stats_file, "r") as ii:
                     lines = ii.readlines()
@@ -198,7 +211,7 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
                         data["reads_count"] = int(lines[3].split("\t")[1])
                         data["reads_size"] = int(float(lines[5].split("\t")[1].split(" ")[0]) * 1000000)
                     except:
-                        print("WARNING: {} file is corrupted!".format(stats_file))
+                        write_log("WARNING: {} file is corrupted!".format(stats_file))
                 if path.exists(fp + ".failed"):
                     data["failed_assembly"] = True
                 else:
@@ -234,9 +247,9 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
                             data["num_contigs"] = int(lines[1].split(",")[1].split(" = ")[1])
                             data["n50"] = int(lines[2].split(",")[0].split(" = ")[1])
                     except:
-                        print("WARNING: failed to parse {} (corrupted?)".format(assembly_stats_path))
+                        write_log("WARNING: failed to parse {} (corrupted?)".format(assembly_stats_path))
                 elif data["finished_qc"]:
-                    print("WARNING: {} marked as 'finished QC' but lack assembly-stats files, please re-run QC!".format(fp))
+                    write_log("WARNING: {} marked as 'finished QC' but lack assembly-stats files, please re-run QC!".format(fp))
                     data["passed_qc"] = None
 
                 # checkm
@@ -250,9 +263,9 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
                             data["contamination"] = float(lines[1].split("\t")[12])
                             data["heterogenity"] = float(lines[1].split("\t")[13].rstrip("\n"))
                     except:
-                        print("WARNING: failed to parse {} (corrupted?)".format(checkm_path))
+                        write_log("WARNING: failed to parse {} (corrupted?)".format(checkm_path))
                 elif data["finished_qc"]:
-                    print("WARNING: {} marked as 'finished QC' but lack checkM files, please re-run QC!".format(fp))
+                    write_log("WARNING: {} marked as 'finished QC' but lack checkM files, please re-run QC!".format(fp))
                     data["passed_qc"] = None
 
                 # annotations
@@ -272,7 +285,7 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
                                 data["closest_species"] = max(data["related_species"], key=data["related_species"].get)
                                 data["closest_species_ani"] = max(data["related_species"].values())
                     except:
-                        print("WARNING: failed to parse {} (corrupted?)".format(gtdb_path))
+                        write_log("WARNING: failed to parse {} (corrupted?)".format(gtdb_path))
 
                     if path.exists(antismash_path):
                         data["annotated"] = True
@@ -293,27 +306,27 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
     
     def insert_sequencing_data():
                 
-        print("scanning link files...")
+        write_log("scanning link files...")
 
         links_files = list(
             glob.iglob(path.join(input_tables_folder, "npdc_db-links-*.tsv"))
         )
 
-        print("found {} files".format(len(links_files)))
+        write_log("found {} files".format(len(links_files)))
         links_data = pd.concat([
             pd.read_csv(filepath, sep="\t").fillna("") for filepath in links_files
         ])
 
-        print("linking {} sequences".format(links_data.shape[0]))
+        write_log("linking {} sequences".format(links_data.shape[0]))
         df_sequencing.loc[links_data["dataset"].values + "/" + links_data["name"].values, "linked_sequencing_id"] = links_data["sequencing_id"].values
         
         # print warnings for unlinked sequences
         for idx, row in df_sequencing[df_sequencing["linked_sequencing_id"].isna()].iterrows():
-            print("WARNING: found no linkage info for {} (skipping)".format(idx))
+            write_log("WARNING: found no linkage info for {} (skipping)".format(idx))
         
         # insert the rest
         df_sequencing_linked = df_sequencing[~df_sequencing["linked_sequencing_id"].isna()]
-        print("inserting {} rows".format(df_sequencing_linked.shape[0]))
+        write_log("inserting {} rows".format(df_sequencing_linked.shape[0]))
         with sqlite3.connect(output_database_path) as con:
             df_sequencing_linked = pd.DataFrame({
                 "orig_identifier": df_sequencing_linked.index,
@@ -346,15 +359,19 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
     insert_sequencing_data()
     
     ### pause and perform foreign keys checking
-    print("checking the integrity of tables linkage...")
+    write_log("checking the integrity of tables linkage...")
     with sqlite3.connect(output_database_path) as con:
         failed_foreign_keys = pd.read_sql_query("PRAGMA foreign_key_check", con)
         for idx, val in (
             failed_foreign_keys["table"] + "->" + failed_foreign_keys["parent"]
         ).value_counts().iteritems():
-            print("WARNING: missing foreign keys for {} rows in '{}'".format(val, idx))
+            write_log("WARNING: missing foreign keys for {} rows in '{}'".format(val, idx))
             
     print("completed.")
+    write_log("FINISH", False)
+    
+    with sqlite3.connect(output_database_path) as con:
+        pd.DataFrame(logs).to_sql("logs", con, if_exists='append', index=False)
 
     
 if __name__ == "__main__":
