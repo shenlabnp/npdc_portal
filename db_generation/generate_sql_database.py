@@ -88,20 +88,6 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
             pd.read_csv(filepath, sep="\t").fillna("") for filepath in gdna_files
         ])
 
-        """
-        all_gdnas["gdna_id"] = (
-            "GDNA-" + 
-            all_gdnas["plate"].map(
-                lambda x: (
-                    "T{:03d}".format(int(x[1:])) if x.startswith("T") else (
-                        "X{:03d}".format(int(x[1:])) if x.startswith("X") else "{:04d}".format(int(x))
-                    )
-                )
-            ) +
-            all_gdnas["well"].map(lambda x: "{}{:02d}".format(x[0].upper(), int(x[1:])))
-        )
-        """
-
         print("inserting {} rows".format(all_gdnas.shape[0]))
         with sqlite3.connect(output_database_path) as con:
             all_gdnas.to_sql("gdnas", con, if_exists='append', index=False)
@@ -167,7 +153,7 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
             samples_data.to_sql("sequencing_samples", con, if_exists='append', index=False)
 
     parse_samples_data()
-
+    
     def scan_sequencing_folder():
 
         print("scanning raw reads...")
@@ -358,7 +344,16 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
         return
     
     insert_sequencing_data()
-        
+    
+    ### pause and perform foreign keys checking
+    print("checking the integrity of tables linkage...")
+    with sqlite3.connect(output_database_path) as con:
+        failed_foreign_keys = pd.read_sql_query("PRAGMA foreign_key_check", con)
+        for idx, val in (
+            failed_foreign_keys["table"] + "->" + failed_foreign_keys["parent"]
+        ).value_counts().iteritems():
+            print("WARNING: missing foreign keys for {} rows in '{}'".format(val, idx))
+            
     print("completed.")
 
     
