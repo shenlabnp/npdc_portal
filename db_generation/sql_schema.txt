@@ -1,10 +1,9 @@
 BEGIN TRANSACTION;
 DROP TABLE IF EXISTS "gdnas";
 CREATE TABLE IF NOT EXISTS "gdnas" (
-	"gdna_id"	TEXT NOT NULL UNIQUE,
-	"npdc_id"	INTEGER,
 	"plate"	TEXT NOT NULL,
 	"well"	TEXT NOT NULL,
+	"npdc_id"	INTEGER,
 	"isolation_date"	TEXT NOT NULL,
 	"nanodrop_conc"	REAL,
 	"nanodrop_a260_280"	REAL,
@@ -12,23 +11,23 @@ CREATE TABLE IF NOT EXISTS "gdnas" (
 	"quantus_ng_ul"	REAL,
 	"person_in_charge"	TEXT NOT NULL,
 	"comment"	TEXT,
-	PRIMARY KEY("gdna_id"),
+	PRIMARY KEY("plate", "well"),
 	FOREIGN KEY("npdc_id") REFERENCES strains("npdc_id")
 );
-DROP TABLE IF EXISTS "original_archives";
-CREATE TABLE IF NOT EXISTS "original_archives" (
+DROP TABLE IF EXISTS "stocks";
+CREATE TABLE IF NOT EXISTS "stocks" (
 	"npdc_id"	INTEGER NOT NULL,
 	"location"	TEXT NOT NULL,
 	FOREIGN KEY("npdc_id") REFERENCES strains("npdc_id")
 );
 DROP TABLE IF EXISTS "sequencing_batches";
 CREATE TABLE IF NOT EXISTS "sequencing_batches" (
-	"batch_id"	INTEGER NOT NULL UNIQUE,
+	"batch_id"	TEXT NOT NULL,
 	"project_id"	TEXT NOT NULL,
 	"submission_date"	TEXT NOT NULL,
 	"person_in_charge"	TEXT NOT NULL,
-	PRIMARY KEY("batch_id" AUTOINCREMENT),
-	FOREIGN KEY("project_id") REFERENCES sequencing_projects("project_id")
+	FOREIGN KEY("project_id") REFERENCES sequencing_projects("project_id"),
+	PRIMARY KEY("project_id", "batch_id")
 );
 DROP TABLE IF EXISTS "sequencing_projects";
 CREATE TABLE IF NOT EXISTS "sequencing_projects" (
@@ -39,12 +38,15 @@ CREATE TABLE IF NOT EXISTS "sequencing_projects" (
 DROP TABLE IF EXISTS "sequencing_samples";
 CREATE TABLE IF NOT EXISTS "sequencing_samples" (
 	"sequencing_id"	TEXT NOT NULL UNIQUE,
-	"batch_id"	INTEGER NOT NULL,
-	"gdna_source"	TEXT NOT NULL,
+	"project_id"	TEXT NOT NULL,
+	"batch_id"	TEXT NOT NULL,
+	"gdna_plate"	TEXT NOT NULL,
+	"gdna_well"	TEXT NOT NULL,
 	"is_partial"	INTEGER NOT NULL DEFAULT 0,
 	PRIMARY KEY("sequencing_id"),
-	FOREIGN KEY("batch_id") REFERENCES sequencing_batches("batch_id"),
-	FOREIGN KEY("gdna_source") REFERENCES gdnas("gdna_id")
+	FOREIGN KEY("project_id") REFERENCES sequencing_projects("project_id"),
+	FOREIGN KEY("project_id", "batch_id") REFERENCES sequencing_batches("project_id", "batch_id"),
+	FOREIGN KEY("gdna_plate", "gdna_well") REFERENCES gdnas("plate", "well")
 );
 DROP TABLE IF EXISTS "strains";
 CREATE TABLE IF NOT EXISTS "strains" (
@@ -62,5 +64,32 @@ CREATE TABLE IF NOT EXISTS "strains" (
 	"comment_general"	TEXT,
 	"comment_type_strains"	TEXT,
 	PRIMARY KEY("npdc_id")
+);
+DROP TABLE IF EXISTS "sequences";
+CREATE TABLE "sequences" (
+	"orig_identifier"	TEXT NOT NULL,
+	"sequencing_id"	TEXT NOT NULL,
+	"assembly_status"	INTEGER NOT NULL,
+	"qc_status"	INTEGER NOT NULL,
+	"annotation_status"	INTEGER NOT NULL,
+	"reads_folder"	TEXT,
+	"reads_count"	INTEGER,
+	"reads_size_nt"	INTEGER,
+	"reads_gc"	REAL,
+	"reads_gc_std"	REAL,
+	"genome_folder"	TEXT,
+	"genome_num_contigs"	INTEGER,
+	"genome_size_nt"	INTEGER,
+	"genome_n50"	REAL,
+	"genome_qc_completeness"	REAL,
+	"genome_qc_contamination"	REAL,
+	"genome_qc_heterogenity"	REAL,
+	"genome_qc_taxon"	TEXT,
+	"genome_taxa_phylum"	TEXT,
+	"genome_taxa_genus"	TEXT,
+	"genome_taxa_species"	TEXT,
+	"genome_taxa_ref_fastani"	REAL,
+	PRIMARY KEY("orig_identifier"),
+	FOREIGN KEY("sequencing_id") REFERENCES "sequencing_samples"("sequencing_id")
 );
 COMMIT;

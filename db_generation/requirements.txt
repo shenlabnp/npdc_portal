@@ -1,0 +1,3 @@
+pandas
+pysqlite3
+tqdm
