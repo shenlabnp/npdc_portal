@@ -58,7 +58,7 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
 
         write_log("found {} files".format(len(strains_data_files)))
         all_strains_data = pd.concat([
-            pd.read_csv(filepath, sep="\t").fillna("") for filepath in strains_data_files
+            pd.read_csv(filepath, sep="\t", dtype=str).fillna("") for filepath in strains_data_files
         ])
 
         write_log("inserting {} rows".format(all_strains_data.shape[0]))
@@ -78,7 +78,7 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
 
         write_log("found {} files".format(len(strains_archive_files)))
         all_strains_archives = pd.concat([
-            pd.read_csv(filepath, sep="\t").fillna("") for filepath in strains_archive_files
+            pd.read_csv(filepath, sep="\t", dtype=str).fillna("") for filepath in strains_archive_files
         ])
 
         write_log("inserting {} rows".format(all_strains_archives.shape[0]))
@@ -98,7 +98,7 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
 
         write_log("found {} files".format(len(gdna_files)))
         all_gdnas = pd.concat([
-            pd.read_csv(filepath, sep="\t").fillna("") for filepath in gdna_files
+            pd.read_csv(filepath, sep="\t", dtype=str).fillna("") for filepath in gdna_files
         ])
 
         write_log("inserting {} rows".format(all_gdnas.shape[0]))
@@ -118,7 +118,7 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
 
         write_log("found {} files".format(len(projects_files)))
         projects_data = pd.concat([
-            pd.read_csv(filepath, sep="\t").fillna("") for filepath in projects_files
+            pd.read_csv(filepath, sep="\t", dtype=str).fillna("") for filepath in projects_files
         ])
 
         write_log("inserting {} rows".format(projects_data.shape[0]))
@@ -138,7 +138,7 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
 
         write_log("found {} files".format(len(batches_files)))
         batches_data = pd.concat([
-            pd.read_csv(filepath, sep="\t").fillna("") for filepath in batches_files
+            pd.read_csv(filepath, sep="\t", dtype=str).fillna("") for filepath in batches_files
         ])
 
         write_log("inserting {} rows".format(batches_data.shape[0]))
@@ -158,7 +158,7 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
 
         write_log("found {} files".format(len(samples_files)))
         samples_data = pd.concat([
-            pd.read_csv(filepath, sep="\t").fillna("") for filepath in samples_files
+            pd.read_csv(filepath, sep="\t", dtype=str).fillna("") for filepath in samples_files
         ])
 
         write_log("inserting {} rows".format(samples_data.shape[0]))
@@ -314,7 +314,7 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
 
         write_log("found {} files".format(len(links_files)))
         links_data = pd.concat([
-            pd.read_csv(filepath, index_col="sequencing_id", sep="\t").fillna("") for filepath in links_files
+            pd.read_csv(filepath, index_col="sequencing_id", sep="\t", dtype=str).fillna("") for filepath in links_files
         ]).apply(lambda row: row["dataset"] + "/" + row["name"], axis=1)
         
         df_sequencing_linked = links_data.map(
