@@ -314,20 +314,40 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
 
         write_log("found {} files".format(len(links_files)))
         links_data = pd.concat([
-            pd.read_csv(filepath, sep="\t").fillna("") for filepath in links_files
-        ])
+            pd.read_csv(filepath, index_col="sequencing_id", sep="\t").fillna("") for filepath in links_files
+        ]).apply(lambda row: row["dataset"] + "/" + row["name"], axis=1)
+        
+        df_sequencing_linked = links_data.map(
+            lambda x: list(
+                df_sequencing[df_sequencing.index.str.startswith(x[:-1])].index
+            ) if x.endswith("*") else list(df_sequencing[df_sequencing.index == x].index)
+        ).explode()
+        df_sequencing_linked = df_sequencing_linked[~df_sequencing_linked.isna()]
 
-        write_log("linking {} sequences".format(links_data.shape[0]))
-        df_sequencing.loc[links_data["dataset"].values + "/" + links_data["name"].values, "linked_sequencing_id"] = links_data["sequencing_id"].values
+        write_log("linking {} sequences".format(df_sequencing_linked.shape[0]))
         
         # print warnings for unlinked sequences
-        for idx, row in df_sequencing[df_sequencing["linked_sequencing_id"].isna()].iterrows():
+        for idx, row in df_sequencing[~df_sequencing.index.isin(df_sequencing_linked)].iterrows():
             write_log("WARNING: found no linkage info for {} (skipping)".format(idx))
         
+        # print warnings (and stop as it will fail integrity checking) for double-assigned sequences
+        multi_samples_links = df_sequencing_linked[df_sequencing_linked.duplicated(False)]
+        if multi_samples_links.shape[0] > 0:
+            for idx, count in multi_samples_links.value_counts().iteritems():
+                write_log("WARNING: genome {} is assigned to {} samples ({})".format(
+                    idx,
+                    count,
+                    ",".join(multi_samples_links[multi_samples_links == idx].index)
+                ))
+            write_log("failing genome sequences insertion due to integrity issues")
+            return
+        
         # insert the rest
-        df_sequencing_linked = df_sequencing[~df_sequencing["linked_sequencing_id"].isna()]
         write_log("inserting {} rows".format(df_sequencing_linked.shape[0]))
         with sqlite3.connect(output_database_path) as con:
+            temp_sequencing_id = df_sequencing_linked.index
+            df_sequencing_linked = df_sequencing.reindex(df_sequencing_linked.values)
+            df_sequencing_linked["linked_sequencing_id"] = temp_sequencing_id
             df_sequencing_linked = pd.DataFrame({
                 "orig_identifier": df_sequencing_linked.index,
                 "sequencing_id": df_sequencing_linked["linked_sequencing_id"],
