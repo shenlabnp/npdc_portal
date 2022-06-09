@@ -205,6 +205,8 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
                     continue
                 with open(stats_file, "r") as ii:
                     lines = ii.readlines()
+                    if lines[0].startswith("running srun via a wrapper script"):
+                        lines = lines[1:]
                     try:
                         data["reads_gc"] = float(lines[1].split("\t")[7]) * 100
                         data["reads_gc_stdev"] = float(lines[1].split("\t")[8]) * 100
@@ -243,6 +245,8 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
                     try:
                         with open(assembly_stats_path, "r") as oo:
                             lines = oo.readlines()
+                            if lines[0].startswith("running srun"):
+                                lines = lines[1:]
                             data["genome_size"] = int(lines[1].split(",")[0].split(" = ")[1])
                             data["num_contigs"] = int(lines[1].split(",")[1].split(" = ")[1])
                             data["n50"] = int(lines[2].split(",")[0].split(" = ")[1])
@@ -265,8 +269,11 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
                     except:
                         write_log("WARNING: failed to parse {} (corrupted?)".format(checkm_path))
                 elif data["finished_qc"]:
-                    write_log("WARNING: {} marked as 'finished QC' but lack checkM files, please re-run QC!".format(fp))
-                    data["passed_qc"] = None
+                    if path.exists(path.join(path.dirname(checkm_path), "checkm.log")):
+                        data["passed_qc"] = False
+                    elif data["passed_qc"] != False:
+                        write_log("WARNING: {} marked as 'finished QC' but lack checkM files, please re-run QC!".format(fp))
+                        data["passed_qc"] = None
 
                 # annotations
                 gtdb_path = path.join(path.dirname(fp), data["name"] + ".taxa.txt")
@@ -351,9 +358,11 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
             df_sequencing_linked = pd.DataFrame({
                 "orig_identifier": df_sequencing_linked.index,
                 "sequencing_id": df_sequencing_linked["linked_sequencing_id"],
-                "assembly_status": df_sequencing_linked["failed_assembly"].map(lambda x: 1 if x == True else (0 if x == False else -1)),
+                "assembly_status": df_sequencing_linked["failed_assembly"].map(lambda x: 0 if x == True else (1 if x == False else -1)),
                 "qc_status": df_sequencing_linked.apply(lambda row: -1 if row["finished_qc"] != True else (1 if row["passed_qc"] == True else 0), axis=1),
-                "annotation_status": df_sequencing_linked["annotated"].map(lambda x: 1 if x == True else (0 if x == False else -1)),
+                "annotation_status": df_sequencing_linked.apply(
+                    lambda row: (1 if row["annotated"] == True else -1) if row["passed_qc"] == True else 0, axis=1
+                ),
                 "reads_folder": df_sequencing_linked["read_file_folder"],
                 "reads_count": df_sequencing_linked["reads_count"].astype(int, errors="ignore"),
                 "reads_size_nt": df_sequencing_linked["reads_size"].astype(int, errors="ignore"),

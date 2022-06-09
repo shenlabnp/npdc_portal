@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS "sequencing_batches" (
 	"project_id"	TEXT NOT NULL,
 	"submission_date"	TEXT NOT NULL,
 	"person_in_charge"	TEXT NOT NULL,
+	"is_finished"	INTEGER NOT NULL,
 	FOREIGN KEY("project_id") REFERENCES sequencing_projects("project_id"),
 	PRIMARY KEY("project_id", "batch_id")
 );
