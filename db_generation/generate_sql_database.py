@@ -4,23 +4,150 @@ import sqlite3
 import pandas as pd
 from sys import argv
 from os import path
+from multiprocessing import Pool, cpu_count
 import glob
 from tqdm import tqdm
+import subprocess
 import datetime
+
 
 def main():
     input_tables_folder = argv[1]
     genome_sequencing_folder = argv[2]
     output_database_path = argv[3]
+    pool = fetch_pool(int(argv[4]))
 
-    return generate_sql_database(input_tables_folder, genome_sequencing_folder, output_database_path)
+    return generate_sql_database(input_tables_folder, genome_sequencing_folder, output_database_path, pool)
+
+
+def parse_sequencing_row(tup):
+    genome_sequencing_folder, dataset, name = tup
+    data = {
+        "dataset": dataset,
+        "name": name
+    }
+
+    # parse reads --> todo: parse R2!!!
+    read_file_path = path.abspath(path.join(
+        genome_sequencing_folder, "filtered_reads", dataset, name, name + ".R1.fastq.gz"
+    ))
+    if path.exists(read_file_path):
+        data["read_file_folder"] = path.dirname(read_file_path)
+        fp = read_file_path
+
+        # check assembly-stats
+        stats_file = path.join(data["read_file_folder"], data["name"] + ".stats.txt")
+        if not path.exists(stats_file):
+            print("WARNING: {} missing stats.txt (skipped)".format(data["read_file_folder"]), flush=True)
+            return data
+        with open(stats_file, "r") as ii:
+            lines = ii.readlines()
+            if lines[0].startswith("running srun via a wrapper script"):
+                lines = lines[1:]
+            try:
+                data["reads_gc"] = float(lines[1].split("\t")[7]) * 100
+                data["reads_gc_stdev"] = float(lines[1].split("\t")[8]) * 100
+                data["reads_count"] = int(lines[3].split("\t")[1])
+                data["reads_size"] = int(float(lines[5].split("\t")[1].split(" ")[0]) * 1000000)
+            except:
+                print("WARNING: {} file is corrupted!".format(stats_file), flush=True)
+        if path.exists(fp + ".failed"):
+            data["failed_assembly"] = True
+        else:
+            data["failed_assembly"] = None
+
+
+    # parse genome
+    genome_file_path = path.abspath(path.join(
+        genome_sequencing_folder, "genomes", "per_batches", dataset, "all_genomes", name, name + ".fna"
+    ))
+    if path.exists(genome_file_path):
+        data["genome_folder"] = path.dirname(genome_file_path)
+        fp = genome_file_path
+
+        # check QC status
+        if path.exists(fp.replace("/all_genomes/", "/passed_qc/")):
+            data["finished_qc"] = True
+            data["passed_qc"] = True
+        elif path.exists(fp.replace("/all_genomes/", "/failed_qc/")):
+            data["finished_qc"] = True
+            data["passed_qc"] = False
+        else:
+            data["finished_qc"] = False
+            data["passed_qc"] = None
+
+        # assembly data
+        assembly_stats_path = path.join(data["genome_folder"], "qc", "assembly_stats.txt")
+        if path.exists(assembly_stats_path):
+            try:
+                with open(assembly_stats_path, "r") as oo:
+                    lines = oo.readlines()
+                    if lines[0].startswith("running srun"):
+                        lines = lines[1:]
+                    data["genome_size"] = int(lines[1].split(",")[0].split(" = ")[1])
+                    data["num_contigs"] = int(lines[1].split(",")[1].split(" = ")[1])
+                    data["n50"] = int(lines[2].split(",")[0].split(" = ")[1])
+            except:
+                print("WARNING: failed to parse {} (corrupted?)".format(assembly_stats_path), flush=True)
+        elif data["finished_qc"]:
+            print("WARNING: {} marked as 'finished QC' but lack assembly-stats files, please re-run QC!".format(fp), flush=True)
+            data["passed_qc"] = None
+
+        # checkm
+        checkm_path = path.join(path.dirname(fp), "qc", "checkm", "checkm_result.txt")
+        if path.exists(checkm_path):
+            try:
+                with open(checkm_path, "r") as oo:
+                    lines = oo.readlines()
+                    data["taxon_checkm"] = lines[1].split("\t")[1]
+                    data["completeness"] = float(lines[1].split("\t")[11])
+                    data["contamination"] = float(lines[1].split("\t")[12])
+                    data["heterogenity"] = float(lines[1].split("\t")[13].rstrip("\n"))
+            except:
+                print("WARNING: failed to parse {} (corrupted?)".format(checkm_path), flush=True)
+        elif data["finished_qc"]:
+            if path.exists(path.join(path.dirname(checkm_path), "checkm.log")):
+                data["passed_qc"] = False
+            elif data["passed_qc"] != False:
+                print("WARNING: {} marked as 'finished QC' but lack checkM files, please re-run QC!".format(fp), flush=True)
+                data["passed_qc"] = None
+
+        # annotations
+        gtdb_path = path.join(path.dirname(fp), data["name"] + ".taxa.txt")
+        antismash_path = path.join(path.dirname(fp), "annotations", "antismash", "regions.js")
+        if path.exists(gtdb_path):
+            try:
+                with open(gtdb_path, "r") as oo:
+                    lines = oo.readlines()
+                    data["phylum_gtdb"] = lines[1].split("\t")[1].split(";")[1].rstrip("\n")
+                    data["genus_gtdb"] = lines[1].split("\t")[1].split(";")[5].rstrip("\n")
+                    data["species_gtdb"] = lines[1].split("\t")[1].split(";")[6].rstrip("\n")
+                    data["fastANI_gtdb"] = lines[5].split("\t")[1].rstrip("\n")
+                    data["fastANI_gtdb"] = float(data["fastANI_gtdb"]) if not data["fastANI_gtdb"] == "N/A" else None
+                    data["related_species"] = {x.split(",")[1].lstrip().rstrip(): float(x.split(",")[3].lstrip().rstrip()) for x in lines[15].split("\t")[1].split(";") if len(x.split(",")) == 5}
+                    if len(data["related_species"]) > 0:
+                        data["closest_species"] = max(data["related_species"], key=data["related_species"].get)
+                        data["closest_species_ani"] = max(data["related_species"].values())
+            except:
+                print("WARNING: failed to parse {} (corrupted?)".format(gtdb_path), flush=True)
+
+            if path.exists(antismash_path):
+                data["annotated"] = True
+            else:
+                data["annotated"] = False
+        else:
+            data["annotated"] = False
+
+        data["failed_assembly"] = False
+
+    return data
 
 
 """
 Load all related tsv files in "input_tables_folder", parse, then
 output the SQLite database file to "output_database_path"
 """
-def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_database_path):
+def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_database_path, pool):
 
     # initiate logs recording
     logs = []
@@ -30,7 +157,7 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
             "message": text
         })
         if print_msg:
-            print(text)
+            print(text, flush=True)
         
     write_log("START", False)
 
@@ -190,12 +317,12 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
     def scan_sequencing_folder():
 
         write_log("scanning raw reads...")
-        read_indices = set([(x.split("/")[-3], x.split("/")[-2]) for x in glob.iglob(path.join(
+        read_indices = set([(genome_sequencing_folder, x.split("/")[-3], x.split("/")[-2]) for x in glob.iglob(path.join(
             genome_sequencing_folder, "filtered_reads", "*", "*", "*.R1.fastq.gz"
         )) if x.split("/")[-2] == x.split("/")[-1].split(".R1.fastq.gz")[0]])
 
         write_log("scanning assembled genomes...")
-        genome_indices = set([(x.split("/")[-4], x.split("/")[-2]) for x in glob.iglob(path.join(
+        genome_indices = set([(genome_sequencing_folder, x.split("/")[-4], x.split("/")[-2]) for x in glob.iglob(path.join(
             genome_sequencing_folder, "genomes", "per_batches", "*", "all_genomes", "*", "*.fna"
         )) if x.split("/")[-2] == x.split("/")[-1].split(".fna")[0]])
 
@@ -203,129 +330,9 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
 
         write_log("found {:,} total sequences, parsing...".format(len(merged_indices)))
 
-        result = []
-        for dataset, name in tqdm(merged_indices):
-            data = {
-                "dataset": dataset,
-                "name": name
-            }
-
-            # parse reads --> todo: parse R2!!!
-            read_file_path = path.abspath(path.join(
-                genome_sequencing_folder, "filtered_reads", dataset, name, name + ".R1.fastq.gz"
-            ))
-            if path.exists(read_file_path):
-                data["read_file_folder"] = path.dirname(read_file_path)
-                fp = read_file_path
-
-                # check assembly-stats
-                stats_file = path.join(data["read_file_folder"], data["name"] + ".stats.txt")
-                if not path.exists(stats_file):
-                    write_log("WARNING: {} missing stats.txt (skipped)".format(data["read_file_folder"]))
-                    continue
-                with open(stats_file, "r") as ii:
-                    lines = ii.readlines()
-                    if lines[0].startswith("running srun via a wrapper script"):
-                        lines = lines[1:]
-                    try:
-                        data["reads_gc"] = float(lines[1].split("\t")[7]) * 100
-                        data["reads_gc_stdev"] = float(lines[1].split("\t")[8]) * 100
-                        data["reads_count"] = int(lines[3].split("\t")[1])
-                        data["reads_size"] = int(float(lines[5].split("\t")[1].split(" ")[0]) * 1000000)
-                    except:
-                        write_log("WARNING: {} file is corrupted!".format(stats_file))
-                if path.exists(fp + ".failed"):
-                    data["failed_assembly"] = True
-                else:
-                    data["failed_assembly"] = None
-
-
-            # parse genome
-            genome_file_path = path.abspath(path.join(
-                genome_sequencing_folder, "genomes", "per_batches", dataset, "all_genomes", name, name + ".fna"
-            ))
-            if path.exists(genome_file_path):
-                data["genome_folder"] = path.dirname(genome_file_path)
-                fp = genome_file_path
-
-                # check QC status
-                if path.exists(fp.replace("/all_genomes/", "/passed_qc/")):
-                    data["finished_qc"] = True
-                    data["passed_qc"] = True
-                elif path.exists(fp.replace("/all_genomes/", "/failed_qc/")):
-                    data["finished_qc"] = True
-                    data["passed_qc"] = False
-                else:
-                    data["finished_qc"] = False
-                    data["passed_qc"] = None
-
-                # assembly data
-                assembly_stats_path = path.join(data["genome_folder"], "qc", "assembly_stats.txt")
-                if path.exists(assembly_stats_path):
-                    try:
-                        with open(assembly_stats_path, "r") as oo:
-                            lines = oo.readlines()
-                            if lines[0].startswith("running srun"):
-                                lines = lines[1:]
-                            data["genome_size"] = int(lines[1].split(",")[0].split(" = ")[1])
-                            data["num_contigs"] = int(lines[1].split(",")[1].split(" = ")[1])
-                            data["n50"] = int(lines[2].split(",")[0].split(" = ")[1])
-                    except:
-                        write_log("WARNING: failed to parse {} (corrupted?)".format(assembly_stats_path))
-                elif data["finished_qc"]:
-                    write_log("WARNING: {} marked as 'finished QC' but lack assembly-stats files, please re-run QC!".format(fp))
-                    data["passed_qc"] = None
-
-                # checkm
-                checkm_path = path.join(path.dirname(fp), "qc", "checkm", "checkm_result.txt")
-                if path.exists(checkm_path):
-                    try:
-                        with open(checkm_path, "r") as oo:
-                            lines = oo.readlines()
-                            data["taxon_checkm"] = lines[1].split("\t")[1]
-                            data["completeness"] = float(lines[1].split("\t")[11])
-                            data["contamination"] = float(lines[1].split("\t")[12])
-                            data["heterogenity"] = float(lines[1].split("\t")[13].rstrip("\n"))
-                    except:
-                        write_log("WARNING: failed to parse {} (corrupted?)".format(checkm_path))
-                elif data["finished_qc"]:
-                    if path.exists(path.join(path.dirname(checkm_path), "checkm.log")):
-                        data["passed_qc"] = False
-                    elif data["passed_qc"] != False:
-                        write_log("WARNING: {} marked as 'finished QC' but lack checkM files, please re-run QC!".format(fp))
-                        data["passed_qc"] = None
-
-                # annotations
-                gtdb_path = path.join(path.dirname(fp), data["name"] + ".taxa.txt")
-                antismash_path = path.join(path.dirname(fp), "annotations", "antismash", "regions.js")
-                if path.exists(gtdb_path):
-                    try:
-                        with open(gtdb_path, "r") as oo:
-                            lines = oo.readlines()
-                            data["phylum_gtdb"] = lines[1].split("\t")[1].split(";")[1].rstrip("\n")
-                            data["genus_gtdb"] = lines[1].split("\t")[1].split(";")[5].rstrip("\n")
-                            data["species_gtdb"] = lines[1].split("\t")[1].split(";")[6].rstrip("\n")
-                            data["fastANI_gtdb"] = lines[5].split("\t")[1].rstrip("\n")
-                            data["fastANI_gtdb"] = float(data["fastANI_gtdb"]) if not data["fastANI_gtdb"] == "N/A" else None
-                            data["related_species"] = {x.split(",")[1].lstrip().rstrip(): float(x.split(",")[3].lstrip().rstrip()) for x in lines[15].split("\t")[1].split(";") if len(x.split(",")) == 5}
-                            if len(data["related_species"]) > 0:
-                                data["closest_species"] = max(data["related_species"], key=data["related_species"].get)
-                                data["closest_species_ani"] = max(data["related_species"].values())
-                    except:
-                        write_log("WARNING: failed to parse {} (corrupted?)".format(gtdb_path))
-
-                    if path.exists(antismash_path):
-                        data["annotated"] = True
-                    else:
-                        data["annotated"] = False
-                else:
-                    data["annotated"] = False
-
-                data["failed_assembly"] = False
-
-            result.append(data)
-
+        result = tqdm(pool.imap(parse_sequencing_row, merged_indices), total=len(merged_indices))
         result = pd.DataFrame(result)
+        
         result.index = result["dataset"] + "/" + result["name"]
         return result
 
@@ -422,6 +429,32 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
     with sqlite3.connect(output_database_path) as con:
         pd.DataFrame(logs).to_sql("logs", con, if_exists='append', index=False)
 
-    
+
+def fetch_pool(num_threads: int):
+    pool = Pool(processes=num_threads)
+
+    try:
+        # set cores for the multiprocessing pools
+        all_cpu_ids = set()
+        for i, p in enumerate(pool._pool):
+            cpu_id = str(cpu_count() - (i % cpu_count()) - 1)
+            subprocess.run(["taskset",
+                            "-p", "-c",
+                            cpu_id,
+                            str(p.pid)], check=True)
+            all_cpu_ids.add(cpu_id)
+
+        # set core for the main python script
+        subprocess.run(["taskset",
+                        "-p", "-c",
+                        ",".join(all_cpu_ids),
+                        str(getpid())], check=True)
+
+    except:
+        pass  # running in OSX?
+
+    return pool
+        
+        
 if __name__ == "__main__":
     main()
