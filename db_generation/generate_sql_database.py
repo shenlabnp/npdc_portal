@@ -81,12 +81,12 @@ def parse_sequencing_row(tup):
         if path.exists(assembly_stats_path):
             try:
                 with open(assembly_stats_path, "r") as oo:
-                    lines = oo.readlines()
-                    if lines[0].startswith("running srun"):
-                        lines = lines[1:]
-                    data["genome_size"] = int(lines[1].split(",")[0].split(" = ")[1])
-                    data["num_contigs"] = int(lines[1].split(",")[1].split(" = ")[1])
-                    data["n50"] = int(lines[2].split(",")[0].split(" = ")[1])
+                    for line in oo:
+                        if line.startswith("sum ="):
+                            data["genome_size"] = int(line.split(",")[0].split(" = ")[1])
+                            data["num_contigs"] = int(line.split(",")[1].split(" = ")[1])
+                        elif line.startswith("N50 ="):
+                            data["n50"] = int(line.split(",")[0].split(" = ")[1])
             except:
                 print("WARNING: failed to parse {} (corrupted?)".format(assembly_stats_path), flush=True)
         elif data["finished_qc"]:
@@ -233,6 +233,26 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
             all_growths.to_sql("growth", con, if_exists='append', index=False)
 
     parse_growth_data()
+    
+    # parse extracts data
+
+    def parse_extracts_data():
+
+        write_log("parsing extracts data..")
+        extract_files = list(
+            glob.iglob(path.join(input_tables_folder, "npdc_db-extracts-*.tsv"))
+        )
+
+        write_log("found {} files".format(len(extract_files)))
+        all_extracts = pd.concat([
+            pd.read_csv(filepath, sep="\t", dtype=str).fillna("") for filepath in extract_files
+        ])
+
+        write_log("inserting {} rows".format(all_extracts.shape[0]))
+        with sqlite3.connect(output_database_path) as con:
+            all_extracts.to_sql("extracts", con, if_exists='append', index=False)
+
+    parse_extracts_data()
 
     # parse gdna data
 
