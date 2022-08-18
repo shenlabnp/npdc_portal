@@ -86,6 +86,26 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
             all_strains_archives.to_sql("stocks", con, if_exists='append', index=False)
 
     parse_locations_data()
+    
+    # parse growth data
+
+    def parse_growth_data():
+
+        write_log("parsing growth data..")
+        growth_files = list(
+            glob.iglob(path.join(input_tables_folder, "npdc_db-growth-*.tsv"))
+        )
+
+        write_log("found {} files".format(len(growth_files)))
+        all_growths = pd.concat([
+            pd.read_csv(filepath, sep="\t", dtype=str).fillna("") for filepath in growth_files
+        ])
+
+        write_log("inserting {} rows".format(all_growths.shape[0]))
+        with sqlite3.connect(output_database_path) as con:
+            all_growths.to_sql("growth", con, if_exists='append', index=False)
+
+    parse_growth_data()
 
     # parse gdna data
 

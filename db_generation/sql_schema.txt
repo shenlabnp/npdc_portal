@@ -25,6 +25,20 @@ CREATE TABLE IF NOT EXISTS "stocks" (
 	"location"	TEXT NOT NULL,
 	FOREIGN KEY("npdc_id") REFERENCES strains("npdc_id")
 );
+DROP TABLE IF EXISTS "growth";
+CREATE TABLE IF NOT EXISTS "growth" (
+	"npdc_id"	INTEGER NOT NULL,
+	"media"	TEXT,
+	"antibiotics"	TEXT,
+	"date_inoculated"	TEXT,
+	"time_inoculated"	TEXT,
+	"date_harvested"	TEXT,
+	"time_harvested"	TEXT,
+	"growth"	TEXT,
+	"picture"	TEXT,
+	"comment"	TEXT,
+	FOREIGN KEY("npdc_id") REFERENCES strains("npdc_id")
+);
 DROP TABLE IF EXISTS "sequencing_batches";
 CREATE TABLE IF NOT EXISTS "sequencing_batches" (
 	"batch_id"	TEXT NOT NULL,
