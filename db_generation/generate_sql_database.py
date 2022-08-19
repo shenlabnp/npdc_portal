@@ -112,6 +112,34 @@ def parse_sequencing_row(tup):
                 print("WARNING: {} marked as 'finished QC' but lack checkM files, please re-run QC!".format(fp), flush=True)
                 data["passed_qc"] = None
 
+        # checkm_blast
+        checkm_blast_path = path.join(path.dirname(fp), "qc", "checkm", "blast", "blast_result.filtered.txt")
+        if path.exists(checkm_blast_path):
+            try:
+                df_ = pd.read_csv(checkm_blast_path, sep="\t").fillna("n/a")
+                data["taxa_blast_hits"] = ",".join([
+                    "{}({})".format(taxa, count) for taxa, count in df_.groupby(
+                        "sphylums"
+                    )["marker"].count().sort_index().iteritems()
+                ])
+                data["taxa_blast_markers"] = ",".join([
+                    "{}({})".format(taxa, count) for taxa, count in df_.groupby(
+                        "marker"
+                    )["sphylums"].unique().map(lambda x: "/".join(sorted(x))).value_counts().sort_index().iteritems()
+                ])
+                data["taxa_blast_contigs"] = ",".join([
+                    "{}({})".format(taxa, count) for taxa, count in df_.groupby(
+                        "contig"
+                    )["sphylums"].unique().map(lambda x: "/".join(sorted(x))).value_counts().sort_index().iteritems()
+                ])
+                data["taxa_blast_strains"] = ",".join([
+                    "{}({})".format(taxa, count) for taxa, count in df_.groupby(
+                        "sphylums"
+                    )["taxa"].nunique().sort_index().iteritems()
+                ])
+            except:
+                print("WARNING: failed to parse {} (corrupted?)".format(checkm_blast_path), flush=True)                
+                
         # annotations
         gtdb_path = path.join(path.dirname(fp), data["name"] + ".taxa.txt")
         antismash_path = path.join(path.dirname(fp), "annotations", "antismash", "regions.js")
@@ -373,8 +401,8 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
         
         df_sequencing_linked = links_data.map(
             lambda x: list(
-                df_sequencing[df_sequencing.index.str.startswith(x[:-1])].index
-            ) if x.endswith("*") else list(df_sequencing[df_sequencing.index == x].index)
+                df_sequencing[df_sequencing.index.str.rsplit("-cleaned", 1).str[0].str.startswith(x[:-1])].index
+            ) if x.endswith("*") else list(df_sequencing[df_sequencing.index.str.rsplit("-cleaned", 1).str[0] == x].index)
         ).explode()
         df_sequencing_linked = df_sequencing_linked[~df_sequencing_linked.isna()]
 
@@ -423,6 +451,10 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
                 "genome_qc_contamination": df_sequencing_linked["contamination"],
                 "genome_qc_heterogenity": df_sequencing_linked["heterogenity"],
                 "genome_qc_taxon": df_sequencing_linked["taxon_checkm"],
+                "genome_taxablast_hits": df_sequencing_linked["taxa_blast_hits"],
+                "genome_taxablast_markers": df_sequencing_linked["taxa_blast_markers"],
+                "genome_taxablast_contigs": df_sequencing_linked["taxa_blast_contigs"],
+                "genome_taxablast_strains": df_sequencing_linked["taxa_blast_strains"],
                 "genome_taxa_phylum": df_sequencing_linked["phylum_gtdb"],
                 "genome_taxa_genus": df_sequencing_linked["genus_gtdb"],
                 "genome_taxa_species": df_sequencing_linked["species_gtdb"],
