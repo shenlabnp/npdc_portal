@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import render_template
+from flask import render_template, session, redirect, url_for
 import sqlite3
 
 # import global config
@@ -14,6 +14,10 @@ blueprint = Blueprint('sequencing', __name__)
 @blueprint.route("/sequencing")
 def page_sequencing():
 
+    # check login
+    if not check_logged_in():
+        return redirect(url_for("login.page_login"))
+        
     # page title
     page_title = "Genome Sequencing"
     page_subtitle = (

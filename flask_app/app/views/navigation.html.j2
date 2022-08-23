@@ -3,10 +3,12 @@
     <a href="/">
       <img src="{{ url_for('static', filename='img/logo_npdc_dashboard.png') }}" class="img-fluid">
     </a>
-    <div class="list-group-item {{'list-group-item-danger' if last_updated_days > 30 else 'list-group-item-success'}}">
-      last updated:<br \>
-      {{ last_updated }}<br \>
-      <b>({{ last_updated_days_wording }})</b>
+    <div class="list-group-item">
+      {% if gbal["cur_username"] != "" %}
+      Welcome, <b>{{ gbal["cur_username"] }}</b>! [<a href="/logout">logout</a>]
+      {% else %}
+      Welcome, <b>guest</b>! Please [<a href="/login">login</a>] to access the full database features
+      {% endif %}
     </div>
   </div>
   <div class="list-group panel">

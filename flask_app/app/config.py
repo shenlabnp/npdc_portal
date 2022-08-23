@@ -9,3 +9,4 @@ conf = {
 }
 
 conf["db_path"] = path.join(conf["instance_folder"], "npdc_database.db")
+conf["session_key_path"] = path.join(conf["instance_folder"], "session_key.txt")

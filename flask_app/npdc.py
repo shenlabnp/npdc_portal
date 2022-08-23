@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, url_for, session
 from os import path
 import sqlite3
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
@@ -12,9 +12,8 @@ import datetime
 from app.config import conf
 
 # import controllers
-from app.controllers import root
+from app.controllers import root, login
 from app.controllers import home, analysis, sequencing, gdnas, strains
-
 
 def dashboard():
 
@@ -28,8 +27,12 @@ def dashboard():
             path.realpath(__file__)), "app", "static")
     )
 
+    app.secret_key = open(conf["session_key_path"], "r").read().rstrip("\n")
+
+
     # register controllers
     app.register_blueprint(root.blueprint)
+    app.register_blueprint(login.blueprint)
     app.register_blueprint(home.blueprint)
     app.register_blueprint(analysis.blueprint)
     app.register_blueprint(sequencing.blueprint)
@@ -40,7 +43,8 @@ def dashboard():
     @app.context_processor
     def inject_global():
         gbal = {
-            "version": "1.0.0"
+            "version": "1.0.0",
+            "cur_username": session.get("username", "")
         }
 
         # get last db update stats

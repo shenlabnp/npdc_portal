@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import render_template, request
+from flask import render_template, request, session, redirect, url_for
 import sqlite3
 import pandas as pd
 
@@ -15,6 +15,10 @@ blueprint = Blueprint('strains', __name__)
 @blueprint.route("/strains")
 def page_strains():
 
+    # check login
+    if not check_logged_in():
+        return redirect(url_for("login.page_login"))
+        
     # page title
     page_title = "Strains Collection"
     page_subtitle = (
