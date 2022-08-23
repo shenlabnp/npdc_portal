@@ -9,6 +9,7 @@ import glob
 from tqdm import tqdm
 import subprocess
 import datetime
+import re
 
 
 def main():
@@ -114,28 +115,34 @@ def parse_sequencing_row(tup):
 
         # checkm_blast
         checkm_blast_path = path.join(path.dirname(fp), "qc", "checkm", "blast", "blast_result.filtered.txt")
+        def try_genus(x):
+            try:
+                return re.match("[^A-Z]*([A-Z]{1}[a-z]+)[^A-Z]*", x)[1]
+            except:
+                return "n/a"
         if path.exists(checkm_blast_path):
             try:
                 df_ = pd.read_csv(checkm_blast_path, sep="\t").fillna("n/a")
+                df_["genus"] = df_["sscinames"].fillna("").map(try_genus)
                 data["taxa_blast_hits"] = ",".join([
                     "{}({})".format(taxa, count) for taxa, count in df_.groupby(
-                        "sphylums"
-                    )["marker"].count().sort_index().iteritems()
+                        "genus"
+                    )["marker"].count().sort_values(ascending=False).iteritems()
                 ])
                 data["taxa_blast_markers"] = ",".join([
                     "{}({})".format(taxa, count) for taxa, count in df_.groupby(
                         "marker"
-                    )["sphylums"].unique().map(lambda x: "/".join(sorted(x))).value_counts().sort_index().iteritems()
+                    )["genus"].unique().map(lambda x: "/".join(sorted(x))).value_counts().sort_values(ascending=False).iteritems()
                 ])
                 data["taxa_blast_contigs"] = ",".join([
                     "{}({})".format(taxa, count) for taxa, count in df_.groupby(
                         "contig"
-                    )["sphylums"].unique().map(lambda x: "/".join(sorted(x))).value_counts().sort_index().iteritems()
+                    )["genus"].unique().map(lambda x: "/".join(sorted(x))).value_counts().sort_values(ascending=False).iteritems()
                 ])
                 data["taxa_blast_strains"] = ",".join([
                     "{}({})".format(taxa, count) for taxa, count in df_.groupby(
-                        "sphylums"
-                    )["taxa"].nunique().sort_index().iteritems()
+                        "genus"
+                    )["taxa"].nunique().sort_values(ascending=False).iteritems()
                 ])
             except:
                 print("WARNING: failed to parse {} (corrupted?)".format(checkm_blast_path), flush=True)                
@@ -441,7 +448,7 @@ def generate_sql_database(input_tables_folder, genome_sequencing_folder, output_
                 "reads_folder": df_sequencing_linked["read_file_folder"],
                 "reads_count": df_sequencing_linked["reads_count"].astype(int, errors="ignore"),
                 "reads_size_nt": df_sequencing_linked["reads_size"].astype(int, errors="ignore"),
-                "reads_gc": df_sequencing_linked["reads_count"],
+                "reads_gc": df_sequencing_linked["reads_gc"],
                 "reads_gc_std": df_sequencing_linked["reads_gc_stdev"],
                 "genome_folder": df_sequencing_linked["genome_folder"],
                 "genome_num_contigs": df_sequencing_linked["num_contigs"].astype(int, errors="ignore"),
