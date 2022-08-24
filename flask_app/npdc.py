@@ -13,7 +13,7 @@ from app.config import conf
 
 # import controllers
 from app.controllers import root, login
-from app.controllers import home, strains, genomes
+from app.controllers import home, strains, genomes, feedback, about
 
 def portal():
 
@@ -36,6 +36,8 @@ def portal():
     app.register_blueprint(home.blueprint)
     app.register_blueprint(strains.blueprint)
     app.register_blueprint(genomes.blueprint)
+    app.register_blueprint(feedback.blueprint)
+    app.register_blueprint(about.blueprint)
 
     # app-specific contexts #
     @app.context_processor
@@ -69,11 +71,8 @@ def portal():
             ("Browse NPs", "/dummy"),
             ("Metabolomics database", "/dummy")
         ]))
-        nav_items.append(("Help / Feedback", "/dummy"))
-        nav_items.append(("About NPDC", [
-            ("History", "/dummy"),
-            ("Using the resources", "/dummy")
-        ]))
+        nav_items.append(("Help / Feedback", "/feedback"))
+        nav_items.append(("About NPDC", "/about"))
 
         return dict(
             gbal=gbal,

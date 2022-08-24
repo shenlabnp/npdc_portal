@@ -34,6 +34,34 @@ def page_strains():
     )
 
 
+@blueprint.route("/strains/view/<int:npdc_id>")
+def page_strains_detail(npdc_id):
+
+    # check login
+    if not check_logged_in():
+        return redirect(url_for("login.page_login"))
+
+    with sqlite3.connect(conf["db_path"]) as con:
+        strain_data = pd.read_sql_query((
+            "select *"
+            " from strains where npdc_id={}"
+        ).format(npdc_id),  con).iloc[0]
+
+    # page title
+    page_title = "Unknown bacterium"
+    page_subtitle = (
+        "(NPDC{:06d})".format(strain_data["npdc_id"])
+    )
+    
+    # render view
+    return render_template(
+        "strains/detail.html.j2",
+        page_title=page_title,
+        page_subtitle=page_subtitle,
+        strain_data=strain_data
+    )
+
+
 @blueprint.route("/api/strains/get_overview")
 def get_overview():
     """ for strain overview tables """
@@ -69,7 +97,7 @@ def get_overview():
 
         for idx, row in query_result.iterrows():
             result["data"].append([
-                "NPDC{:06d}".format(row["npdc_id"]),
+                row["npdc_id"],
                 "-",
                 "-",
                 "-" if row["collection_date"] == "" else row["collection_date"],
