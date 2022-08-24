@@ -34,6 +34,27 @@ def page_strains():
     )
 
 
+@blueprint.route("/strains/order")
+def page_strains_ordering():
+
+    # check login
+    if not check_logged_in():
+        return redirect(url_for("login.page_login"))
+        
+    # page title
+    page_title = "Order a strain"
+    page_subtitle = (
+        ""
+    )
+
+    # render view
+    return render_template(
+        "strains/ordering.html.j2",
+        page_title=page_title,
+        page_subtitle=page_subtitle
+    )
+
+
 @blueprint.route("/strains/view/<int:npdc_id>")
 def page_strains_detail(npdc_id):
 
