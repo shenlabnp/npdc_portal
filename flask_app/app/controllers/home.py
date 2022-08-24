@@ -15,9 +15,9 @@ blueprint = Blueprint('home', __name__)
 def page_home():
 
     # page title
-    page_title = "Summary"
+    page_title = "Natural Products Discovery Collection"
     page_subtitle = (
-        "of strains, gDNAs and sequenced genomes"
+        "home of the largest sequenced bacterial strains collection to enable scientific discovery"
     )
 
     # fetch data (test)

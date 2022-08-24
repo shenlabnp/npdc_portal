@@ -13,9 +13,9 @@ from app.config import conf
 
 # import controllers
 from app.controllers import root, login
-from app.controllers import home, analysis, sequencing, gdnas, strains
+from app.controllers import home, strains, genomes
 
-def dashboard():
+def portal():
 
 
     # initiate app
@@ -34,10 +34,8 @@ def dashboard():
     app.register_blueprint(root.blueprint)
     app.register_blueprint(login.blueprint)
     app.register_blueprint(home.blueprint)
-    app.register_blueprint(analysis.blueprint)
-    app.register_blueprint(sequencing.blueprint)
-    app.register_blueprint(gdnas.blueprint)
     app.register_blueprint(strains.blueprint)
+    app.register_blueprint(genomes.blueprint)
 
     # app-specific contexts #
     @app.context_processor
@@ -57,11 +55,25 @@ def dashboard():
 
         # for navigations
         nav_items = []
-        nav_items.append(("Summary", url_for("home.page_home")))
-        nav_items.append(("Analysis", url_for("analysis.page_analysis")))
-        nav_items.append(("Sequencing", url_for("sequencing.page_sequencing")))
-        nav_items.append(("gDNAs", url_for("gdnas.page_gdnas")))
-        nav_items.append(("Strains", url_for("strains.page_strains")))
+        nav_items.append(("Main page", url_for("home.page_home")))
+        nav_items.append(("Strains collection", [
+            ("Browse strains", "/strains/view"),
+            ("Ordering a strain", "/strains/order")
+        ]))
+        nav_items.append(("Genomes database", [
+            ("Browse genomes", "/genomes/view"),
+            ("Browse BGCs", "/dummy"),
+            ("BLAST query", "/dummy")
+        ]))
+        nav_items.append(("Natural Products library", [
+            ("Browse NPs", "/dummy"),
+            ("Metabolomics database", "/dummy")
+        ]))
+        nav_items.append(("Help / Feedback", "/dummy"))
+        nav_items.append(("About NPDC", [
+            ("History", "/dummy"),
+            ("Using the resources", "/dummy")
+        ]))
 
         return dict(
             gbal=gbal,
@@ -96,10 +108,10 @@ if __name__ == "__main__":
 
         app = DispatcherMiddleware(
             create_dummy_app(argv[2]), {
-                "/" + argv[2]: dashboard()
+                "/" + argv[2]: portal()
             })
     else:
-        app = dashboard()
+        app = portal()
 
     run_simple(
         hostname="0.0.0.0",

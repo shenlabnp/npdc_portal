@@ -1,16 +1,10 @@
 <div class="row mt-2">
 	<div class="col">
-		<div class="h3 btn-info text-center mb-2">Strains list</div>
+		<div class="h3 btn-info text-center mb-2">Sequenced genomes</div>
 		<table id="table_strains" class="table table-striped table-bordered table-hover nowrap">
 			<thead class="thead-light">
 				<tr>
 					<th>NPDC No.</th>
-					<th>Sequence(s)</th>
-					<th>Taxonomy</th>
-					<th>Collection date</th>
-					<th>Collection place</th>
-					<th>Comment</th>
-					<th>Ordering</th>
 				</tr>
 			</thead>
 			<tbody class="tbody">
@@ -31,7 +25,7 @@
 			aLengthMenu: [[10, 50, 250], [10, 50, 250]],
         	iDisplayLength: 10,
 			ajax: {
-				url: "{{ url_for('root.page') }}api/strains/get_overview",
+				url: "{{ url_for('root.page') }}api/genomes/get_overview",
 				type: "GET",
 				data: function(d) {
 					//

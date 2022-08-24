@@ -1,5 +1,5 @@
 {% extends "layout.html.j2" %}
 {% block content %}
   {% include "basic_header.html.j2" %}
-  There are {{ strains_count }} strains in the NPDC database
+  {% include "genomes/browse.html.j2" %}
 {% endblock %}
