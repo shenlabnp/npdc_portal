@@ -33,10 +33,11 @@ def page_login():
             if cur_userdata.shape[0] == 1:
                 session["userdata"] = cur_userdata.iloc[0].to_dict()
                 session["userid"] = session["userdata"]["id"]
-                flash("login success")
+                flash("login success", "alert-success")
+                return redirect(url_for("home.page_home"))
             else:
-                flash("login failed")
-        return redirect(url_for("home.page_home"))
+                flash("login failed", "alert-danger")
+                return redirect(url_for("login.page_login"))
 
     # page title
     page_title = "Login / Sign up"
@@ -62,7 +63,7 @@ def page_register():
         ), con=con, params=(request.form['username'], request.form['email']))
         if existing_userdata.shape[0] > 0:
             # user exists, registration failed
-            flash("username / email exists!")
+            flash("username / email exists!", "alert-danger")
             return redirect(url_for("login.page_login"))
 
         token = generate_token(6)
@@ -93,7 +94,7 @@ def page_register():
         email_sender.send(msg)
 
         # render view
-        flash("registration success! please check your e-mail for login information")
+        flash("registration success! please check your e-mail for login information", "alert-info")
         return redirect(url_for("home.page_home"))
 
 
@@ -101,5 +102,5 @@ def page_register():
 def page_logout():
     session.pop("userid", None)
     session.pop("userdata", None)
-    flash("logged out")
+    flash("logged out", "alert-warning")
     return redirect(url_for("home.page_home"))
