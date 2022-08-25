@@ -5,6 +5,7 @@ import sqlite3
 
 # import global config
 from ..config import conf
+from ..session import check_logged_in
 
 # set blueprint object
 from flask import Blueprint
@@ -14,6 +15,10 @@ blueprint = Blueprint('home', __name__)
 @blueprint.route("/home")
 def page_home():
 
+    # check login
+    if not check_logged_in():
+        pass # do nothing
+        
     # page title
     page_title = "Natural Products Discovery Collection"
     page_subtitle = (

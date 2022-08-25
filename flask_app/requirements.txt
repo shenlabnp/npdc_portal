@@ -3,3 +3,4 @@ pysqlite3
 gunicorn
 werkzeug
 pandas
+flask-mail

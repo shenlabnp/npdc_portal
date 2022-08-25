@@ -6,6 +6,7 @@ import sqlite3
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.serving import run_simple
 from sys import argv
+import json
 import datetime
 
 # import global config
@@ -17,6 +18,12 @@ from app.controllers import home, strains, genomes, feedback, about
 
 def portal():
 
+    # check and create account database if not exists
+    if not path.exists(conf["user_db_path"]):
+        with sqlite3.connect(conf["user_db_path"]) as con:
+            cur = con.cursor()
+            cur.executescript(open(path.join(path.dirname(path.realpath(__file__)), "..", "db_generation", "sql_schema_accounts.txt")).read())
+            con.commit()
 
     # initiate app
     app = Flask(
@@ -27,8 +34,12 @@ def portal():
             path.realpath(__file__)), "app", "static")
     )
 
+    # secret key for session
     app.secret_key = open(conf["session_key_path"], "r").read().rstrip("\n")
 
+    # e-mail configuration
+    for key, val in (json.load(open(conf["email_config_path"], "r"))).items():
+        app.config[key] = val
 
     # register controllers
     app.register_blueprint(root.blueprint)
@@ -44,7 +55,7 @@ def portal():
     def inject_global():
         gbal = {
             "version": "1.0.0",
-            "cur_username": session.get("username", "")
+            "cur_userdata": session.get("userdata", None)
         }
 
         # get last db update stats

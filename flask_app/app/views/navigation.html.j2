@@ -4,11 +4,20 @@
       <img src="{{ url_for('static', filename='img/logo_npdc_dashboard.png') }}" class="img-fluid">
     </a>
     <div class="list-group-item">
-      {% if gbal["cur_username"] != "" %}
-      Welcome, <b>{{ gbal["cur_username"] }}</b>! [<a href="/logout">logout</a>]
+      {% if gbal["cur_userdata"] != None %}
+      Welcome, <b>{{ gbal["cur_userdata"]["username"] }}</b>! [<a href="/logout">logout</a>]
       {% else %}
       Welcome, <b>guest</b>! Please [<a href="/login">login</a>] to access the full database features
       {% endif %}
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="alert alert-primary" role="alert">
+          {% for message in messages %}
+            {{ message }}<br />
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endwith %}
     </div>
   </div>
   <div class="list-group panel">
