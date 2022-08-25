@@ -20,12 +20,12 @@ def check_logged_in():
                 # update last_login and num_login
                 last_login = datetime.strptime(cur_userdata["last_login"], "%Y-%m-%d %H:%M:%S")
                 cur_datetime = datetime.now()
-                if (cur_datetime - last_login).days > 0 or cur_userdata["num_login"] == 0:
+                if (cur_datetime.date() - last_login.date()).days > 0 or cur_userdata["num_login"] == 0:
                     cur_userdata["num_login"] += 1
-                cur_userdata["last_login"] = cur_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                con.cursor().execute((
-                    "update users set num_login=?, last_login=? where id=?"
-                ), (cur_userdata["num_login"], cur_userdata["last_login"], cur_userdata["id"]))
+                    cur_userdata["last_login"] = cur_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                    con.cursor().execute((
+                        "update users set num_login=?, last_login=? where id=?"
+                    ), (cur_userdata["num_login"], cur_userdata["last_login"], cur_userdata["id"]))
 
                 # save in session
                 session["userdata"] = cur_userdata
