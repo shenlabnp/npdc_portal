@@ -1,0 +1,113 @@
+BEGIN TRANSACTION;
+DROP TABLE IF EXISTS "logs";
+CREATE TABLE IF NOT EXISTS "logs" (
+ "time" TEXT NOT NULL,
+ "message" TEXT NOT NULL
+);
+
+DROP TABLE IF EXISTS "strains";
+CREATE TABLE IF NOT EXISTS "strains" (
+ "npdc_id" INTEGER PRIMARY KEY,
+ "collection_date" TEXT,
+ "collection_country" TEXT,
+ "collection_region" TEXT,
+ "empirical_category" TEXT,
+ "empirical_genus" TEXT,
+ "empirical_species" TEXT,
+ "comment" TEXT
+);
+
+DROP TABLE IF EXISTS "genomes";
+CREATE TABLE "genomes" (
+ "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+ "npdc_id" INTEGER NOT NULL UNIQUE,
+ "genome_num_contigs" INTEGER NOT NULL,
+ "genome_size_nt" INTEGER NOT NULL,
+ "genome_n50" REAL NOT NULL,
+ "genome_qc_completeness" REAL NOT NULL,
+ "genome_qc_contamination" REAL NOT NULL,
+ "genome_qc_heterogenity" REAL NOT NULL,
+ "genome_qc_taxon" TEXT NOT NULL,
+ "genome_gtdb_phylum" TEXT NOT NULL,
+ "genome_gtdb_genus" TEXT NOT NULL,
+ "genome_gtdb_species" TEXT NOT NULL,
+ "genome_mash_species" TEXT NOT NULL,
+ "is_cleaned_up" INTEGER NOT NULL,
+ "orig_identifier" TEXT NOT NULL,
+ FOREIGN KEY("npdc_id") REFERENCES strains("npdc_id")
+);
+
+DROP TABLE IF EXISTS "bgcs";
+CREATE TABLE "bgcs" (
+ "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+ "genome_id" INTEGER NOT NULL,
+ "contig_num" INTEGER NOT NULL,
+ "fragmented" INTEGER NOT NULL,
+ "bgc_size_nt" INTEGER NOT NULL, 
+ "orig_identifier" TEXT NOT NULL,
+ FOREIGN KEY("genome_id") REFERENCES genomes("id")
+);
+
+CREATE TABLE IF NOT EXISTS "bgc_class" (
+ "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+ "name" TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS "bgc_subclass" (
+ "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+ "class_id" INTEGER NOT NULL,
+ "name"  TEXT NOT NULL,
+ FOREIGN KEY("class_id") REFERENCES bgc_class("id")
+);
+
+CREATE TABLE IF NOT EXISTS "bgc_class_map" (
+ bgc_id INTEGER NOT NULL,
+ subclass_id INTEGER NOT NULL,
+ FOREIGN KEY("bgc_id") REFERENCES bgc("id"),
+ FOREIGN KEY("subclass_id") REFERENCES bgc_subclass("id")
+);
+
+CREATE TABLE IF NOT EXISTS "cds" (
+ "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+ "genome_id" INTEGER NOT NULL,
+ "contig_num" INTEGER NOT NULL,
+ "nt_start" INTEGER NOT NULL,
+ "nt_end" INTEGER NOT NULL,
+ "strand" INTEGER NOT NULL,
+ "locus_tag TEXT,
+ "protein_id" TEXT,
+ "product" TEXT,
+ "aa_seq" TEXT NOT NULL,
+ FOREIGN KEY("genome_id") REFERENCES genomes("id")
+);
+
+CREATE TABLE IF NOT EXISTS cds_bgc_map (
+ cds_id INTEGER NOT NULL UNIQUE,
+ bgc_id INTEGER NOT NULL,
+ FOREIGN KEY("cds_id") REFERENCES cds("id"),
+ FOREIGN KEY("bgc_id") REFERENCES bgcs("id")
+);
+
+DROP TABLE IF EXISTS "np_type";
+CREATE TABLE IF NOT EXISTS "np_type" (
+ "code" TEXT PRIMARY KEY,
+ "name" TEXT NOT NULL
+);
+INSERT OR IGNORE INTO np_type VALUES("E", "Extracts");
+INSERT OR IGNORE INTO np_type VALUES("F", "Fractions");
+INSERT OR IGNORE INTO np_type VALUES("C", "Compounds");
+
+DROP TABLE IF EXISTS "nps";
+CREATE TABLE IF NOT EXISTS "nps" (
+ "npdc_id" INTEGER NOT NULL,
+ "type" TEXT NOT NULL,
+ "media" TEXT,
+ "date" TEXT,
+ "volume_ul" REAL,
+ "concentration_mM" REAL,
+ "comment" TEXT,
+ FOREIGN KEY("npdc_id") REFERENCES strains("npdc_id"),
+ FOREIGN KEY("type") REFERENCES np_type("code")
+);
+
+COMMIT;
