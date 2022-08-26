@@ -4,3 +4,4 @@ gunicorn
 werkzeug
 pandas
 flask-mail
+tqdm
