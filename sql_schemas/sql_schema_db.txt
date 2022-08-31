@@ -16,6 +16,11 @@ CREATE TABLE IF NOT EXISTS "strains" (
  "empirical_species" TEXT,
  "comment" TEXT
 );
+CREATE INDEX IF NOT EXISTS strains_collection_date ON strains(collection_date);
+CREATE INDEX IF NOT EXISTS strains_collection_country ON strains(collection_country);
+CREATE INDEX IF NOT EXISTS strains_collection_region ON strains(collection_region);
+CREATE INDEX IF NOT EXISTS strains_empirical_category ON strains(empirical_genus);
+CREATE INDEX IF NOT EXISTS strains_empirical_genus ON strains(empirical_species);
 
 DROP TABLE IF EXISTS "genomes";
 CREATE TABLE "genomes" (
@@ -36,36 +41,49 @@ CREATE TABLE "genomes" (
  "orig_identifier" TEXT NOT NULL,
  FOREIGN KEY("npdc_id") REFERENCES strains("npdc_id")
 );
+CREATE INDEX IF NOT EXISTS genomes_genome_num_contigs ON genomes(genome_num_contigs);
+CREATE INDEX IF NOT EXISTS genomes_genome_size_nt ON genomes(genome_size_nt);
+CREATE INDEX IF NOT EXISTS genomes_genome_n50 ON genomes(genome_n50);
+CREATE INDEX IF NOT EXISTS genomes_genome_qc_completeness ON genomes(genome_qc_completeness);
+CREATE INDEX IF NOT EXISTS genomes_genome_qc_contamination ON genomes(genome_qc_contamination);
+CREATE INDEX IF NOT EXISTS genomes_genome_qc_heterogenity ON genomes(genome_qc_heterogenity);
+CREATE INDEX IF NOT EXISTS genomes_genome_qc_taxon ON genomes(genome_qc_taxon);
+CREATE INDEX IF NOT EXISTS genomes_genome_gtdb_phylum ON genomes(genome_gtdb_phylum);
+CREATE INDEX IF NOT EXISTS genomes_genome_gtdb_genus ON genomes(genome_gtdb_genus);
+CREATE INDEX IF NOT EXISTS genomes_genome_gtdb_species ON genomes(genome_gtdb_species);
+CREATE INDEX IF NOT EXISTS genomes_genome_mash_species ON genomes(genome_mash_species);
+CREATE INDEX IF NOT EXISTS genomes_is_cleaned_up ON genomes(is_cleaned_up);
 
 DROP TABLE IF EXISTS "bgcs";
 CREATE TABLE "bgcs" (
  "id" INTEGER PRIMARY KEY AUTOINCREMENT,
  "genome_id" INTEGER NOT NULL,
  "contig_num" INTEGER NOT NULL,
+ "nt_start" INTEGER NOT NULL,
+ "nt_end" INTEGER NOT NULL,
  "fragmented" INTEGER NOT NULL,
- "bgc_size_nt" INTEGER NOT NULL, 
+ "gcf" TEXT,
  "orig_identifier" TEXT NOT NULL,
  FOREIGN KEY("genome_id") REFERENCES genomes("id")
 );
+CREATE INDEX IF NOT EXISTS bgcs_genome_id ON bgcs(genome_id);
+CREATE INDEX IF NOT EXISTS bgcs_contig_num ON bgcs(contig_num);
+CREATE INDEX IF NOT EXISTS bgcs_fragmented ON bgcs(fragmented);
+CREATE INDEX IF NOT EXISTS bgcs_gcf ON bgcs(gcf);
 
 CREATE TABLE IF NOT EXISTS "bgc_class" (
  "id" INTEGER PRIMARY KEY AUTOINCREMENT,
  "name" TEXT NOT NULL UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS "bgc_subclass" (
- "id" INTEGER PRIMARY KEY AUTOINCREMENT,
- "class_id" INTEGER NOT NULL,
- "name"  TEXT NOT NULL,
- FOREIGN KEY("class_id") REFERENCES bgc_class("id")
-);
-
 CREATE TABLE IF NOT EXISTS "bgc_class_map" (
  bgc_id INTEGER NOT NULL,
- subclass_id INTEGER NOT NULL,
+ class_id INTEGER NOT NULL,
  FOREIGN KEY("bgc_id") REFERENCES bgc("id"),
- FOREIGN KEY("subclass_id") REFERENCES bgc_subclass("id")
+ FOREIGN KEY("class_id") REFERENCES bgc_class("id")
 );
+CREATE INDEX IF NOT EXISTS bgc_class_map_bgc_id ON bgc_class_map(bgc_id);
+CREATE INDEX IF NOT EXISTS bgc_class_map_class_id ON bgc_class_map(class_id);
 
 CREATE TABLE IF NOT EXISTS "cds" (
  "id" INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -74,12 +92,12 @@ CREATE TABLE IF NOT EXISTS "cds" (
  "nt_start" INTEGER NOT NULL,
  "nt_end" INTEGER NOT NULL,
  "strand" INTEGER NOT NULL,
- "locus_tag TEXT,
- "protein_id" TEXT,
- "product" TEXT,
- "aa_seq" TEXT NOT NULL,
+ "locus_tag" TEXT,
+ "annotation" TEXT,
  FOREIGN KEY("genome_id") REFERENCES genomes("id")
 );
+CREATE INDEX IF NOT EXISTS cds_genome_id ON cds(genome_id);
+CREATE INDEX IF NOT EXISTS cds_contig_num ON cds(contig_num);
 
 CREATE TABLE IF NOT EXISTS cds_bgc_map (
  cds_id INTEGER NOT NULL UNIQUE,
@@ -87,6 +105,7 @@ CREATE TABLE IF NOT EXISTS cds_bgc_map (
  FOREIGN KEY("cds_id") REFERENCES cds("id"),
  FOREIGN KEY("bgc_id") REFERENCES bgcs("id")
 );
+CREATE INDEX IF NOT EXISTS cds_bgc_map_bgc_id ON cds_bgc_map(bgc_id);
 
 DROP TABLE IF EXISTS "np_type";
 CREATE TABLE IF NOT EXISTS "np_type" (
@@ -106,8 +125,15 @@ CREATE TABLE IF NOT EXISTS "nps" (
  "volume_ul" REAL,
  "concentration_mM" REAL,
  "comment" TEXT,
+ "orig_identifier" TEXT NOT NULL,
  FOREIGN KEY("npdc_id") REFERENCES strains("npdc_id"),
  FOREIGN KEY("type") REFERENCES np_type("code")
 );
+CREATE INDEX IF NOT EXISTS nps_npdc_id ON nps(npdc_id);
+CREATE INDEX IF NOT EXISTS nps_type ON nps(type);
+CREATE INDEX IF NOT EXISTS nps_media ON nps(media);
+CREATE INDEX IF NOT EXISTS nps_date ON nps(date);
+CREATE INDEX IF NOT EXISTS nps_volume_ul ON nps(volume_ul);
+CREATE INDEX IF NOT EXISTS nps_concentration_mM ON nps(concentration_mM);
 
 COMMIT;
