@@ -5,17 +5,20 @@ from subprocess import run, DEVNULL
 from shutil import copytree
 from tempfile import TemporaryDirectory
 from sys import exit, argv
-from sqlite3 import connect as db_open
+from sqlite3 import connect
 from time import sleep
 from datetime import datetime
 from multiprocessing import cpu_count
+import pandas as pd
+import numpy as np
+import subprocess
 
 
 def fetch_pending_jobs(jobs_db):
-    with db_open(jobs_db) as con:
+    with connect(jobs_db) as con:
         cur = con.cursor()
         return [row[0] for row in cur.execute((
-            "select name"
+            "select id"
             " from jobs"
             " where status=0"
             " order by submitted asc"
@@ -23,127 +26,84 @@ def fetch_pending_jobs(jobs_db):
 
 
 def deploy_jobs(pending, jobs_db, instance_folder, num_threads):
-    inputs_folder = path.join(instance_folder, "query_inputs")
-    for name in pending:
-        # update status to "DOWNLOADING"
-        with db_open(jobs_db) as con:
+    for job_id in pending:
+        print("PROCESSING: job#{}".format(job_id))
+        # update status to "PROCESSING"
+        with connect(jobs_db) as con:
             cur = con.cursor()
             cur.execute((
                 "update jobs"
                 " set status=?, started=?"
-                " where name like ?"
-            ), (1, datetime.now(), name))
+                " where id=?"
+            ), (1, datetime.now(), job_id))
             con.commit()
 
-        # download antiSMASH result
-        query_input = path.join(
-            inputs_folder,
-            name
-        )
-        print("downloading {}...".format(query_input))
         with TemporaryDirectory() as temp_dir:
-            if name.startswith("bacteria-"):
-                as_type = "antismash"
-            elif name.startswith("fungi-"):
-                as_type = "fungismash"
-            else:
-                # update status to "FAILED"
-                with db_open(jobs_db) as con:
-                    cur = con.cursor()
-                    cur.execute((
-                        "update jobs"
-                        " set status=?, finished=?,"
-                        " comment=?"
-                        " where name like ?"
-                    ), (-1, datetime.now(), "unknown_as_type", name))
-                    con.commit()
-                print("unknown job id!")
-                return 1
-            antismash_url = (
-                "https://{}.secondarymetabolites.org/upload/{}/"
-            ).format(as_type, name)
-            commands = [
-                "wget",
-                "-nd",
-                "-r",
-                "-A",
-                "*.region*.gbk",
-                antismash_url
-            ]
-            is_failed = True
-            if run(commands, cwd=temp_dir).returncode == 0:  # success
-                # check if file exists at all
-                file_exists = False
-                for fname in listdir(temp_dir):
-                    print(fname)
-                    if fname.endswith(".gbk"):
-                        file_exists = True
-                        break
-                if file_exists and not path.exists(query_input):
-                    copytree(temp_dir, query_input)
-                    is_failed = False
+            # create fasta input
+            fasta_input_path = path.join(temp_dir, "input.fasta")
+            with open(fasta_input_path, "w") as oo:
+                for idx, row in pd.read_sql((
+                    "select id,aa_seq from query_proteins"
+                    " where jobid=?"
+                    ),
+                con=connect(jobs_db),
+                params=(job_id,)
+                ).iterrows():
+                    oo.write(">{}\n{}\n".format(
+                        row["id"],
+                        row["aa_seq"]
+                        ))
 
-            if is_failed:  # failed
-                # update status to "FAILED"
-                with db_open(jobs_db) as con:
-                    cur = con.cursor()
-                    cur.execute((
-                        "update jobs"
-                        " set status=?, finished=?,"
-                        " comment=?"
-                        " where name like ?"
-                    ), (-1, datetime.now(), "download_failed", name))
-                    con.commit()
-                print("download failed!")
-                return 1
-            else:
-                # update status to "PROCESSING"
-                with db_open(jobs_db) as con:
-                    cur = con.cursor()
-                    cur.execute((
-                        "update jobs"
-                        " set status=?"
-                        " where name like ?"
-                    ), (2, name))
-                    con.commit()
-                is_failed = False
+            # run DIAMOND BLASTP
+            blast_columns = "qseqid sseqid qstart qend sstart send evalue bitscore pident"
+            diamond_blast_db_path = path.join(
+                path.dirname(__file__),
+                "..",
+                "instance",
+                "db_data",
+                "npdc_portal.dmnd"
+            )
+            blast_output_path = path.join(temp_dir, "output.txt")
+            subprocess.run(
+                "diamond blastp -d {} -q {} -e 1e-10 -o {} -f 6 {} --query-cover 80 --id 40 -k 999999 -p {} -b20 -c1".format(
+                    diamond_blast_db_path,
+                    fasta_input_path,
+                    blast_output_path,
+                    blast_columns,
+                    num_threads
+                ), shell=True
+            )
 
-        # run BiG-SLICE query
-        commands = [
-            "bigslice",
-            "-t",
-            str(num_threads),
-            "--query",
-            query_input,
-            "--query_name",
-            name,
-            instance_folder
-        ]
-        print("processing {}...".format(query_input))
-        # if run(commands, stdout=DEVNULL) == 0:  # success
-        if run(commands).returncode == 0:  # success
+            # process BLAST result
+            blast_result = pd.read_csv(
+                blast_output_path, sep="\t", header=None
+            )
+            blast_result.columns = blast_columns.split(" ")
+            blast_result = blast_result.sort_values(by=["qseqid", "bitscore"], ascending=False)
+            pd.DataFrame({
+                "query_prot_id": blast_result["qseqid"],
+                "target_cds_id": blast_result["sseqid"],
+                "query_start": blast_result["qstart"],
+                "query_end": blast_result["qend"],
+                "target_start": blast_result["sstart"],
+                "target_end": blast_result["send"],
+                "evalue": blast_result["evalue"],
+                "bitscore": blast_result["bitscore"],
+                "pct_identity": blast_result["pident"],
+            }).to_sql("blast_hits", connect(jobs_db), index=False, if_exists="append")
+
             # update status to "PROCESSED"
-            with db_open(jobs_db) as con:
+            with connect(jobs_db) as con:
                 cur = con.cursor()
                 cur.execute((
                     "update jobs"
                     " set status=?, finished=?"
-                    " where name like ?"
-                ), (3, datetime.now(), name))
+                    " where id=?"
+                ), (2, datetime.now(), job_id))
                 con.commit()
-        else:  # failed
-            # update status to "FAILED"
-            with db_open(jobs_db) as con:
-                cur = con.cursor()
-                cur.execute((
-                    "update jobs"
-                    " set status=?, finished=?,"
-                    " comment=?"
-                    " where name like ?"
-                ), (-1, datetime.now(), "query_failed", name))
-                con.commit()
-            print("run failed!")
-            return 1
+
+            print("COMPLETED: job#{}".format(job_id))
+
     return 0
 
 
@@ -159,15 +119,17 @@ def main():
         "..",
         "instance"
     )
-    jobs_db = path.join(instance_folder, "bigfam_jobs.db")
+    jobs_db = path.join(instance_folder, "queries.db")
 
     if not path.exists(jobs_db):
         print("creating jobs db ({})...".format(jobs_db))
-        with db_open(jobs_db) as con:
+        with connect(jobs_db) as con:
             cur = con.cursor()
             schema_sql = path.join(
                 path.dirname(__file__),
-                "jobs_schema.sql"
+                "..",
+                "sql_schemas",
+                "sql_schema_jobs.txt",
             )
             with open(schema_sql, "r") as sql_script:
                 cur.executescript(sql_script.read())

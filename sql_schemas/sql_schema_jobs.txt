@@ -1,26 +1,50 @@
 CREATE TABLE IF NOT EXISTS status_enum (
-	code INTEGER UNIQUE NOT NULL,
-	name VARCHAR(30) UNIQUE NOT NULL
+ code INTEGER UNIQUE NOT NULL,
+ name VARCHAR(30) UNIQUE NOT NULL
 );
 INSERT OR IGNORE INTO status_enum VALUES(-1, 'FAILED');
 INSERT OR IGNORE INTO status_enum VALUES(0, 'PENDING');
-INSERT OR IGNORE INTO status_enum VALUES(1, 'DOWNLOADING');
-INSERT OR IGNORE INTO status_enum VALUES(2, 'PROCESSING');
-INSERT OR IGNORE INTO status_enum VALUES(3, 'PROCESSED');
-INSERT OR IGNORE INTO status_enum VALUES(4, 'DELETED');
+INSERT OR IGNORE INTO status_enum VALUES(1, 'PROCESSING');
+INSERT OR IGNORE INTO status_enum VALUES(2, 'PROCESSED');
+INSERT OR IGNORE INTO status_enum VALUES(3, 'DELETED');
 
 CREATE TABLE IF NOT EXISTS jobs (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	userid INTEGER NOT NULL,
-	submitted TEXT NOT NULL,
-	started TEXT,
-	finished TEXT,
-	deleted TEXT,
-	status INTEGER NOT NULL,
-	FOREIGN KEY(status) REFERENCES status_enum(code)
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ userid INTEGER NOT NULL,
+ submitted TEXT NOT NULL,
+ started TEXT,
+ finished TEXT,
+ deleted TEXT,
+ status INTEGER NOT NULL,
+ FOREIGN KEY(status) REFERENCES status_enum(code)
 );
 CREATE INDEX IF NOT EXISTS jobs_started ON jobs(started);
 CREATE INDEX IF NOT EXISTS jobs_finished ON jobs(finished);
 CREATE INDEX IF NOT EXISTS jobs_deleted ON jobs(deleted);
 CREATE INDEX IF NOT EXISTS jobs_userid ON jobs(userid);
 CREATE INDEX IF NOT EXISTS jobs_status ON jobs(status);
+
+CREATE TABLE IF NOT EXISTS query_proteins (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ name TEXT NOT NULL,
+ jobid INTEGER NOT NULL,
+ aa_seq TEXT NOT NULL,
+ FOREIGN KEY(jobid) REFERENCES jobs(id)
+);
+
+CREATE TABLE IF NOT EXISTS blast_hits (
+ query_prot_id INTEGER NOT NULL,
+ target_cds_id INTEGER NOT NULL,
+ query_start INTEGER NOT NULL,
+ query_end INTEGER NOT NULL,
+ target_start INTEGER NOT NULL,
+ target_end INTEGER NOT NULL,
+ evalue REAL NOT NULL,
+ bitscore INTEGER NOT NULL,
+ pct_identity REAL NOT NULL,
+ FOREIGN KEY(query_prot_id) REFERENCES query_proteins(id)
+);
+CREATE INDEX IF NOT EXISTS hits_target_cds ON blast_hits(target_cds_id);
+CREATE INDEX IF NOT EXISTS hits_evalue ON blast_hits(evalue);
+CREATE INDEX IF NOT EXISTS hits_bitscore ON blast_hits(bitscore);
+CREATE INDEX IF NOT EXISTS hits_pct_identity ON blast_hits(pct_identity);
