@@ -9,18 +9,12 @@
 
 #page_title {
 	font-weight:  bold;
-	font-style: italic;
 	font-size: xx-large;
 }
 
 #page_subtitle {
 	font-weight: normal;
-	font-style: italic;
 	font-size: large;
-}
-
-.popover-taxonomy {
-	width: 300px;
 }
 
 /* overriding bootstrap css */

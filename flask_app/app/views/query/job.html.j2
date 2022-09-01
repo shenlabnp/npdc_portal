@@ -1,0 +1,15 @@
+{% if auto_refresh %}
+<meta http-equiv="Refresh" content="10" />
+{% endif %}
+
+{% extends "layout.html.j2" %}
+{% block content %}
+  {% include "basic_header.html.j2" %}
+
+  {% if auto_refresh %}
+  <div class="text-warning font-italic">this page will refresh every 10 seconds</div>
+  {% endif %}
+
+  {{ job_data }}
+
+{% endblock %}

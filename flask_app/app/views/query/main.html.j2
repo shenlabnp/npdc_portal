@@ -1,0 +1,40 @@
+{% extends "layout.html.j2" %}
+{% block content %}
+  {% include "basic_header.html.j2" %}
+
+  <div class="row mt-2">
+    <div class="col">
+      <div class="h3 mb-2">Submit a new job</div>
+    </div>
+  </div>
+
+  <div class="row">
+    <form method="post">
+      <fieldset>
+        <div class="col-6">
+          <small class="text-secondary">
+            BLAST query will be ran using DIAMOND-BLASTP with e-value, %identity, and query coverage cutoffs of 1e-10, 40%, and 80%, respectively.
+          </small>
+        </div>
+        <div class="col-6">
+          <div class="form-group">
+            <label for="protsequences">Query proteins multifasta (max. 5)</label>
+            <textarea class="form-control" id="protsequences" name="protsequences" rows="7" spellcheck="false"></textarea>
+          </div>
+        </div>
+        <div class="col-6 text-end">
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+      </fieldset>
+    </form>
+  </div>
+
+
+  <div class="row mt-2">
+    <div class="col">
+      <div class="h3 mb-2">Previously-submitted jobs</div>
+    </div>
+  </div>
+
+
+{% endblock %}

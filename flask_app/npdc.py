@@ -14,7 +14,7 @@ from app.config import conf
 
 # import controllers
 from app.controllers import root, login
-from app.controllers import home, strains, genomes, feedback, about
+from app.controllers import home, strains, genomes, feedback, about, query
 
 def portal():
 
@@ -49,6 +49,7 @@ def portal():
     app.register_blueprint(genomes.blueprint)
     app.register_blueprint(feedback.blueprint)
     app.register_blueprint(about.blueprint)
+    app.register_blueprint(query.blueprint)
 
     # app-specific contexts #
     @app.context_processor
@@ -61,10 +62,16 @@ def portal():
         # get last db update stats
         with sqlite3.connect(conf["db_path"]) as con:
             cur = con.cursor()
-            last_updated, = cur.execute("select logs.time from logs where message like 'START' limit 1").fetchone()
-            last_updated = datetime.datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S")
+            last_db_updated, = cur.execute("select logs.time from logs where message like 'START' limit 1").fetchone()
+            last_db_updated = datetime.datetime.strptime(last_db_updated, "%Y-%m-%d %H:%M:%S")
             now_date = datetime.datetime.now()
-            last_updated_days = (now_date - last_updated).days
+            last_db_updated_days = (now_date - last_db_updated).days
+
+        # get last query db update stats
+        with sqlite3.connect(conf["query_db_path"]) as con:
+            cur = con.cursor()
+            num_jobs_pending = cur.execute("select count(id) from jobs where status in (0, 1)").fetchone()[0]
+            num_jobs_processed = cur.execute("select count(id) from jobs where status in (2, 3)").fetchone()[0]
 
         # for navigations
         nav_items = []
@@ -76,7 +83,7 @@ def portal():
         nav_items.append(("Genomes database", [
             ("Browse genomes", "/genomes/view"),
             ("Browse BGCs", "/dummy"),
-            ("BLAST query", "/dummy")
+            ("BLAST query", "/query")
         ]))
         nav_items.append(("Natural Products library", [
             ("Browse NPs", "/dummy"),
@@ -88,13 +95,15 @@ def portal():
         return dict(
             gbal=gbal,
             nav_items=nav_items,
-            last_updated=last_updated.strftime("%x"),
-            last_updated_days=last_updated_days,
-            last_updated_days_wording="{} days ago".format(last_updated_days) if last_updated_days > 1 else (
-                "yesterday" if last_updated_days == 1 else (
-                    "today" if last_updated_days == 0 else "???"
+            last_db_updated=last_db_updated.strftime("%x"),
+            last_db_updated_days=last_db_updated_days,
+            last_db_updated_days_wording="{} days ago".format(last_db_updated_days) if last_db_updated_days > 1 else (
+                "yesterday" if last_db_updated_days == 1 else (
+                    "today" if last_db_updated_days == 0 else "???"
                 )
-            )
+            ),
+            num_jobs_pending=num_jobs_pending,
+            num_jobs_processed=num_jobs_processed
         )
 
     return app
