@@ -8,7 +8,7 @@ conf = {
     )
 }
 
-conf["db_path"] = path.join(conf["instance_folder"], "npdc_database.db")
+conf["db_path"] = path.join(conf["instance_folder"], "db_data/npdc_portal.db")
 conf["user_db_path"] = path.join(conf["instance_folder"], "accounts.db")
 conf["session_key_path"] = path.join(conf["instance_folder"], "session_key.txt")
 conf["email_config_path"] = path.join(conf["instance_folder"], "email_config.json")

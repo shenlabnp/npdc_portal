@@ -1,8 +1,10 @@
 <div id="MainMenu">
-  <div class="text-center mb-4">
+  <div class="text-center mb-4 mt-4">
     <a href="/">
-      <img src="{{ url_for('static', filename='img/logo_npdc_dashboard.png') }}" class="img-fluid">
+      <img src="{{ url_for('static', filename='img/logo.png') }}" class="img-fluid">
     </a>
+  </div>
+  <div class="text-center mb-2 list-group">
     <div class="list-group-item">
       {% if gbal["cur_userdata"] != None %}
       Welcome, <b>{{ gbal["cur_userdata"]["username"] }}</b>! [<a href="/logout">logout</a>]
