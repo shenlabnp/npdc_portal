@@ -18,7 +18,7 @@
         </div>
         <div class="col-6">
           <div class="form-group">
-            <label for="protsequences">Query proteins multifasta (max. 5)</label>
+            <label for="protsequences">Query proteins multifasta (max. 5 sequences with >=50 AAs each)</label>
             <textarea class="form-control" id="protsequences" name="protsequences" rows="7" spellcheck="false"></textarea>
           </div>
         </div>
@@ -88,6 +88,17 @@
               return html_text;
             }
           },
+          {
+            "targets": 1,
+            render: function(data, type, row, meta) {
+              let html_text = "<ul class=\"list-unstyled mb-0\">";
+              data.forEach((prot_id) => {
+                html_text += "<li>" + prot_id + "</li>";
+              });
+              html_text += "</ul>";
+              return html_text;
+            }
+          }
         ]
       });
     });

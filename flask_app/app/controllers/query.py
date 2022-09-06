@@ -4,6 +4,7 @@ import sqlite3
 from flask import render_template, request, session, redirect, url_for, flash
 import pandas as pd
 from datetime import datetime
+import re
 
 # import global config
 from ..config import conf
@@ -28,25 +29,26 @@ def page_main():
         input_validated, input_proteins = parse_input_prots(request.form["protsequences"])
 
         if not input_validated:
-            flash("Failed to submit query: please check your input sequences", "alert-danger")
+            flash("Failed to submit query: '{}'. please check your input sequences".format(
+                input_proteins
+            ), "alert-danger")
             return redirect(url_for("query.page_main"))
 
         # check if user have a pending submitted job
-
-        # check if user have recently submitted job
+        user_jobs_pending_count = pd.read_sql((
+            "select count(jobs.id) from jobs,status_enum"
+            " where userid=? and jobs.status=status_enum.code"
+            " and status_enum.code in ('PENDING', 'PROCESSING')"
+        ), sqlite3.connect(conf["query_db_path"]), params=(session["userid"],)).iloc[0, 0]
+        if user_jobs_pending_count > 0:
+            flash("Failed to submit query: you still have a submission in progress", "alert-danger")
+            return redirect(url_for("query.page_main"))
 
         # submit the new job
         job_id = submit_new_job(session["userid"], input_proteins)
 
         # redirect to the job's page
         return redirect(url_for("query.page_job", job_id=job_id))
-
-
-    # get list of jobs # move this to json
-    user_jobs = pd.read_sql((
-        "SELECT jobs.*,status_enum.name as status_desc FROM jobs,status_enum"
-        " WHERE userid=? and jobs.status=status_enum.code"
-    ), sqlite3.connect(conf["query_db_path"]), params=(session["userid"],)).sort_values(by="id", ascending=False)
         
     # page title
     page_title = "BLAST Query"
@@ -56,8 +58,7 @@ def page_main():
     return render_template(
         "query/main.html.j2",
         page_title=page_title,
-        page_subtitle=page_subtitle,
-        user_jobs=user_jobs.to_dict("records")
+        page_subtitle=page_subtitle
     )
 
 @blueprint.route("/gdb/query/result/<int:job_id>")
@@ -97,15 +98,46 @@ def page_job(job_id):
         auto_refresh=(job_data["status"] < 2),
         job_data=job_data,
         results=blast_hits.to_dict("records")
-)
-    return str(job_id)
+    )
 
 
 def parse_input_prots(prot_seq):
-    results = {
-        "prot_1": "MRHRLKMGVVANDVTVTDPDRGLLPASGSAALHRYAAYHVTGGLDLDALRTAWRAVAGDGAPVEPAAVGQTAGEGFGDEELCARWAARPFAEGDAPARLHLARRGPREHLLLLAASHSGAWEGPSGALPAALSDAYRAVVTGGRPSAPPLRPAPGTRGGEEPSATAAGLVLPADRNRPHLPPHAGGAVAFTWSPDLGFRTARLAEAAGVTPAAVVLAGFRALVHRYAGQDDGTLSTAFRELLRTVPDPASKPCRIEGADAVFVHRERAALRIPGAEVRQLSVHNGTAAADLALVLQDTAPCVAGFLEYRAALFEPASARRLLDQLATLLAAATADPDAPVGGLPLDDERHRDRALRASDRRAPRGHVTPPVHVSVRGHAGQDGTAVSFGGVSTGYAELTAHAARVASALTAAGAGPGSPVAVRMRPGAHRIAVLLGVLEAGAHLAWFAPDGGGERHRSMLRDLRPSCMVLDGGPQEDPLALWYAGEPGARLLDASQVLGSPSAAPGADAAAGARPDPEDLAYVAFTSGSTGRPKGIVQSHAALAQFAGWMGEQFAMGPGARVAQWVSPEHDPALAEVFATLVAGGTLCPVPERVRVNPDKLVPWLVQEGITHIQTVPSFARDLLGVITGSGPDRRPDALSHLLLMGEALPGELVDGLRAALPRTRLINLYGPTETIAATWHEITGPVAGQVPIGRPLPGRQVLVVDEHDRPSPAGVTGELVVRSPYVTPGYLAVEGGPDHGALFAPVAGFAPDGDRWYRTGDLARVRFDGALEFRGRSDFQVKLFGNRVELTEIEAALNRDPSVLECAVLPHVNGQGLVTRLAVYVVPRGDGEGDVNADVRAWRSHLRGQFGPLTLPAVFTRLSSRLPRNAAGKVDRSQLTR",
-        "prot_2": "MQAWFKRTSGVPGDRRGKWLVLAAWLIIAMALGPLAGKLADVQDSSANAFLPRSSESAKLNKELEKFRADELMPAVVVYSADGSLPAEGRAKAEKDIAAFQELAAEGEKVEAPLESKDGQALMVVVPLISDADIVATTKKVRDIADANAPPGVAVEVGGPAGSTTDAAGAFESLDSMLMMVTGLVVAVLLLITYRSPILWLLPLLSVGFASVLTQVGTYMLAKYAGLPVDPQSSGVLMVLVFGVGTDYALLLIARYREELRREQDRHIAMKTALRRSGPAILASAGTIAIGLVCLVLADVNSSRSMGLVGAIGVVCAFLAMVTILPALLVILGRWVFWPFVPRWTAEAAAAPEAPASHSRWERIGSVTAARPRRAWVLSLAATGLLALSSLGLDMGLTQSELLQTKPESVVAQERISAHYPSGSSDPATVVTPTADAAEVRRAAEGTEGVVSVEDGPTTPDGELTLLSVVLKDVPDSAGAKDTVDALRDNTDALVGGTTAQSLDTQRASVRDLWVTVPAVLLVVLLVLIWLLRSVAGPLIMLGTVVVSFFAALGASNLLFEHVMGHAGVDWSVPLLGFVYLVALGIDYNIFLMHRVKEEVALHGHAKGVLTGLTTTGGVITSAGVVLAATFAVIASLPLVPMAQMGVVVGLGILLDTFLVRTILLPALALDLGPRFWWPGALSKAAGGPTPVREDRTSQPVG"
-    }
+    name = ""
+    seq = ""
+    results = {}
+    for line in prot_seq.split("\n"):
+        line = line.rstrip("\r")
+        if line.startswith(">"):
+            if name != "":                
+                if name in results: # double naming
+                    return False, "duplicated protein ids"
+                if re.fullmatch(r"([ABCDEFGHIKLMNPQRSTUVWYZX\*-]+)", seq) == None:
+                    return False, "fasta protein sequence format unrecognized"
+                if len(seq) < 50: # too short of a protein
+                    return False, "AA too short (min. 50)"
+                if len(seq) > 30000: # too short of a protein
+                    return False, "AA too long (max. 30,000)"
+                results[name] = seq
+                name = ""
+            name = line[1:].split(" ")[0].replace(",", "_")
+            seq = ""
+        else:
+            if name == "": # format error
+                print("d")
+                return False, {}
+            seq += line.upper()
+
+    if name != "":
+        if name in results: # double naming
+            return False, "duplicated protein ids"
+        if re.fullmatch(r"([ABCDEFGHIKLMNPQRSTUVWYZX\*-]+)", seq) == None:
+            return False, "fasta protein sequence format unrecognized"
+        if len(seq) < 50: # too short of a protein
+            return False, "AA too short (min. 50)"
+        if len(seq) > 30000: # too short of a protein
+            return False, "AA too long (max. 30,000)"
+        results[name] = seq
+
     return True, results
 
 
@@ -149,7 +181,7 @@ def get_list():
         for idx, row in query_result.iterrows():
             result["data"].append([
                 (row["status"], row["id"]),
-                row["input_proteins"],
+                row["input_proteins"].split(","),
                 row["submitted"][:19],
                 row["finished"][:19] if row["finished"] != None else ""
             ])
