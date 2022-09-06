@@ -10,6 +10,12 @@
   <div class="text-warning font-italic">this page will refresh every 10 seconds</div>
   {% endif %}
 
-  {{ job_data }}
+  {{ job_data }}<hr />
+
+  <ul>
+    {% for row in results %}
+      <li>{{ row }}</li>
+    {% endfor %}
+  </ul>
 
 {% endblock %}

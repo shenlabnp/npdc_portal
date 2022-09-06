@@ -81,9 +81,9 @@ def portal():
             ("Ordering a strain", "/strains/order")
         ]))
         nav_items.append(("Genomes database", [
-            ("Browse genomes", "/genomes/view"),
+            ("Browse genomes", "/gdb/genomes"),
             ("Browse BGCs", "/dummy"),
-            ("BLAST query", "/query")
+            ("BLAST query", "/gdb/query")
         ]))
         nav_items.append(("Natural Products library", [
             ("Browse NPs", "/dummy"),

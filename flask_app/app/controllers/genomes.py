@@ -13,7 +13,7 @@ from flask import Blueprint
 blueprint = Blueprint('genomes', __name__)
 
 
-@blueprint.route("/genomes/view")
+@blueprint.route("/gdb/genomes/")
 def page_genomes():
 
     # check login
@@ -47,28 +47,25 @@ def get_overview():
 
         # fetch total records
         result["recordsTotal"] = cur.execute((
-            "select count(sequences.sequencing_id)"
-            " from sequences,gdnas,sequencing_samples"
-            " where annotation_status=1 and sequences.sequencing_id=sequencing_samples.sequencing_id and sequencing_samples.gdna_plate=gdnas.plate and sequencing_samples.gdna_well=gdnas.well"
-            " order by gdnas.npdc_id"
+            "select count(id)"
+            " from genomes"
+            " where 1"
         )).fetchall()[0][0]
 
         # fetch total records (filtered)
         result["recordsFiltered"] = cur.execute((
-            "select count(sequences.sequencing_id)"
-            " from sequences,gdnas,sequencing_samples"
-            " where annotation_status=1 and sequences.sequencing_id=sequencing_samples.sequencing_id and sequencing_samples.gdna_plate=gdnas.plate and sequencing_samples.gdna_well=gdnas.well"
-            " order by gdnas.npdc_id"
+            "select count(id)"
+            " from genomes"
+            " where 1"
         )).fetchall()[0][0]
 
 
         result["data"] = []
 
         query_result = pd.read_sql_query((
-            "select sequences.*,gdnas.npdc_id"
-            " from sequences,gdnas,sequencing_samples"
-            " where annotation_status=1 and sequences.sequencing_id=sequencing_samples.sequencing_id and sequencing_samples.gdna_plate=gdnas.plate and sequencing_samples.gdna_well=gdnas.well"
-            " order by gdnas.npdc_id"
+            "select *"
+            " from genomes"
+            " where 1"
             " limit {} offset {}"
         ).format(limit, offset), con)
 
