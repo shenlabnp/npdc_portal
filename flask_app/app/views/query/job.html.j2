@@ -10,12 +10,303 @@
   <div class="text-warning font-italic">this page will refresh every 10 seconds</div>
   {% endif %}
 
-  {{ job_data }}<hr />
+  <div class="row m-2">
+    <div class="col">
+      <div class="bs-component">
+        <div class="card bg-{{ 'secondary' if job_status in ['PENDING', 'PROCESSING'] else ('success text-white' if job_status in ['PROCESSED'] else 'warning text-white') }}">
+          <div class="card-header">
+            <strong>Status:</strong>
+            {{ job_status }}
+          </div>
+          <div class="card-body">
+            <div class="row card-text">
+              <div class="col-4">
+                <strong>Submitted:</strong>
+                <br />
+                {{ job_submitted }}
+              </div>
+              <div class="col-4">
+                <strong>Finished:</strong>
+                <br />
+                {{ job_finished if job_finished != "" else "n/a"}}
+              </div>
+              <div class="col-4">
+                <strong>Query proteins:</strong>
+                <br />
+                <ul>
+                {% for prot_id, prot_name in job_proteins.items() %}
+                  <li>{{ prot_name }}</li>
+                {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <ul>
-    {% for row in results %}
-      <li>{{ row }}</li>
-    {% endfor %}
-  </ul>
+  {% if job_status in ['PROCESSED'] %}
+  <div class="row m-2">
+    <div class="col">
+      <div class="bs-component">
+        <div class="accordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+              <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                <strong>Results selection</strong>
+              </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne">
+              <div class="accordion-body" id="select_result">
+                <div class="row">
+                  <div class="col-6">
+                    <div class="form-group mb-2">
+                      <div class="m-1">
+                        Show hits:
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="select_result_type" id="select_result_type_genome" value="genome" checked="">
+                        <label class="form-check-label" for="select_result_type_genome">Genomes</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="select_result_type" id="select_result_type_bgc" value="bgc">
+                        <label class="form-check-label" for="select_result_type_bgc">Biosynthetic Gene Clusters (BGCs)</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="form-group mb-2">
+                      <div class="m-1">
+                        To protein(s):
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="select_result_protein" id="select_result_protein_all" value="0" checked="">
+                        <label class="form-check-label" for="select_result_protein_all">All (will find genomes and BGCs with <strong>all of the protein hits present</strong>)</label>
+                      </div>
+                      {% for prot_id, prot_name in job_proteins.items() %}
+                        <div class="form-check">
+                        <input class="form-check-input" type="radio" name="select_result_protein" id="select_result_protein_{{ prot_id }}" value="{{ prot_id }}">
+                        <label class="form-check-label" for="select_result_protein_{{ prot_id }}">{{ prot_name }}</label>
+                      </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTwo">
+              <button class="accordion-button collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                <strong>Download</strong>
+              </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo">
+              <div class="accordion-body">
+                ...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <div class="h3 btn-secondary text-center p-2">Results</div>
+
+      <!-- by BGC -->
+      <div id="section_results_by_bgc" class="d-none section_results">
+        <div class="alert alert-primary">
+          Your query is found in <strong>1,000</strong> BGCs, forming a total of <strong>100</strong> GCFs.
+          The main biosynthetic class of the BGCs is <strong>Polyketide (50%)</strong>.
+          These BGCs were coming from <strong>1,000</strong> genomes of <strong>500</strong> different species
+          (most of the genomes, <strong>xx% </strong>, were coming from the genus <strong><i>Streptomyces</i></strong>).
+        </div>
+        <table id="table_results_by_bgc" class="table table-striped table-bordered table-hover nowrap">
+          <thead class="thead-light">
+            <tr>
+              <th>Detail</th>
+              <th>Name</th>
+              <th>Mash cluster</th>
+              <th>Assembly quality</th>
+              <th>GC content</th>
+              <th>Num. of BGCs</th>
+              <th>Known BGC hits</th>
+            </tr>
+          </thead>
+          <tbody class="tbody">
+          </tbody>
+        </table>
+      </div>
+
+      <script type="text/javascript">
+        $(document).ready(function(){
+
+          $("#table_results_by_bgc").DataTable({
+            searching: false,
+            ordering:  false,
+            serverSide: true,
+            responsive: false,
+            processing: true,
+            aLengthMenu: [[25, 50, 250], [25, 50, 250]],
+                iDisplayLength: 25,
+            ajax: {
+              url: "{{ url_for('root.page') }}api/genomes/get_overview",
+              type: "GET",
+              data: function(d) {
+                //
+              }
+            },
+            "columnDefs": [
+              { className: "text-center", targets: [0] },
+              {
+                targets: 0,
+                render: function(data, type, row, meta) {
+                  let [genome_id, npdc_id] = data
+                  return "<a href=\"{{ url_for('root.page') }}gdb/genomes/" + genome_id + "\"><button class=\"btn btn-primary\">NPDC-" + npdc_id + "</button></a>";
+                }
+              },
+              {
+                targets: 1,
+                render: function(data, type, row, meta) {
+                  return "<i>" + data + "</i>";
+                }
+              },
+              {
+                targets: 3,
+                render: function(data, type, row, meta) {
+                  let html_text = "";
+                  let badge_class = {
+                    "high": "rounded-pill bg-success",
+                    "good": "bg-success",
+                    "fair": "bg-secondary",
+                    "fragmented": "bg-warning"
+                  };
+                  html_text += "<span class='badge m-1 " + badge_class[data["grade"]] + "'>" + data["grade"] + "</span>";
+                  if (data["cleaned"]) {
+                    html_text += "<span class='badge rounded-pill bg-info m-1'>" + "cleaned-up" + "</span>";
+                  }
+                  return html_text;
+                }
+              },
+              {
+                targets: 6,
+                render: function(data, type, row, meta) {
+                  return data.length;
+                }
+              }
+            ]
+          });
+        });
+      </script>
+
+      <!-- by Genomes -->
+      <div id="section_results_by_genome" class="d-none section_results">
+        <div class="alert alert-primary">
+          Your query is found in <strong>1,000</strong> genomes of <strong>500</strong> different species.
+          Most of the genomes, <strong>xx% </strong>, were coming from the genus <strong><i>Streptomyces</i></strong>.
+        </div>
+        <table id="table_results_by_genome" class="table table-striped table-bordered table-hover nowrap">
+          <thead class="thead-light">
+            <tr>
+              <th>Detail</th>
+              <th>Name</th>
+              <th>Mash cluster</th>
+              <th>Assembly quality</th>
+              <th>GC content</th>
+              <th>Num. of BGCs</th>
+              <th>Known BGC hits</th>
+            </tr>
+          </thead>
+          <tbody class="tbody">
+          </tbody>
+        </table>
+      </div>
+
+      <script type="text/javascript">
+        $(document).ready(function(){
+
+          $("#table_results_by_genome").DataTable({
+            searching: false,
+            ordering:  false,
+            serverSide: true,
+            responsive: false,
+            processing: true,
+            aLengthMenu: [[25, 50, 250], [25, 50, 250]],
+                iDisplayLength: 25,
+            ajax: {
+              url: "{{ url_for('root.page') }}api/genomes/get_overview",
+              type: "GET",
+              data: function(d) {
+                //
+              }
+            },
+            "columnDefs": [
+              { className: "text-center", targets: [0] },
+              {
+                targets: 0,
+                render: function(data, type, row, meta) {
+                  let [genome_id, npdc_id] = data
+                  return "<a href=\"{{ url_for('root.page') }}gdb/genomes/" + genome_id + "\"><button class=\"btn btn-primary\">NPDC-" + npdc_id + "</button></a>";
+                }
+              },
+              {
+                targets: 1,
+                render: function(data, type, row, meta) {
+                  return "<i>" + data + "</i>";
+                }
+              },
+              {
+                targets: 3,
+                render: function(data, type, row, meta) {
+                  let html_text = "";
+                  let badge_class = {
+                    "high": "rounded-pill bg-success",
+                    "good": "bg-success",
+                    "fair": "bg-secondary",
+                    "fragmented": "bg-warning"
+                  };
+                  html_text += "<span class='badge m-1 " + badge_class[data["grade"]] + "'>" + data["grade"] + "</span>";
+                  if (data["cleaned"]) {
+                    html_text += "<span class='badge rounded-pill bg-info m-1'>" + "cleaned-up" + "</span>";
+                  }
+                  return html_text;
+                }
+              },
+              {
+                targets: 6,
+                render: function(data, type, row, meta) {
+                  return data.length;
+                }
+              }
+            ]
+          });
+        });
+      </script>
+
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    $(document).ready(function(){
+
+      function updateShowResult() {
+        let show_result = ($("input[name='select_result_type']:checked").val());
+        $(".section_results").addClass("d-none");
+
+        // process data
+
+        // show tables
+        $("#section_results_by_" + show_result).removeClass("d-none");
+      }
+
+      $("#select_result * input").on("change", function() { updateShowResult(); });
+      updateShowResult();
+    });
+  </script>
+  {% endif%}
 
 {% endblock %}

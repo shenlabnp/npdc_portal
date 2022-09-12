@@ -34,7 +34,7 @@ def page_genomes():
     )
 
 
-@blueprint.route("/api/genomes/get_overview")
+@blueprint.route("/api/genomes/get_overview", methods=["GET"])
 def get_overview():
     """ for genomes overview tables """
     result = {}
@@ -59,20 +59,51 @@ def get_overview():
             " where 1"
         )).fetchall()[0][0]
 
-
         result["data"] = []
 
         query_result = pd.read_sql_query((
-            "select *"
-            " from genomes"
+            "select genomes.*, group_concat(bgcs.id) as bgcs, group_concat(bgcs.mibig_name, ';') as mibig_bgcs"
+            " from genomes left join ("
+            "    select bgcs.genome_id, bgcs.id, mibig.mibig_id, mibig.mibig_name"
+            "    from bgcs left join ("
+            "      select bgc_id, mibig_id, mibig.name_dereplicated as mibig_name"
+            "      from bgc_mibig_hit inner join mibig on mibig.id=bgc_mibig_hit.mibig_id"
+            "      where bgc_mibig_hit.hit_pct >= 40"
+            "    ) as mibig on mibig.bgc_id=bgcs.id"
+            " ) as bgcs on genomes.id=bgcs.genome_id"
             " where 1"
+            " group by genomes.id"
             " limit {} offset {}"
         ).format(limit, offset), con)
-
-
         for idx, row in query_result.iterrows():
+
+            assembly_grade = ""
+
+            if row["genome_num_contigs"] <= 50:
+                assembly_grade = "high"
+            elif row["genome_num_contigs"] <= 100:
+                assembly_grade = "good"
+            elif row["genome_num_contigs"] <= 500:
+                assembly_grade = "fair"
+            else:
+                assembly_grade = "fragmented"
+
             result["data"].append([
-                "NPDC{:06d}".format(row["npdc_id"]) if isinstance(row["npdc_id"], int) else row["npdc_id"],
+                (row["id"], row["npdc_id"]),
+                (row["genome_gtdb_species"] if row["genome_gtdb_species"] != ""
+                    else row["genome_gtdb_genus"] + " spp."),
+                row["genome_mash_species"],
+                {
+                    "grade": assembly_grade,
+                    "cleaned": row["is_cleaned_up"],
+                    "n50": row["genome_n50"],
+                    "num_contigs": row["genome_num_contigs"],
+                    "contamination": row["genome_qc_contamination"],
+                    "completeness": row["genome_qc_completeness"],
+                },
+                "",
+                len(row["bgcs"].split(",")),
+                list(set(row["mibig_bgcs"].split(";")))
             ])
 
     return result

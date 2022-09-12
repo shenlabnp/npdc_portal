@@ -75,7 +75,7 @@ def portal():
 
         # for navigations
         nav_items = []
-        nav_items.append(("Main page", url_for("home.page_home")))
+        nav_items.append(("Home page", url_for("home.page_home")))
         nav_items.append(("Strains collection", [
             ("Browse strains", "/strains/view"),
             ("Ordering a strain", "/strains/order")
@@ -92,6 +92,9 @@ def portal():
         nav_items.append(("Help / Feedback", "/feedback"))
         nav_items.append(("About NPDC", "/about"))
 
+        # for important alerts
+        important_message = ""
+
         return dict(
             gbal=gbal,
             nav_items=nav_items,
@@ -103,7 +106,8 @@ def portal():
                 )
             ),
             num_jobs_pending=num_jobs_pending,
-            num_jobs_processed=num_jobs_processed
+            num_jobs_processed=num_jobs_processed,
+            important_message=important_message
         )
 
     return app

@@ -22,9 +22,16 @@
       {% endwith %}
     </div>
   </div>
+  {% if important_message %}
+  <div class="text-center list-group">
+    <div class="alert alert-info" role="alert">
+      {{ important_message }}
+    </div>
+  </div>
+  {% endif %}
   <div class="text-center mb-2 list-group">
     <div class="list-group-item">
-      Query Server status:
+      BLAST Server status:
       <div><strong class="text-success">{{ num_jobs_processed }}</strong> jobs processed</div>
       <div><strong class="text-muted">{{ num_jobs_pending }}</strong> jobs pending</div>
     </div>

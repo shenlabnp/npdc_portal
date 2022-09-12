@@ -70,8 +70,9 @@ def page_job(job_id):
 
     # get job data
     job_data = pd.read_sql((
-        "SELECT jobs.*,status_enum.name as status_desc FROM jobs,status_enum"
-        " WHERE userid=? AND id=? and jobs.status=status_enum.code"
+        "SELECT jobs.*, status_enum.name as status_desc"
+        " FROM jobs, status_enum"
+        " WHERE userid=? AND jobs.id=? and jobs.status=status_enum.code"
     ), sqlite3.connect(conf["query_db_path"]), params=(session["userid"], job_id))
 
     if job_data.shape[0] != 1:
@@ -80,11 +81,11 @@ def page_job(job_id):
 
     job_data = job_data.iloc[0].to_dict()
 
-    # get all hits
-    blast_hits = pd.read_sql((
-        "SELECT blast_hits.*,query_proteins.name as query_name FROM blast_hits,query_proteins"
-        " WHERE query_proteins.jobid=? and query_proteins.id=blast_hits.query_prot_id"
-    ), sqlite3.connect(conf["query_db_path"]), params=(job_id,)).sort_values(by=["query_prot_id", "bitscore"], ascending=False)
+    # get protein queries
+    job_data["proteins"] = {row["id"]: row["name"] for idx, row in pd.read_sql((
+        "SELECT id, name FROM query_proteins"
+        " WHERE jobid=?"
+    ), sqlite3.connect(conf["query_db_path"]), params=(job_id,)).iterrows()}
 
     # page title
     page_title = "Query result: job #{}".format(job_id)
@@ -96,8 +97,10 @@ def page_job(job_id):
         page_title=page_title,
         page_subtitle=page_subtitle,
         auto_refresh=(job_data["status"] < 2),
-        job_data=job_data,
-        results=blast_hits.to_dict("records")
+        job_status=job_data["status_desc"],
+        job_submitted=job_data["submitted"][:16],
+        job_finished=job_data["finished"][:16] if job_data["finished"] else "",
+        job_proteins=job_data["proteins"]
     )
 
 
@@ -143,6 +146,11 @@ def parse_input_prots(prot_seq):
 
 @blueprint.route("/api/query/get_list")
 def get_list():
+
+    # check login
+    if not check_logged_in():
+        return ""
+
     result = {}
     result["draw"] = request.args.get('draw', type=int)
     limit = request.args.get('length', type=int)
@@ -219,3 +227,41 @@ def submit_new_job(user_id, input_proteins):
         con.commit()
 
     return job_id
+
+@blueprint.route("/api/query/get_results_summary")
+def get_result_summary():
+
+    # check login
+    if not check_logged_in():
+        return ""
+
+    job_id = request.args.get('jobid', type=int)
+    query_protein_id = request.args.get('protid', type=int)
+
+    with sqlite3.connect(conf["db_path"]) as con:
+        cur = con.cursor()
+        cur.execute("ATTACH DATABASE ? AS job_db", (conf["query_db_path"],))
+
+        sql_query = {
+            "q": "".join([
+                "select * from (",
+                    "select count(distinct hits.query_prot_id) as num_hits_unique, cds.genome_id, genomes.genome_mash_species from cds inner join (",
+                        " select blast_hits.target_cds_id, blast_hits.query_prot_id",
+                        " from job_db.query_proteins, job_db.blast_hits where query_proteins.jobid=? and query_proteins.id=blast_hits.query_prot_id",
+                        " and query_proteins.id = ?" if query_protein_id != 0 else " and ?",
+                    ") as hits on cds.id=hits.target_cds_id inner join genomes on cds.genome_id=genomes.id",
+                " group by cds.genome_id)",
+                " where num_hits_unique=?"
+            ]),
+            "p": (
+                job_id,
+                query_protein_id if query_protein_id != 0 else "1",
+                1 if query_protein_id != 0 else 1 # change to length
+            )
+        }
+
+        print(sql_query)
+        result = (pd.read_sql_query((sql_query["q"]), con, params=sql_query["p"])).to_dict()
+
+
+    return result
