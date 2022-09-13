@@ -10,6 +10,9 @@ import re
 from ..config import conf
 from ..session import check_logged_in
 
+#
+from .genomes import get_assembly_grade
+
 # set blueprint object
 from flask import Blueprint
 blueprint = Blueprint('query', __name__)
@@ -97,6 +100,7 @@ def page_job(job_id):
         page_title=page_title,
         page_subtitle=page_subtitle,
         auto_refresh=(job_data["status"] < 2),
+        job_id=job_data["id"],
         job_status=job_data["status_desc"],
         job_submitted=job_data["submitted"][:16],
         job_finished=job_data["finished"][:16] if job_data["finished"] else "",
@@ -228,13 +232,15 @@ def submit_new_job(user_id, input_proteins):
 
     return job_id
 
-@blueprint.route("/api/query/get_results_summary")
-def get_result_summary():
+
+@blueprint.route("/api/query/get_results_list")
+def get_results_list():
 
     # check login
     if not check_logged_in():
         return ""
 
+    type_req = request.args.get('type', type=str)
     job_id = request.args.get('jobid', type=int)
     query_protein_id = request.args.get('protid', type=int)
 
@@ -242,26 +248,51 @@ def get_result_summary():
         cur = con.cursor()
         cur.execute("ATTACH DATABASE ? AS job_db", (conf["query_db_path"],))
 
-        sql_query = {
-            "q": "".join([
-                "select * from (",
-                    "select count(distinct hits.query_prot_id) as num_hits_unique, cds.genome_id, genomes.genome_mash_species from cds inner join (",
-                        " select blast_hits.target_cds_id, blast_hits.query_prot_id",
-                        " from job_db.query_proteins, job_db.blast_hits where query_proteins.jobid=? and query_proteins.id=blast_hits.query_prot_id",
-                        " and query_proteins.id = ?" if query_protein_id != 0 else " and ?",
-                    ") as hits on cds.id=hits.target_cds_id inner join genomes on cds.genome_id=genomes.id",
-                " group by cds.genome_id)",
-                " where num_hits_unique=?"
-            ]),
-            "p": (
-                job_id,
-                query_protein_id if query_protein_id != 0 else "1",
-                1 if query_protein_id != 0 else 1 # change to length
-            )
-        }
+        num_query_proteins = cur.execute("select count(id) from job_db.query_proteins where jobid=?", (job_id,)).fetchall()[0][0]
 
-        print(sql_query)
-        result = (pd.read_sql_query((sql_query["q"]), con, params=sql_query["p"])).to_dict()
+        if type_req == "genome":
+            sql_query = {
+                "q": "".join([
+                    "select * from (",
+                        "select count(distinct hits.query_prot_id) as num_hits_unique, genomes.*",
+                        " from cds inner join (",
+                            " select blast_hits.target_cds_id, blast_hits.query_prot_id",
+                            " from job_db.query_proteins, job_db.blast_hits where query_proteins.jobid=? and query_proteins.id=blast_hits.query_prot_id",
+                            " and query_proteins.id = ?" if query_protein_id != 0 else " and ?",
+                        ") as hits on cds.id=hits.target_cds_id inner join (",
+                            "select genomes.*, group_concat(bgcs.id) as bgcs, group_concat(bgcs.mibig_name, ';') as mibig_bgcs",
+                            " from genomes left join (",
+                            "    select bgcs.genome_id, bgcs.id, mibig.mibig_id, mibig.mibig_name",
+                            "    from bgcs left join (",
+                            "      select bgc_id, mibig_id, mibig.name_dereplicated as mibig_name",
+                            "      from bgc_mibig_hit inner join mibig on mibig.id=bgc_mibig_hit.mibig_id",
+                            "      where bgc_mibig_hit.hit_pct >= 40",
+                            "    ) as mibig on mibig.bgc_id=bgcs.id",
+                            " ) as bgcs on genomes.id=bgcs.genome_id",
+                            " group by genomes.id"
+                        ") as genomes on cds.genome_id=genomes.id",
+                    " group by cds.genome_id)",
+                    " where num_hits_unique=?"
+                    " order by npdc_id asc"
+                ]),
+                "p": (
+                    job_id,
+                    query_protein_id if query_protein_id != 0 else "1",
+                    1 if query_protein_id != 0 else num_query_proteins
+                )
+            }
+
+            result = pd.read_sql_query((sql_query["q"]), con, params=sql_query["p"])
+            result["grade"] = result.apply(get_assembly_grade, axis=1) if result.shape[0] > 0 else []
+            result = {col: vals.tolist() for col, vals in result.iteritems()}
+
+        elif type_req == "bgc":
+            result = {
+                "columns": [],
+                "data": []
+            }
+        else:
+            result = ""
 
 
     return result

@@ -119,13 +119,13 @@
 
       <!-- by BGC -->
       <div id="section_results_by_bgc" class="d-none section_results">
-        <div class="alert alert-primary">
+        <div id="section_results_by_bgc_summary" class="alert alert-primary">
           Your query is found in <strong>1,000</strong> BGCs, forming a total of <strong>100</strong> GCFs.
           The main biosynthetic class of the BGCs is <strong>Polyketide (50%)</strong>.
           These BGCs were coming from <strong>1,000</strong> genomes of <strong>500</strong> different species
           (most of the genomes, <strong>xx% </strong>, were coming from the genus <strong><i>Streptomyces</i></strong>).
         </div>
-        <table id="table_results_by_bgc" class="table table-striped table-bordered table-hover nowrap">
+        <table id="section_results_by_bgc_table" class="table table-striped table-bordered table-hover nowrap">
           <thead class="thead-light">
             <tr>
               <th>Detail</th>
@@ -139,77 +139,27 @@
           </thead>
           <tbody class="tbody">
           </tbody>
+          <script type="text/javascript">
+            $(document).ready(function(){
+              $("#section_results_by_bgc_table").DataTable({
+                searching: false,
+                ordering:  false,
+                serverSide: false,
+                responsive: false,
+                processing: true,
+                aLengthMenu: [[25, 50, 250], [25, 50, 250]],
+                iDisplayLength: 25,
+                "columnDefs": []
+              });
+            });
+          </script>
         </table>
       </div>
-
-      <script type="text/javascript">
-        $(document).ready(function(){
-
-          $("#table_results_by_bgc").DataTable({
-            searching: false,
-            ordering:  false,
-            serverSide: true,
-            responsive: false,
-            processing: true,
-            aLengthMenu: [[25, 50, 250], [25, 50, 250]],
-                iDisplayLength: 25,
-            ajax: {
-              url: "{{ url_for('root.page') }}api/genomes/get_overview",
-              type: "GET",
-              data: function(d) {
-                //
-              }
-            },
-            "columnDefs": [
-              { className: "text-center", targets: [0] },
-              {
-                targets: 0,
-                render: function(data, type, row, meta) {
-                  let [genome_id, npdc_id] = data
-                  return "<a href=\"{{ url_for('root.page') }}gdb/genomes/" + genome_id + "\"><button class=\"btn btn-primary\">NPDC-" + npdc_id + "</button></a>";
-                }
-              },
-              {
-                targets: 1,
-                render: function(data, type, row, meta) {
-                  return "<i>" + data + "</i>";
-                }
-              },
-              {
-                targets: 3,
-                render: function(data, type, row, meta) {
-                  let html_text = "";
-                  let badge_class = {
-                    "high": "rounded-pill bg-success",
-                    "good": "bg-success",
-                    "fair": "bg-secondary",
-                    "fragmented": "bg-warning"
-                  };
-                  html_text += "<span class='badge m-1 " + badge_class[data["grade"]] + "'>" + data["grade"] + "</span>";
-                  if (data["cleaned"]) {
-                    html_text += "<span class='badge rounded-pill bg-info m-1'>" + "cleaned-up" + "</span>";
-                  }
-                  return html_text;
-                }
-              },
-              {
-                targets: 6,
-                render: function(data, type, row, meta) {
-                  return data.length;
-                }
-              }
-            ]
-          });
-        });
-      </script>
 
       <!-- by Genomes -->
       <div id="section_results_by_genome" class="d-none section_results">
-        <div class="alert alert-primary">
-          Your query is found in <strong>1,000</strong> genomes of <strong>500</strong> different species.
-          Most of the genomes, <strong>xx% </strong>, were coming from the genus <strong><i>Streptomyces</i></strong>.
-        </div>
-        <table id="table_results_by_genome" class="table table-striped table-bordered table-hover nowrap">
+        <div id="section_results_by_genome_summary" class="alert alert-primary"></div>
+        <table id="section_results_by_genome_table" class="table table-striped table-bordered table-hover nowrap">
           <thead class="thead-light">
             <tr>
               <th>Detail</th>
@@ -223,69 +173,60 @@
           </thead>
           <tbody class="tbody">
           </tbody>
+          <script type="text/javascript">
+            $(document).ready(function(){
+              $("#section_results_by_genome_table").DataTable({
+                searching: false,
+                ordering:  false,
+                serverSide: false,
+                responsive: false,
+                processing: true,
+                aLengthMenu: [[25, 50, 250], [25, 50, 250]],
+                iDisplayLength: 25,
+                columnDefs: [
+                  { className: "text-center", targets: [0] },
+                  {
+                    targets: 0,
+                    render: function(data, type, row, meta) {
+                      let [genome_id, npdc_id] = data
+                      return "<a href=\"{{ url_for('root.page') }}gdb/genomes/" + genome_id + "\"><button class=\"btn btn-primary\">NPDC-" + npdc_id + "</button></a>";
+                    }
+                  },
+                  {
+                    targets: 1,
+                    render: function(data, type, row, meta) {
+                      return "<i>" + data + "</i>";
+                    }
+                  },
+                  {
+                    targets: 3,
+                    render: function(data, type, row, meta) {
+                      let html_text = "";
+                      let badge_class = {
+                        "high": "rounded-pill bg-success",
+                        "good": "bg-success",
+                        "fair": "bg-secondary",
+                        "fragmented": "bg-warning"
+                      };
+                      html_text += "<span class='badge m-1 " + badge_class[data["grade"]] + "'>" + data["grade"] + "</span>";
+                      if (data["cleaned"]) {
+                        html_text += "<span class='badge rounded-pill bg-info m-1'>" + "cleaned-up" + "</span>";
+                      }
+                      return html_text;
+                    }
+                  },
+                  {
+                    targets: 6,
+                    render: function(data, type, row, meta) {
+                      return data.length;
+                    }
+                  }
+                ]
+              });
+            });
+          </script>
         </table>
       </div>
-
-      <script type="text/javascript">
-        $(document).ready(function(){
-
-          $("#table_results_by_genome").DataTable({
-            searching: false,
-            ordering:  false,
-            serverSide: true,
-            responsive: false,
-            processing: true,
-            aLengthMenu: [[25, 50, 250], [25, 50, 250]],
-                iDisplayLength: 25,
-            ajax: {
-              url: "{{ url_for('root.page') }}api/genomes/get_overview",
-              type: "GET",
-              data: function(d) {
-                //
-              }
-            },
-            "columnDefs": [
-              { className: "text-center", targets: [0] },
-              {
-                targets: 0,
-                render: function(data, type, row, meta) {
-                  let [genome_id, npdc_id] = data
-                  return "<a href=\"{{ url_for('root.page') }}gdb/genomes/" + genome_id + "\"><button class=\"btn btn-primary\">NPDC-" + npdc_id + "</button></a>";
-                }
-              },
-              {
-                targets: 1,
-                render: function(data, type, row, meta) {
-                  return "<i>" + data + "</i>";
-                }
-              },
-              {
-                targets: 3,
-                render: function(data, type, row, meta) {
-                  let html_text = "";
-                  let badge_class = {
-                    "high": "rounded-pill bg-success",
-                    "good": "bg-success",
-                    "fair": "bg-secondary",
-                    "fragmented": "bg-warning"
-                  };
-                  html_text += "<span class='badge m-1 " + badge_class[data["grade"]] + "'>" + data["grade"] + "</span>";
-                  if (data["cleaned"]) {
-                    html_text += "<span class='badge rounded-pill bg-info m-1'>" + "cleaned-up" + "</span>";
-                  }
-                  return html_text;
-                }
-              },
-              {
-                targets: 6,
-                render: function(data, type, row, meta) {
-                  return data.length;
-                }
-              }
-            ]
-          });
-        });
-      </script>
 
     </div>
   </div>
@@ -295,12 +236,89 @@
 
       function updateShowResult() {
         let show_result = ($("input[name='select_result_type']:checked").val());
+
+        // destroy current summary boxes
+        $("#section_results_by_genome_summary").html("loading data..");
+        $("#section_results_by_bgc_summary").html("loading data..");
+
+        // clear current dataTables
+        $('#section_results_by_genome_table').DataTable().clear();
+        $('#section_results_by_bgc_table').DataTable().clear();
+
+        // show specific section
         $(".section_results").addClass("d-none");
+        $("#section_results_by_" + show_result).removeClass("d-none");
 
         // process data
+        $.ajax({
+          url: "{{ url_for('root.page') }}api/query/get_results_list",
+          dataType: "json",
+          data: {
+            "jobid": {{ job_id }},
+            "protid": 0,
+            "type": show_result
+          },
+          success: function (response) {
+            let summary_content = "";
+            let datatable_data = [];
 
-        // show tables
-        $("#section_results_by_" + show_result).removeClass("d-none");
+            switch(show_result) {
+              case "genome":
+                // update summary
+                summary_content = "0 hits found."
+                if (response["id"].length > 0) {
+                  let count_genome = response["id"].length
+                  let count_species = new Set(response["genome_mash_species"]).size;
+                  let count_most_genus = "";
+                  let count_most_genus_pct = 0;
+                  $.each(response["genome_gtdb_genus"].reduce(function (acc, curr) {
+                    return acc[curr] ? ++acc[curr] : acc[curr] = 1, acc
+                  }, {}), function(genus, count) {
+                    if ((count > count_most_genus_pct) || (count_most_genus_pct == 0)) {
+                      count_most_genus = genus;
+                      count_most_genus_pct = count;
+                    }
+                  });
+                  count_most_genus_pct = (count_most_genus_pct / count_genome * 100).toFixed(0);
+                  summary_content = (
+                    "Your query is found in <strong>" + count_genome + "</strong> genome(s) of <strong>" + count_species + "</strong> different species." +
+                    " Most of the genome(s), <strong>" + count_most_genus_pct + "%</strong>, were coming from" +
+                    " the genus <strong><i>" + count_most_genus + "</i></strong>."
+                  )
+                }
+
+                // update datatables
+                datatable_data = [];
+                $.each(response["id"], function(i, genome_id) {
+                  datatable_data.push([
+                    [genome_id, response["npdc_id"][i]],
+                    response["genome_gtdb_species"][i] != ""? response["genome_gtdb_species"][i]:(response["genome_gtdb_genus"][i] + " spp."),
+                    response["genome_mash_species"][i],
+                    {
+                        "grade": response["grade"][i],
+                        "cleaned": response["is_cleaned_up"][i],
+                    },
+                    "",
+                    (new Set(response["bgcs"][i].split(","))).size,
+                    Array.from(new Set(response["mibig_bgcs"][i].split(";")))
+                  ]);
+                });
+                break;
+
+              case "bgc":
+                // update summary
+                summary_content = "(not implemented yet)";
+
+                // update datatables
+                //...
+                break;
+            }
+            
+            $("#section_results_by_" + show_result + "_summary").html(summary_content);
+            $("#section_results_by_" + show_result + "_table").DataTable().rows.add(datatable_data).draw();
+          }
+        });
+
       }
 
       $("#select_result * input").on("change", function() { updateShowResult(); });

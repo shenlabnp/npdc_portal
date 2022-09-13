@@ -34,6 +34,20 @@ def page_genomes():
     )
 
 
+def get_assembly_grade(genome_row):
+
+    if genome_row["genome_num_contigs"] <= 50:
+        assembly_grade = "high"
+    elif genome_row["genome_num_contigs"] <= 100:
+        assembly_grade = "good"
+    elif genome_row["genome_num_contigs"] <= 500:
+        assembly_grade = "fair"
+    else:
+        assembly_grade = "fragmented"
+
+    return assembly_grade
+
+
 @blueprint.route("/api/genomes/get_overview", methods=["GET"])
 def get_overview():
     """ for genomes overview tables """
