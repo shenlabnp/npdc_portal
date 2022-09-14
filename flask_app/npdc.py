@@ -22,7 +22,7 @@ def portal():
     if not path.exists(conf["user_db_path"]):
         with sqlite3.connect(conf["user_db_path"]) as con:
             cur = con.cursor()
-            cur.executescript(open(path.join(path.dirname(path.realpath(__file__)), "..", "db_generation", "sql_schema_accounts.txt")).read())
+            cur.executescript(open(path.join(path.dirname(path.dirname(path.realpath(__file__))), "sql_schemas", "sql_schema_accounts.txt")).read())
             con.commit()
 
     # initiate app
