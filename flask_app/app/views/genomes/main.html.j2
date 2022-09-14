@@ -42,6 +42,7 @@
         },
         "columnDefs": [
           { className: "text-center", targets: [0] },
+          { className: "text-end", targets: [4, 5, 6] },
           {
             targets: 0,
             render: function(data, type, row, meta) {
@@ -67,9 +68,15 @@
               };
               html_text += "<span class='badge m-1 " + badge_class[data["grade"]] + "'>" + data["grade"] + "</span>";
               if (data["cleaned"]) {
-                html_text += "<span class='badge rounded-pill bg-info m-1'>" + "cleaned-up" + "</span>";
+                html_text += "<span class='badge rounded-pill bg-warning m-1'>" + "cleaned-up" + "</span>";
               }
               return html_text;
+            }
+          },
+          {
+            targets: 4,
+            render: function(data, type, row, meta) {
+              return data.toFixed(1) + " %";
             }
           },
           {

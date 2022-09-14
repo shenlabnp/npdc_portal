@@ -76,7 +76,7 @@ def get_overview():
         result["data"] = []
 
         query_result = pd.read_sql_query((
-            "select genomes.*, group_concat(bgcs.id) as bgcs, group_concat(bgcs.mibig_name, ';') as mibig_bgcs"
+            "select genomes.*, group_concat(distinct bgcs.id) as bgcs, group_concat(bgcs.mibig_name, ';') as mibig_bgcs"
             " from genomes left join ("
             "    select bgcs.genome_id, bgcs.id, mibig.mibig_id, mibig.mibig_name"
             "    from bgcs left join ("
@@ -115,9 +115,9 @@ def get_overview():
                     "contamination": row["genome_qc_contamination"],
                     "completeness": row["genome_qc_completeness"],
                 },
-                "",
+                row["genome_gc"],
                 len(row["bgcs"].split(",")),
-                list(set(row["mibig_bgcs"].split(";")))
+                list(set(row["mibig_bgcs"].split(";"))) if row["mibig_bgcs"] else []
             ])
 
     return result
