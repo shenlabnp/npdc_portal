@@ -13,7 +13,7 @@ from flask import Blueprint
 blueprint = Blueprint('genomes', __name__)
 
 
-@blueprint.route("/gdb/genomes/")
+@blueprint.route("/genomes/")
 def page_genomes():
 
     # check login

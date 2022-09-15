@@ -14,7 +14,8 @@ from app.config import conf
 
 # import controllers
 from app.controllers import root, login
-from app.controllers import home, strains, genomes, feedback, about, query
+from app.controllers import home, strains, genomes, bgcs
+from app.controllers import feedback, about, query
 
 def portal():
 
@@ -47,6 +48,7 @@ def portal():
     app.register_blueprint(home.blueprint)
     app.register_blueprint(strains.blueprint)
     app.register_blueprint(genomes.blueprint)
+    app.register_blueprint(bgcs.blueprint)
     app.register_blueprint(feedback.blueprint)
     app.register_blueprint(about.blueprint)
     app.register_blueprint(query.blueprint)
@@ -75,22 +77,14 @@ def portal():
 
         # for navigations
         nav_items = []
-        nav_items.append(("Home page", url_for("home.page_home")))
-        nav_items.append(("Strains collection", [
-            ("Browse strains", "/strains/view"),
-            ("Ordering a strain", "/strains/order")
-        ]))
-        nav_items.append(("Genomes database", [
-            ("Browse genomes", "/gdb/genomes"),
-            ("Browse BGCs", "/dummy"),
-            ("BLAST query", "/gdb/query")
-        ]))
-        nav_items.append(("Natural Products library", [
-            ("Browse NPs", "/dummy"),
-            ("Metabolomics database", "/dummy")
-        ]))
-        nav_items.append(("Help / Feedback", "/feedback"))
-        nav_items.append(("About NPDC", "/about"))
+        nav_items.append(("Home", url_for("home.page_home")))
+        nav_items.append(("Strain Collection", url_for("strains.page_strains")))
+        nav_items.append(("Genome database", url_for("genomes.page_genomes")))
+        nav_items.append(("BGC database", url_for("bgcs.page_bgcs")))
+        nav_items.append(("BLAST", url_for("query.page_main")))
+        nav_items.append(("Order Strains", url_for("strains.page_strains_ordering")))
+        nav_items.append(("Help", url_for("feedback.page_feedback")))
+        nav_items.append(("About NPDC", url_for("about.page_about")))
 
         # for important alerts
         important_message = ""

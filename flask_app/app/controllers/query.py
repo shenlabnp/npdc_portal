@@ -18,7 +18,7 @@ from flask import Blueprint
 blueprint = Blueprint('query', __name__)
 
 
-@blueprint.route("/gdb/query/", methods=['POST', 'GET'])
+@blueprint.route("/query/", methods=['POST', 'GET'])
 def page_main():
 
     # check login
@@ -64,7 +64,7 @@ def page_main():
         page_subtitle=page_subtitle
     )
 
-@blueprint.route("/gdb/query/result/<int:job_id>")
+@blueprint.route("/query/result/<int:job_id>")
 def page_job(job_id):
 
     # check login

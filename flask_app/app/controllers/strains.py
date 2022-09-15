@@ -21,7 +21,7 @@ def page_strains():
         return redirect(url_for("login.page_login"))
         
     # page title
-    page_title = "Strains Collection"
+    page_title = "Strain Collection"
     page_subtitle = (
         ""
     )
@@ -34,7 +34,7 @@ def page_strains():
     )
 
 
-@blueprint.route("/strains/order")
+@blueprint.route("/order")
 def page_strains_ordering():
 
     # check login

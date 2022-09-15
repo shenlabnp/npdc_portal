@@ -147,7 +147,7 @@
                     targets: 0,
                     render: function(data, type, row, meta) {
                       let [genome_id, npdc_id] = data
-                      return "<a href=\"{{ url_for('root.page') }}gdb/genomes/" + genome_id + "\"><button class=\"btn btn-primary\">NPDC-" + npdc_id + "</button></a>";
+                      return "<a href=\"{{ url_for('root.page') }}genomes/" + genome_id + "\"><button class=\"btn btn-primary\">NPDC-" + npdc_id + "</button></a>";
                     }
                   },
                   {

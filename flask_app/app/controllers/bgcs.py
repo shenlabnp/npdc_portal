@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sqlite3
-from flask import render_template, request, session, redirect, url_for
+from flask import render_template, request, session, redirect, url_for, flash
 
 # import global config
 from ..config import conf
@@ -13,19 +13,11 @@ blueprint = Blueprint('bgcs', __name__)
 
 
 @blueprint.route("/bgcs")
-def page_feedback():
+def page_bgcs():
 
     # check login
     if not check_logged_in():
         return redirect(url_for("login.page_login"))
-        
-    # page title
-    page_title = "Help / Feedback"
-    page_subtitle = ("")
 
-    # render view
-    return render_template(
-        "feedback/main.html.j2",
-        page_title=page_title,
-        page_subtitle=page_subtitle
-    )
+    flash("page not implemented yet", "alert-warning")
+    return redirect(url_for("home.page_home"))

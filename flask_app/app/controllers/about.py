@@ -13,7 +13,7 @@ blueprint = Blueprint('about', __name__)
 
 
 @blueprint.route("/about")
-def page_fabout():
+def page_about():
 
     # check login
     if not check_logged_in():
