@@ -10,6 +10,7 @@
 #page_title {
 	font-weight:  bold;
 	font-size: xx-large;
+	color: #2F5597;
 }
 
 #page_subtitle {
@@ -18,7 +19,6 @@
 }
 
 /* overriding bootstrap css */
-
 .popover {
     max-width: 100% !important;
 }
