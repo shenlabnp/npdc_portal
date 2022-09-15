@@ -290,8 +290,8 @@
         $("#section_results_by_bgc_summary").html("loading data..");
 
         // clear current dataTables
-        $('#section_results_by_genome_table').DataTable().clear();
-        $('#section_results_by_bgc_table').DataTable().clear();
+        $('#section_results_by_genome_table').DataTable().clear().draw();
+        $('#section_results_by_bgc_table').DataTable().clear().draw();
 
         // show specific section
         $(".section_results").addClass("d-none");
@@ -338,7 +338,6 @@
                 // update datatables
                 datatable_data = [];
                 $.each(response["id"], function(i, genome_id) {
-                  console.log(response["mibig_bgcs"][i]);
                   datatable_data.push([
                     [genome_id, response["npdc_id"][i]],
                     response["genome_gtdb_species"][i] != ""? response["genome_gtdb_species"][i]:(response["genome_gtdb_genus"][i] + " spp."),
@@ -377,7 +376,6 @@
                       count_class[class_name] ? ++count_class[class_name] : count_class[class_name] = 1
                     })
                   });
-                  console.log(count_class);
                   $.each(count_class, function(class_name, count) {
                     if ((count > count_most_class_pct) || (count_most_class_pct == 0)) {
                       count_most_class = class_name;
