@@ -99,7 +99,7 @@ def page_job(job_id):
         "query/job.html.j2",
         page_title=page_title,
         page_subtitle=page_subtitle,
-        auto_refresh=(job_data["status"] < 2),
+        auto_refresh=(job_data["status_desc"] in ["PROCESSING", "PENDING"]),
         job_id=job_data["id"],
         job_status=job_data["status_desc"],
         job_submitted=job_data["submitted"][:16],

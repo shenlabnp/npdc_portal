@@ -360,11 +360,6 @@
 
               case "bgc":
                 // update summary
-                /*
-          Your query is found in <strong>1,000</strong> BGCs, forming a total of <strong>100</strong> GCFs.
-          The main biosynthetic class of the BGCs is <strong>Polyketide (50%)</strong>.
-          These BGCs were coming from <strong>1,000</strong> genomes of <strong>500</strong> different species
-          (most of the genomes, <strong>xx% </strong>, were coming from the genus <strong><i>Streptomyces</i></strong>).*/
                 summary_content = "0 hits found."
                 if (response["id"].length > 0) {
                   let count_bgc = response["id"].length;
