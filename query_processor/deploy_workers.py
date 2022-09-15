@@ -25,7 +25,7 @@ def fetch_pending_jobs(jobs_db):
         )).fetchall()]
 
 
-def deploy_jobs(pending, jobs_db, instance_folder, num_threads):
+def deploy_jobs(pending, jobs_db, instance_folder, num_threads, ram_size_gb):
     for job_id in pending:
         print("PROCESSING: job#{}".format(job_id))
         # update status to "PROCESSING"
@@ -65,12 +65,13 @@ def deploy_jobs(pending, jobs_db, instance_folder, num_threads):
             )
             blast_output_path = path.join(temp_dir, "output.txt")
             subprocess.run(
-                "diamond blastp -d {} -q {} -e 1e-10 -o {} -f 6 {} --ignore-warnings --query-cover 80 --id 40 -k 999999 -p {} -b20 -c1".format(
+                "diamond blastp -d {} -q {} -e 1e-10 -o {} -f 6 {} --ignore-warnings --query-cover 80 --id 40 -k 999999 -p {} -b{:.1f} -c4".format(
                     diamond_blast_db_path,
                     fasta_input_path,
                     blast_output_path,
                     blast_columns,
-                    num_threads
+                    num_threads,
+                    ram_size_gb / 6
                 ), shell=True
             )
 
@@ -110,10 +111,8 @@ def deploy_jobs(pending, jobs_db, instance_folder, num_threads):
 
 def main():
 
-    if len(argv) > 1:
-        num_threads = int(argv[1])
-    else:
-        num_threads = cpu_count()
+    num_threads = int(argv[1])
+    ram_size_gb = int(argv[2])
 
     instance_folder = path.join(
         path.dirname(__file__),
@@ -143,7 +142,7 @@ def main():
             print("deploying {} jobs...".format(
                 len(pending)
             ))
-            deploy_jobs(pending, jobs_db, instance_folder, num_threads)
+            deploy_jobs(pending, jobs_db, instance_folder, num_threads, ram_size_gb)
 
         sleep(5)
 
