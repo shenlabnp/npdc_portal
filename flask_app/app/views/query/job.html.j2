@@ -311,6 +311,9 @@
             "protid": ($("input[name='select_result_protein']:checked").val()),
             "type": show_result
           },
+          failure: function(response) {
+            alert("fail to fetch data, please refresh the page.")
+          },
           success: function (response) {
             let summary_content = "";
             let datatable_data = [];
