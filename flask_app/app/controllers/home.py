@@ -20,12 +20,10 @@ def page_home():
         pass # do nothing
         
     # page title
-    page_title = "Natural Products Discovery Collection"
-    page_subtitle = (
-        "home of the largest sequenced bacterial strains collection to enable scientific discovery"
-    )
+    page_title = "Welcome to the NPDC!"
+    page_subtitle = ""
 
-    # fetch data (test)
+    # fetch data
     with sqlite3.connect(conf["db_path"]) as con:
         cur = con.cursor()
 
@@ -33,6 +31,9 @@ def page_home():
             "SELECT count(npdc_id) FROM strains"
         ).fetchall()[0]
 
+        genomes_count, = cur.execute(
+            "SELECT count(id) FROM genomes"
+        ).fetchall()[0]
 
 
     # render view
@@ -40,5 +41,6 @@ def page_home():
         "home/main.html.j2",
         page_title=page_title,
         page_subtitle=page_subtitle,
-        strains_count="{:,}".format(strains_count)
+        strains_count=strains_count,
+        genomes_count=genomes_count
     )

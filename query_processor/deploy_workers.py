@@ -25,7 +25,7 @@ def fetch_pending_jobs(jobs_db):
         )).fetchall()]
 
 
-def deploy_jobs(pending, jobs_db, instance_folder, num_threads, ram_size_gb):
+def deploy_jobs(pending, jobs_db, instance_folder, num_threads, ram_size_gb, use_srun):
     for job_id in pending:
         print("PROCESSING: job#{}".format(job_id))
         # update status to "PROCESSING"
@@ -66,6 +66,9 @@ def deploy_jobs(pending, jobs_db, instance_folder, num_threads, ram_size_gb):
             blast_output_path = path.join(temp_dir, "output.txt")
             try:
                 subprocess.check_output(
+                    "".format(
+                        "srun -c {} -n 1 --mem={}G -t 1000 ".format(num_threads, ram_size_gb) if use_srun else ""
+                    ) +
                     "diamond blastp -d {} -q {} -e 1e-10 -o {} -f 6 {} --ignore-warnings --query-cover 80 --id 40 -k 999999 -p {} -b{:.1f} -c1".format(
                         diamond_blast_db_path,
                         fasta_input_path,
@@ -117,6 +120,9 @@ def main():
 
     num_threads = int(argv[1])
     ram_size_gb = int(argv[2])
+    use_srun = False
+    if len(argv) > 3:
+        use_srun = int(argv[3]) == 1
 
     instance_folder = path.join(
         path.dirname(__file__),
@@ -146,7 +152,7 @@ def main():
             print("deploying {} jobs...".format(
                 len(pending)
             ))
-            deploy_jobs(pending, jobs_db, instance_folder, num_threads, ram_size_gb)
+            deploy_jobs(pending, jobs_db, instance_folder, num_threads, ram_size_gb, use_srun)
 
         sleep(5)
 

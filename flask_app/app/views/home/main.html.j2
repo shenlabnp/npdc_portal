@@ -1,4 +1,86 @@
 {% extends "layout.html.j2" %}
 {% block content %}
-  There are {{ strains_count }} strains in the NPDC database
+  {% include "basic_header.html.j2" %}
+
+  <div class="row">
+    <div class="col text-center">
+      The <strong>Natural Products Discovery Center</strong> at UF Scripps comprises the world’s largest natural products-focused collection of bacteria and their genomes.
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col text-center">
+      <svg width="1000" height="250">
+        <g>
+          <rect x="175" y="75" rx="5" ry="5" width="250" height="100" stroke="#393F45" stroke-width="2" fill="#EBEEF1"></rect>
+          <text text-anchor="middle" x="300" y="115" fill="#992222" font-size="30" font-weight="bold">{{ "{:,.0f}".format(strains_count) }}</text>
+          <text text-anchor="middle" x="300" y="150" fill="black" font-size="20">strains in the collection</text>
+          <rect x="575" y="75" rx="5" ry="5" width="250" height="100" stroke="#393F45" stroke-width="2" fill="#EBEEF1"></rect>
+          <text text-anchor="middle" x="700" y="115" fill="#229922" font-size="30" font-weight="bold">{{ "{:,.0f}".format(genomes_count) }}</text>
+          <text text-anchor="middle" x="700" y="150" fill="black" font-size="20">genomes assembled</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col text-center">
+      <p>
+        The synergistic resources of the <strong>Actinobacterial Strain Collection</strong> and 
+        the <strong>Genome Database</strong> enable both cutting-edge bioinformatics analysis <br \> and 
+        follow-up experimentation via physical access to strains. Click below to get started!
+      </p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col text-center">
+      <style>
+        .click_below:hover .click_below_shape {
+          fill: #215383;
+          stroke: #E0671A;
+          cursor:  pointer;
+        }
+        .click_below:hover .click_below_text {
+          fill: #E0671A;
+          cursor: pointer;
+        }
+      </style>
+      <svg width="1000" height="250">
+        <g url="">
+          <circle cx="250" cy="125" r="100" stroke="#393F45" stroke-width="4" fill="#EBEEF1" class="click_below_shape"></circle>
+          <text text-anchor="middle" x="250" y="130" fill="black" font-size="35" font-weight="bold" class="click_below_text">Explore</text>
+        </g>
+        <g class="click_below" url="{{ url_for('genomes.page_genomes') }}">
+          <rect x="35" y="40" rx="5" ry="5" width="150" height="50" stroke="#393F45" stroke-width="3" fill="#EBEEF1" class="click_below_shape"></rect>
+          <text text-anchor="middle" x="110" y="70" fill="black" font-size="20" font-weight="bold" class="click_below_text">Strains</text>
+        </g>
+        <g class="click_below" url="{{ url_for('genomes.page_genomes') }}">
+          <rect x="15" y="100" rx="5" ry="5" width="150" height="50" stroke="#393F45" stroke-width="3" fill="#EBEEF1" class="click_below_shape"></rect>
+          <text text-anchor="middle" x="90" y="130" fill="black" font-size="20" font-weight="bold" class="click_below_text">BGCs</text>
+        </g>
+        <g class="click_below" url="{{ url_for('genomes.page_genomes') }}">
+          <rect x="35" y="160" rx="5" ry="5" width="150" height="50" stroke="#393F45" stroke-width="3" fill="#EBEEF1" class="click_below_shape"></rect>
+          <text text-anchor="middle" x="110" y="190" fill="black" font-size="20" font-weight="bold" class="click_below_text">Genomes</text>
+        </g>
+        <g class="click_below" url="{{ url_for('query.page_main') }}">
+          <circle cx="500" cy="125" r="100" stroke="#393F45" stroke-width="4" fill="#EBEEF1" class="click_below_shape"></circle>
+          <text text-anchor="middle" x="500" y="130" fill="black" font-size="35" font-weight="bold" class="click_below_text">BLAST</text>
+        </g>
+        <g class="click_below" url="{{ url_for('strains.page_strains_ordering') }}">
+          <circle cx="750" cy="125" r="100" stroke="#393F45" stroke-width="4" fill="#EBEEF1" class="click_below_shape"></circle>
+          <text text-anchor="middle" x="750" y="130" fill="black" font-size="35" font-weight="bold" class="click_below_text">Order</text>
+        </g>
+      </svg>
+      <script type="text/javascript">
+      $(document).ready(function() {
+        $(".click_below").click(function() {
+          if $(this).attr("url") !== "" {
+            location.href = $(this).attr("url");
+          }
+        });
+      });
+      </script>
+    </div>
+  </div>
 {% endblock %}
