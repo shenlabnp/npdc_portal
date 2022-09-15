@@ -66,7 +66,7 @@ def deploy_jobs(pending, jobs_db, instance_folder, num_threads, ram_size_gb):
             blast_output_path = path.join(temp_dir, "output.txt")
             try:
                 subprocess.check_output(
-                    "diamond blastp -d {} -q {} -e 1e-10 -o {} -f 6 {} --ignore-warnings --query-cover 80 --id 40 -k 999999 -p {} -b{:.1f} -c4".format(
+                    "diamond blastp -d {} -q {} -e 1e-10 -o {} -f 6 {} --ignore-warnings --query-cover 80 --id 40 -k 999999 -p {} -b{:.1f} -c1".format(
                         diamond_blast_db_path,
                         fasta_input_path,
                         blast_output_path,
