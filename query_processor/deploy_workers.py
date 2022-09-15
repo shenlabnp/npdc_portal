@@ -64,44 +64,29 @@ def deploy_jobs(pending, jobs_db, instance_folder, num_threads, ram_size_gb):
                 "npdc_portal.dmnd"
             )
             blast_output_path = path.join(temp_dir, "output.txt")
-            subprocess.run(
-                "diamond blastp -d {} -q {} -e 1e-10 -o {} -f 6 {} --ignore-warnings --query-cover 80 --id 40 -k 999999 -p {} -b{:.1f} -c4".format(
-                    diamond_blast_db_path,
-                    fasta_input_path,
-                    blast_output_path,
-                    blast_columns,
-                    num_threads,
-                    ram_size_gb / 6
-                ), shell=True
-            )
-
-            if (path.getsize(blast_output_path) > 0): # else, no hit's produced
-                # process BLAST result
-                blast_result = pd.read_csv(
-                    blast_output_path, sep="\t", header=None
+            try:
+                subprocess.check_output(
+                    "diamond blastp -d {} -q {} -e 1e-10 -o {} -f 6 {} --ignore-warnings --query-cover 80 --id 40 -k 999999 -p {} -b{:.1f} -c4".format(
+                        diamond_blast_db_path,
+                        fasta_input_path,
+                        blast_output_path,
+                        blast_columns,
+                        num_threads,
+                        max(1, ram_size_gb / 7)
+                    ), shell=True
                 )
-                blast_result.columns = blast_columns.split(" ")
-                blast_result = blast_result.sort_values(by=["qseqid", "bitscore"], ascending=False)
-                pd.DataFrame({
-                    "query_prot_id": blast_result["qseqid"],
-                    "target_cds_id": blast_result["sseqid"],
-                    "query_start": blast_result["qstart"],
-                    "query_end": blast_result["qend"],
-                    "target_start": blast_result["sstart"],
-                    "target_end": blast_result["send"],
-                    "evalue": blast_result["evalue"],
-                    "bitscore": blast_result["bitscore"],
-                    "pct_identity": blast_result["pident"],
-                }).to_sql("blast_hits", connect(jobs_db), index=False, if_exists="append")
+                status = 2
+            except subprocess.CalledProcessError as e:
+                status = -1
 
-            # update status to "PROCESSED"
+            # update status
             with connect(jobs_db) as con:
                 cur = con.cursor()
                 cur.execute((
                     "update jobs"
                     " set status=?, finished=?"
                     " where id=?"
-                ), (2, datetime.now(), job_id))
+                ), (status, datetime.now(), job_id))
                 con.commit()
 
             print("COMPLETED: job#{}".format(job_id))
