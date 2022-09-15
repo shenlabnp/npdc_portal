@@ -79,6 +79,25 @@ def deploy_jobs(pending, jobs_db, instance_folder, num_threads, ram_size_gb):
             except subprocess.CalledProcessError as e:
                 status = -1
 
+            if status == 2 and (path.getsize(blast_output_path) > 0): # else, no hit's produced
+                # process BLAST result
+                blast_result = pd.read_csv(
+                    blast_output_path, sep="\t", header=None
+                )
+                blast_result.columns = blast_columns.split(" ")
+                blast_result = blast_result.sort_values(by=["qseqid", "bitscore"], ascending=False)
+                pd.DataFrame({
+                    "query_prot_id": blast_result["qseqid"],
+                    "target_cds_id": blast_result["sseqid"],
+                    "query_start": blast_result["qstart"],
+                    "query_end": blast_result["qend"],
+                    "target_start": blast_result["sstart"],
+                    "target_end": blast_result["send"],
+                    "evalue": blast_result["evalue"],
+                    "bitscore": blast_result["bitscore"],
+                    "pct_identity": blast_result["pident"],
+                }).to_sql("blast_hits", connect(jobs_db), index=False, if_exists="append")
+
             # update status
             with connect(jobs_db) as con:
                 cur = con.cursor()
