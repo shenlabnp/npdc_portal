@@ -286,8 +286,8 @@
         let show_result = ($("input[name='select_result_type']:checked").val());
 
         // destroy current summary boxes
-        $("#section_results_by_genome_summary").html("loading data..");
-        $("#section_results_by_bgc_summary").html("loading data..");
+        $("#section_results_by_genome_summary").html("<center><strong>loading data..</center></strong>");
+        $("#section_results_by_bgc_summary").html("<center><strong>loading data..</center></strong>");
 
         // clear current dataTables
         $('#section_results_by_genome_table').DataTable().clear().draw();
