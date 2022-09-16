@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import render_template, request, session, redirect, url_for
+from flask import render_template, request, session, redirect, url_for, flash
 import sqlite3
 import pandas as pd
 
@@ -32,6 +32,25 @@ def page_genomes():
         page_title=page_title,
         page_subtitle=page_subtitle
     )
+
+@blueprint.route("/genomes/view/<int:genome_id>")
+def page_genomes_view(genome_id):
+
+    # check login
+    if not check_logged_in():
+        return redirect(url_for("login.page_login"))
+        
+    # grab genome's npdc id
+    try:
+        npdc_id = pd.read_sql_query((
+            "select npdc_id from genomes"
+            " where id=?"
+        ), sqlite3.connect(conf["db_path"]), params=(genome_id, )).iloc[0, 0]
+    except:        
+        flash("can't find genome id", "alert-danger")
+        return redirect(url_for("home.page_home"))
+
+    return redirect(url_for("strains.page_strains_detail", npdc_id=npdc_id))
 
 
 def get_assembly_grade(genome_row):
