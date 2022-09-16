@@ -1,39 +1,120 @@
 {% extends "layout.html.j2" %}
 {% block content %}
   {% include "basic_header.html.j2" %}
-  <div class="row mt-2">
+  <div class="row mb-4">
   	<div class="col">
 		To support the database, we need to keep a tally on how many and what kinds of users benefited from its services.<br />
-		Therefore, we kindly ask you to sign up and provide your institutional information below (or login if you have already signed up).
+		Therefore, we kindly ask you to sign up and provide your institutional information below (or login if you have already signed up before).
   	</div>
   </div>
-  <div class="row mt-2">
+  <div class="row">
      <div class="col-3">
-       <div class="h4 btn-info text-center mb-2">Existing users</div>
+       <div class="h4 btn-secondary text-center p-2">Existing users</div>
        <form method="post">
-          <div class="form-group">
-             <label>User Name</label>
-             <input type="text" name="username" class="form-control" placeholder="User Name">
+          <div class="form-group mb-4">
+             <label>Username</label>
+             <input type="text" name="username" class="form-control" placeholder="User Name" required>
           </div>
-          <div class="form-group">
+          <div class="form-group mb-4">
              <label>Password</label>
-             <input type="password" name="token" class="form-control" placeholder="Password">
+             <input type="password" name="token" class="form-control" placeholder="Password" required>
           </div>
-          <button type="submit" class="btn btn-primary">Login</button>
+          <div class="form-group mb-4 text-end">
+            <button type="submit" class="btn btn-primary">Login</button>
+          </div>
        </form>
      </div>
      <div class="col-9">
-       <div class="h4 btn-info text-center mb-2">New users</div>
+       <div class="h4 btn-secondary text-center p-2">New users</div>
        <form method="post" action="{{ url_for('root.page') }}register">
-          <div class="form-group">
-             <label>User Name</label>
-             <input type="text" name="username" class="form-control" placeholder="User Name">
+          <div class="form-group mb-4">
+             <label>Username</label>
+             <input type="text" name="username" class="form-control" placeholder="User Name" required>
           </div>
-          <div class="form-group">
+          <div class="form-group mb-4">
              <label>E-mail</label>
-             <input type="text" name="email" class="form-control" placeholder="you@email.address">
+             <input type="email" name="email" class="form-control" placeholder="you@email.address" required>
           </div>
-          <button type="submit" class="btn btn-primary">Sign up</button>
+          <div class="form-group mb-4">
+             <label>Name</label>
+             <div class="row">
+               <div class="col-5 pr-0 mr-0">
+                <input type="text" name="firstname" class="form-control" placeholder="First Name" required>
+               </div>
+               <div class="col-7 pl-0 ml-0">
+                <input type="text" name="lastname" class="form-control" placeholder="Last Name" required>
+               </div>
+             </div>
+          </div>
+          <div class="form-group mb-4">
+            <div class="row">
+               <div class="col-2">
+                  <label>Category </label>
+               </div>
+               <div class="col-10 text-start btn-group" role="group">
+                <input type="radio" class="btn-check btn-outline-secondary" name="category" id="category_academia" value="academia" checked>
+                <label class="btn btn-outline-secondary btn-outline-secondary" for="category_academia">Academia</label>
+                <input type="radio" class="btn-check btn-outline-secondary" name="category" id="category_nonacademia" value="nonacademia">
+                <label class="btn btn-outline-secondary" for="category_nonacademia">Non-academia</label>
+              </div>
+            </div>
+           </div>
+          <div class="form-group mb-4">
+             <label>Job title (for academics)</label>
+             <select class="form-select" id="jobtitle" name="jobtitle">
+               {% for idx, name in job_titles %}
+               <option value="{{ idx }}">{{ name }}</option>
+               {% endfor %}
+              </select>
+          </div>
+          <div class="form-group mb-4">
+             <label>Institution's country</label>
+             <select class="form-select" id="country" name="country" required>
+               {% for idx, name in countries %}
+               <option value="{{ idx }}">{{ name }}</option>
+               {% endfor %}
+             </select>
+          </div>
+          <div class="form-group mb-4">
+             <label>Do you have (check all that applies):</label>
+             <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="funding_nih" id="funding_nih" />
+                <label class="form-check-label" for="funding_nih">
+                  NIH funding
+                </label>
+              </div>
+             <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="funding_nsf" id="funding_nsf" />
+                <label class="form-check-label" for="funding_nsf">
+                  NSF funding
+                </label>
+              </div>
+             <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="funding_others" id="funding_others" />
+                <label class="form-check-label" for="funding_others">
+                  Other US government agency funding
+                </label>
+              </div>
+          </div>
+          <div class="form-group mb-4 text-end">
+            <button type="submit" class="btn btn-primary">Sign up</button>
+          </div>
+          <script type="text/javascript">
+            function check_category() {
+               let selected_category = $("input[name=category]:checked").val();
+               if (selected_category === "academia") {
+                  $("#jobtitle").parent().removeClass("d-none");
+               } else {
+                  $("#jobtitle").parent().addClass("d-none");
+               }               
+            }
+            $(document).ready(function() {
+               $("input[type=radio][name=category]").on("change", function() {
+                  check_category();
+               });
+               check_category();
+            });
+          </script>
        </form>
      </div>
   </div>

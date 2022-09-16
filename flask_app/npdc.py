@@ -8,6 +8,7 @@ from werkzeug.serving import run_simple
 from sys import argv
 import json
 import datetime
+import pandas as pd
 
 # import global config
 from app.config import conf
@@ -25,6 +26,16 @@ def portal():
             cur = con.cursor()
             cur.executescript(open(path.join(path.dirname(path.dirname(path.realpath(__file__))), "sql_schemas", "sql_schema_accounts.txt")).read())
             con.commit()
+
+            # insert countries data
+            countries_ref = pd.read_csv(path.join(path.dirname(path.dirname(path.realpath(__file__))), "sql_schemas", "country-capitals.csv"), sep=",")
+            pd.DataFrame({
+                "code": countries_ref["CountryCode"],
+                "name": countries_ref["CountryName"],
+                "lat": countries_ref["CapitalLatitude"],
+                "long": countries_ref["CapitalLongitude"],
+                "continent": countries_ref["ContinentName"]
+            }).to_sql("countries", con, index=False, if_exists="append")
 
     # initiate app
     app = Flask(

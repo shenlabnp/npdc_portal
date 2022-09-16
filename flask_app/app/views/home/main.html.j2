@@ -75,7 +75,7 @@
       <script type="text/javascript">
       $(document).ready(function() {
         $(".click_below").click(function() {
-          if $(this).attr("url") !== "" {
+          if ($(this).attr("url") !== "") {
             location.href = $(this).attr("url");
           }
         });
