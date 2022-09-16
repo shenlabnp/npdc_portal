@@ -93,6 +93,11 @@
                     </div>
                   </div>
                 </div>
+                <div class="row m-2">
+                  <div class="col text-end">
+                    <button class="btn btn-primary" id="select_result_update_btn">Update</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -288,7 +293,13 @@
     $(document).ready(function(){
 
       function updateShowResult() {
-        let show_result = ($("input[name='select_result_type']:checked").val());
+        let selected_type = $("input[name='select_result_type']:checked");
+        let show_result = selected_type.val();
+        let selected_prot = $("input[name='select_result_protein']:checked");
+        let prot_id = selected_prot.val();
+
+        // disable button
+        $("#select_result_update_btn").addClass("disabled");
 
         // destroy current summary boxes
         $("#section_results_by_genome_summary").html("<center><strong>loading data..</center></strong>");
@@ -308,11 +319,12 @@
           dataType: "json",
           data: {
             "jobid": {{ job_id }},
-            "protid": ($("input[name='select_result_protein']:checked").val()),
+            "protid": prot_id,
             "type": show_result
           },
           failure: function(response) {
             alert("fail to fetch data, please refresh the page.")
+            $("#select_result_update_btn").removeClass("disabled");
           },
           success: function (response) {
             let summary_content = "";
@@ -424,12 +436,14 @@
             
             $("#section_results_by_" + show_result + "_summary").html(summary_content);
             $("#section_results_by_" + show_result + "_table").DataTable().rows.add(datatable_data).draw();
+            $("#select_result_update_btn").removeClass("disabled");
           }
         });
 
       }
 
-      $("#select_result * input").on("change", function() { updateShowResult(); });
+      $("#select_result_update_btn").click(function() { updateShowResult(); });
+
       updateShowResult();
     });
   </script>
