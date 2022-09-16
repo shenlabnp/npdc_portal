@@ -93,8 +93,11 @@
                     </div>
                   </div>
                 </div>
-                <div class="row m-2">
-                  <div class="col text-end">
+                <div class="row mt-4">
+                  <div class="col-8">
+                    <p id="select_result_selected_text"></p>
+                  </div>
+                  <div class="col-4 text-end">
                     <button class="btn btn-primary" id="select_result_update_btn">Update</button>
                   </div>
                 </div>
@@ -437,6 +440,12 @@
             $("#section_results_by_" + show_result + "_summary").html(summary_content);
             $("#section_results_by_" + show_result + "_table").DataTable().rows.add(datatable_data).draw();
             $("#select_result_update_btn").removeClass("disabled");
+
+            $("#select_result_selected_text").html(
+              "Current selected inputs: " + selected_type.siblings(".form-check-label").text() +
+              " / " + (prot_id == 0? "All" : selected_prot.siblings(".form-check-label").text())
+            );
+
           }
         });
 
