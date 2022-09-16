@@ -2,4 +2,37 @@
 {% block content %}
   {% include "basic_header.html.j2" %}
 
+  <div class="accordion accordion-flush" id="accordionFlushExample">
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="flush-headingOne">
+        <button class="accordion-button collapsed btn-secondary" type="button" data-toggle="collapse" data-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+        <strong>Mission of the NPDC</strong>         
+        </button>
+      </h2>
+      <div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-parent="#accordionFlushExample">
+        <div class="accordion-body">
+          
+          <div class="row mt-4">
+            <div class="col">
+              (i) Develop a shared state-of-the-art actinobacterial strain collection and genome database to revitalize natural products discovery <br \>
+              (ii) Serve the broad scientific community to promote research and development on natural products and associated applications <br \>
+            </div>
+          </div>
+
+          <div class="row mt-4">
+            <div class="col">
+              Over the past two decades, ~23,000 non-pathogenic actinobacterial genomes have been sequenced and made publicly available. We have initiated a large-scale genome sequencing campaign to sequence all actinobacterial strains at NPDC over the next five years, ultimately quintupling the number of actinobacterial genomes currently available.
+            </div>
+          </div>
+
+          <div class="row mt-4">
+            <div class="col">
+              NPDC: The actinobacterial strain collection at the Natural Products Discovery Center (NPDC) at UF Scripps currently contains a total of 125,127 strains, of which at least 62,328 are actinobacteria, 14,465 other bacteria, and 48,334 unidentified. These strains were isolated over the last eight decades, with the majority acquired between 1940s to the 2010s. The wide time range of collection has allowed for capture of chemical diversity based on evolution and environmental cues, which change over time and are impossible to reproduce in laboratory settings today. The 62,328 actinobacteria in the collection, spanning at least 88 different genera, were isolated from 69 different countries with different climate and ecology factors that further increase natural product structural diversity.  Although these statistics, as well as taxonomic data, are incomplete, the fraction of the strains whose information is available provides a glimpse into the vast spatial, temporal, and taxonomic diversity of the entire collection.​
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}
