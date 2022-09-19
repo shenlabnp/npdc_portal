@@ -315,13 +315,13 @@
                       <table id="list_related_strains" class="table table-striped table-bordered table-hover nowrap">
                         <thead class="thead-light">
                           <tr>
-                            <th>Contig</th>
-                            <th>BGC</th>
-                            <th>GCF</th>
-                            <th>BGC quality</th>
-                            <th>BGC class</th>
-                            <th>Size (kb)</th>
-                            <th>Num. of genes</th>
+                            <th>Detail</th>
+                            <th>Name</th>
+                            <th>Mash cluster</th>
+                            <th>Assembly quality</th>
+                            <th>GC content</th>
+                            <th>Num. of BGCs</th>
+                            <th>Known BGC hits</th>
                           </tr>
                         </thead>
                         <tbody class="tbody">
@@ -331,12 +331,64 @@
                             $("#list_related_strains").DataTable({
                               searching: false,
                               ordering:  false,
-                              serverSide: false,
+                              serverSide: true,
                               responsive: false,
                               processing: true,
                               bLengthChange: false,
                               iDisplayLength: 5,
+                              ajax: {
+                                url: "{{ url_for('root.page') }}api/genomes/get_overview",
+                                type: "GET",
+                                data: function(d) {
+                                  d["mash_group"] = "{{ strain_data["genome_mash_species"] }}"
+                                  d["exclude_id"] = "{{ strain_data["genome_id"] }}"
+                                }
+                              },
                               "columnDefs": [
+                                { className: "text-center", targets: [0] },
+                                { className: "text-end", targets: [4, 5, 6] },
+                                {
+                                  targets: 0,
+                                  render: function(data, type, row, meta) {
+                                    let [genome_id, npdc_id] = data
+                                    return "<a href=\"{{ url_for('root.page') }}genomes/view/" + genome_id + "\"><button class=\"btn btn-primary\">NPDC-" + npdc_id + "</button></a>";
+                                  }
+                                },
+                                {
+                                  targets: 1,
+                                  render: function(data, type, row, meta) {
+                                    return "<i>" + data + "</i>";
+                                  }
+                                },
+                                {
+                                  targets: 3,
+                                  render: function(data, type, row, meta) {
+                                    let html_text = "";
+                                    let badge_class = {
+                                      "high": "rounded-pill bg-success",
+                                      "good": "bg-success",
+                                      "fair": "bg-secondary",
+                                      "fragmented": "bg-warning"
+                                    };
+                                    html_text += "<span class='badge m-1 " + badge_class[data["grade"]] + "'>" + data["grade"] + "</span>";
+                                    if (data["cleaned"]) {
+                                      html_text += "<span class='badge rounded-pill bg-warning m-1'>" + "cleaned-up" + "</span>";
+                                    }
+                                    return html_text;
+                                  }
+                                },
+                                {
+                                  targets: 4,
+                                  render: function(data, type, row, meta) {
+                                    return data.toFixed(1) + " %";
+                                  }
+                                },
+                                {
+                                  targets: 6,
+                                  render: function(data, type, row, meta) {
+                                    return data.length;
+                                  }
+                                }
                               ]
                             });
                           });

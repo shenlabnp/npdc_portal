@@ -78,6 +78,15 @@ def get_overview():
     with sqlite3.connect(conf["db_path"]) as con:
         cur = con.cursor()
 
+        genome_filter = "1"
+        genome_filter_params = []
+        if request.args.get("mash_group", "") != "":
+            genome_filter += " and genome_mash_species like ?"
+            genome_filter_params.append(request.args.get("mash_group"))
+        if request.args.get("exclude_id", "") != "":
+            genome_filter += " and genomes.id<>?"
+            genome_filter_params.append(request.args.get("exclude_id"))
+
         # fetch total records
         result["recordsTotal"] = cur.execute((
             "select count(id)"
@@ -86,28 +95,40 @@ def get_overview():
         )).fetchall()[0][0]
 
         # fetch total records (filtered)
-        result["recordsFiltered"] = cur.execute((
-            "select count(id)"
-            " from genomes"
-            " where 1"
-        )).fetchall()[0][0]
+        result["recordsFiltered"] = cur.execute("".join([
+            "select count(id) from ("
+                "select genomes.*, group_concat(distinct bgcs.id) as bgcs, group_concat(bgcs.mibig_name, ';') as mibig_bgcs",
+                " from genomes left join (",
+                "    select bgcs.genome_id, bgcs.id, mibig.mibig_id, mibig.mibig_name",
+                "    from bgcs left join (",
+                "      select bgc_id, mibig_id, mibig.name_dereplicated as mibig_name",
+                "      from bgc_mibig_hit inner join mibig on mibig.id=bgc_mibig_hit.mibig_id",
+                "      where bgc_mibig_hit.hit_pct >= ?",
+                "    ) as mibig on mibig.bgc_id=bgcs.id",
+                " ) as bgcs on genomes.id=bgcs.genome_id",
+                " where 1",
+                (" and " + genome_filter) if genome_filter != "" else "",
+                " group by genomes.id",
+            ")"
+        ]), tuple([*[conf["knowncb_cutoff"]], *genome_filter_params])).fetchall()[0][0]
 
         result["data"] = []
 
-        query_result = pd.read_sql_query((
-            "select genomes.*, group_concat(distinct bgcs.id) as bgcs, group_concat(bgcs.mibig_name, ';') as mibig_bgcs"
-            " from genomes left join ("
-            "    select bgcs.genome_id, bgcs.id, mibig.mibig_id, mibig.mibig_name"
-            "    from bgcs left join ("
-            "      select bgc_id, mibig_id, mibig.name_dereplicated as mibig_name"
-            "      from bgc_mibig_hit inner join mibig on mibig.id=bgc_mibig_hit.mibig_id"
-            "      where bgc_mibig_hit.hit_pct >= {}"
-            "    ) as mibig on mibig.bgc_id=bgcs.id"
-            " ) as bgcs on genomes.id=bgcs.genome_id"
-            " where 1"
-            " group by genomes.id"
-            " limit {} offset {}"
-        ).format(conf["knowncb_cutoff"], limit, offset), con)
+        query_result = pd.read_sql_query("".join([
+            "select genomes.*, group_concat(distinct bgcs.id) as bgcs, group_concat(bgcs.mibig_name, ';') as mibig_bgcs",
+            " from genomes left join (",
+            "    select bgcs.genome_id, bgcs.id, mibig.mibig_id, mibig.mibig_name",
+            "    from bgcs left join (",
+            "      select bgc_id, mibig_id, mibig.name_dereplicated as mibig_name",
+            "      from bgc_mibig_hit inner join mibig on mibig.id=bgc_mibig_hit.mibig_id",
+            "      where bgc_mibig_hit.hit_pct >= ?",
+            "    ) as mibig on mibig.bgc_id=bgcs.id",
+            " ) as bgcs on genomes.id=bgcs.genome_id",
+            " where 1",
+            (" and " + genome_filter) if genome_filter != "" else "",
+            " group by genomes.id",
+            " limit ? offset ?"
+        ]), con, params=tuple([*[conf["knowncb_cutoff"]], *genome_filter_params, *[limit, offset]]))
         for idx, row in query_result.iterrows():
 
             assembly_grade = ""
