@@ -131,24 +131,13 @@ def get_overview():
         ]), con, params=tuple([*[conf["knowncb_cutoff"]], *genome_filter_params, *[limit, offset]]))
         for idx, row in query_result.iterrows():
 
-            assembly_grade = ""
-
-            if row["genome_num_contigs"] <= 50:
-                assembly_grade = "high"
-            elif row["genome_num_contigs"] <= 100:
-                assembly_grade = "good"
-            elif row["genome_num_contigs"] <= 500:
-                assembly_grade = "fair"
-            else:
-                assembly_grade = "fragmented"
-
             result["data"].append([
                 (row["id"], row["npdc_id"]),
                 (row["genome_gtdb_species"] if row["genome_gtdb_species"] != ""
                     else row["genome_gtdb_genus"] + " spp."),
                 row["genome_mash_species"],
                 {
-                    "grade": assembly_grade,
+                    "grade": get_assembly_grade(row),
                     "cleaned": row["is_cleaned_up"],
                     "n50": row["genome_n50"],
                     "num_contigs": row["genome_num_contigs"],

@@ -272,12 +272,31 @@
                             $("#list_bgcs").DataTable({
                               searching: false,
                               ordering:  false,
-                              serverSide: false,
+                              serverSide: true,
                               responsive: false,
                               processing: true,
                               bLengthChange: false,
                               iDisplayLength: 5,
+                              ajax: {
+                                url: "{{ url_for('root.page') }}api/bgcs/get_overview",
+                                type: "GET",
+                                data: function(d) {
+                                  d["genome_id"] = {{ strain_data["genome_id"] }};
+                                }
+                              },
                               "columnDefs": [
+                                {
+                                  targets: 3,
+                                  render: function(data, type, row, meta) {
+                                    let html_text = "";
+                                    let badge_class = {
+                                      1: ["fragmented", "rounded-pill bg-warning"],
+                                      0: ["complete", "rounded-pill bg-success"]
+                                    };
+                                    html_text += "<span class='badge m-1 " + badge_class[data][1] + "'>" + badge_class[data][0] + "</span>";
+                                    return html_text;
+                                  }
+                                }
                               ]
                             });
                           });
