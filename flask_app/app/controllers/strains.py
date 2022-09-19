@@ -3,10 +3,14 @@
 from flask import render_template, request, session, redirect, url_for
 import sqlite3
 import pandas as pd
+from datetime import datetime
+from os import path
 
 # import global config
 from ..config import conf
 from ..session import check_logged_in
+
+from .genomes import get_assembly_grade
 
 # set blueprint object
 from flask import Blueprint
@@ -64,21 +68,59 @@ def page_strains_detail(npdc_id):
 
     with sqlite3.connect(conf["db_path"]) as con:
         strain_data = pd.read_sql_query((
-            "select *"
-            " from strains where npdc_id={}"
-        ).format(npdc_id),  con).iloc[0]
+            "select strains.*, genomes.*, genomes.id as genome_id"
+            " from strains left join genomes on strains.npdc_id=genomes.npdc_id"
+            " where strains.npdc_id=?"
+            " limit 1"
+        ),  con, params=(npdc_id, )).fillna("").iloc[0]
 
-    # page title
-    page_title = "Unknown bacterium"
-    page_subtitle = (
-        "(NPDC{:06d})".format(strain_data["npdc_id"])
-    )
+        strain_data = strain_data.groupby(strain_data.index).first()
+
+        if strain_data["genome_id"] != "":
+            strain_data["complete_bgcs"] = pd.read_sql_query((
+                "select count(id)"
+                " from bgcs"
+                " where genome_id=? and fragmented=0"
+            ),  con, params=(int(strain_data["genome_id"]), )).iloc[0, 0]
+            strain_data["fragmented_bgcs"] = pd.read_sql_query((
+                "select count(id)"
+                " from bgcs"
+                " where genome_id=? and fragmented=1"
+            ),  con, params=(int(strain_data["genome_id"]), )).iloc[0, 0]
+            strain_data["mibig_hits"] = pd.read_sql_query((
+                "select count(id)"
+                " from bgcs inner join bgc_mibig_hit on bgcs.id=bgc_mibig_hit.bgc_id"
+                " where bgcs.genome_id=? and bgc_mibig_hit.hit_pct >= ?"
+            ),  con, params=(int(strain_data["genome_id"]), conf["knowncb_cutoff"])).iloc[0, 0]
+            strain_data["genome_quality"] = get_assembly_grade(strain_data)
+        else:
+            strain_data["complete_bgcs"] = ""
+            strain_data["fragmented_bgcs"] = ""
+            strain_data["mibig_hits"] = ""
+            strain_data["genome_quality"] = ""
     
+        strain_data["name"] = "Unknown bacterium"
+        if strain_data["genome_gtdb_species"] != "":
+            strain_data["name"] = strain_data["genome_gtdb_species"]
+        elif strain_data["genome_gtdb_genus"] != "":
+            strain_data["name"] = strain_data["genome_gtdb_genus"] + " spp."
+        elif strain_data["empirical_genus"] != "":
+            strain_data["name"] = "Unknown " + strain_data["empirical_genus"]
+        elif strain_data["empirical_category"] != "":
+            strain_data["name"] = "Unknown " + strain_data["empirical_category"]
+
+        if strain_data["collection_date"] != "":
+            strain_data["collection_date"] = datetime.strftime(
+                datetime.strptime(strain_data["collection_date"], "%Y-%m-%d"), "%B %-m, %Y"
+            )
+
+        strain_data["picture_available"] = path.exists(path.join(conf["strain_pictures_folder_path"], "{}.jpg".format(strain_data["npdc_id"])))
+
+        strain_data = strain_data.replace("", "n/a").replace("Unknown", "n/a").to_dict()
+
     # render view
     return render_template(
         "strains/detail.html.j2",
-        page_title=page_title,
-        page_subtitle=page_subtitle,
         strain_data=strain_data
     )
 

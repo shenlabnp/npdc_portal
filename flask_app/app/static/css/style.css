@@ -7,6 +7,19 @@
 	border-right: 1px solid rgba(0, 0, 0, 0.1);
 }
 
+h1 {
+	font-weight:  bold;
+	font-size: xx-large;
+	color: #2F5597;
+}
+
+img.img-strains {
+  max-width:400px;
+  max-height:400px;
+  width: auto;
+  height: auto;
+}
+
 #page_title {
 	font-weight:  bold;
 	font-size: xx-large;

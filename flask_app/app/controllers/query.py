@@ -270,7 +270,7 @@ def get_results_list():
                             "    from bgcs left join (",
                             "      select bgc_id, mibig_id, mibig.name_dereplicated as mibig_name",
                             "      from bgc_mibig_hit inner join mibig on mibig.id=bgc_mibig_hit.mibig_id",
-                            "      where bgc_mibig_hit.hit_pct >= 40",
+                            "      where bgc_mibig_hit.hit_pct >= ?",
                             "    ) as mibig on mibig.bgc_id=bgcs.id",
                             " ) as bgcs on genomes.id=bgcs.genome_id",
                             " group by genomes.id"
@@ -283,6 +283,7 @@ def get_results_list():
                 "p": (
                     job_id,
                     query_protein_id if query_protein_id != 0 else "1",
+                    conf["knowncb_cutoff"],
                     1 if query_protein_id != 0 else num_query_proteins
                 )
             }

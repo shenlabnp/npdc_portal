@@ -101,13 +101,13 @@ def get_overview():
             "    from bgcs left join ("
             "      select bgc_id, mibig_id, mibig.name_dereplicated as mibig_name"
             "      from bgc_mibig_hit inner join mibig on mibig.id=bgc_mibig_hit.mibig_id"
-            "      where bgc_mibig_hit.hit_pct >= 40"
+            "      where bgc_mibig_hit.hit_pct >= {}"
             "    ) as mibig on mibig.bgc_id=bgcs.id"
             " ) as bgcs on genomes.id=bgcs.genome_id"
             " where 1"
             " group by genomes.id"
             " limit {} offset {}"
-        ).format(limit, offset), con)
+        ).format(conf["knowncb_cutoff"], limit, offset), con)
         for idx, row in query_result.iterrows():
 
             assembly_grade = ""

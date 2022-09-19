@@ -74,14 +74,16 @@
               let html_text = "";
               let [status, job_id] = data;
               switch(status) {
+                case "PENDING":
+                case "PROCESSING":
+                  html_text += "<a href=\"{{ url_for('root.page') }}query/result/" + job_id + "\"><button class=\"btn btn-info\">" + status + "</button></a>";
+                  break;
                 case "PROCESSED":
                   html_text += "<a href=\"{{ url_for('root.page') }}query/result/" + job_id + "\"><button class=\"btn btn-success\">" + status + "</button></a>";
                   break;
                 case "EXPIRED":
                   html_text += "<a href=\"{{ url_for('root.page') }}query/result/" + job_id + "\"><button class=\"btn btn-warning\">" + status + "</button></a>";
                   break;
-                case "PENDING":
-                case "PROCESSING":
                 case "NOT_STARTED":
                 case "FAILED":
                 case "DELETED":
