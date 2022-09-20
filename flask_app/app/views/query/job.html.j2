@@ -170,7 +170,7 @@
                   {
                     targets: 1,
                     render: function(data, type, row, meta) {
-                      return "<i>" + data + "</i>";
+                      return "<i><strong style='color: #222266;'>" + data + "</strong></i>";
                     }
                   },
                   {
@@ -205,6 +205,7 @@
                 ]
               });
             });
+            $("#section_results_by_genome_table").width("100%");
           </script>
         </table>
       </div>
@@ -218,6 +219,7 @@
               <th>Genome</th>
               <th>Name</th>
               <th>Mash cluster</th>
+              <th>Contig</th>
               <th>BGC</th>
               <th>GCF</th>
               <th>BGC quality</th>
@@ -239,8 +241,9 @@
                 aLengthMenu: [[25, 50, 250], [25, 50, 250]],
                 iDisplayLength: 25,
                 "columnDefs": [
-                  { className: "text-center", targets: [0, 3] },
-                  { className: "text-end", targets: [7, 8] },
+                  { className: "text-center", targets: [0, 4] },
+                  { className: "text-end", targets: [8, 9] },
+                  { visible: false, searchable: false, targets: [2] },
                   {
                     targets: 0,
                     render: function(data, type, row, meta) {
@@ -256,7 +259,7 @@
                     }
                   },
                   {
-                    targets:3,
+                    targets:4,
                     render: function(data, type, row, meta) {
                       let [bgc_id, npdc_id, contig_num, region_name] = data;
                       let bgc_num = parseInt(region_name.split("region")[1], 10);
@@ -265,13 +268,13 @@
                     }
                   },
                   {
-                    targets: 4,
+                    targets: 5,
                     render: function(data, type, row, meta) {
                       return "GCF-" + data;
                     }
                   },
                   {
-                    targets: 5,
+                    targets: 6,
                     render: function(data, type, row, meta) {
                       let html_text = "";
                       let badge_class = {
@@ -283,7 +286,7 @@
                     }
                   },
                   {
-                    "targets": 6,
+                    "targets": 7,
                     render: function(data, type, row, meta) {
                       let html_text = "<ul class=\"list-unstyled mb-0\">";
                       data.forEach((bgc_class) => {
@@ -296,6 +299,7 @@
                 ]
               });
             });
+            $("#section_results_by_bgc_table").width("100%");
           </script>
         </table>
       </div>
@@ -363,7 +367,7 @@
                   });
                   count_most_genus_pct = (count_most_genus_pct / count_genome * 100).toFixed(0);
                   summary_content = (
-                    "Your query is found in <strong>" + count_genome + "</strong> genome(s) of <strong>" + count_species + "</strong> different species." +
+                    "Your query is found in <strong>" + count_genome + "</strong> genome(s) of <strong>" + count_species + "</strong> different Mash cluster(s)." +
                     " Most of the genome(s), <strong>" + count_most_genus_pct + "%</strong>, were coming from" +
                     " the genus <strong><i>" + count_most_genus + "</i></strong>."
                   )
@@ -426,7 +430,7 @@
                   summary_content = (
                     "Your query is found in <strong>" + count_bgc + "</strong> BGC(s), forming a total of <strong>" + count_gcf + "</strong> GCF(s)." +
                     " The main biosynthetic class of the BGCs is <strong>" + count_most_class + " (" + count_most_class_pct + "%)</strong>." +
-                    " These BGCs were coming from  <strong>" + count_genome + "</strong> genome(s) of <strong>" + count_species + "</strong> different species." +
+                    " These BGCs were coming from  <strong>" + count_genome + "</strong> genome(s) of <strong>" + count_species + "</strong> different Mash cluster(s)." +
                     " Most of the BGCs, <strong>" + count_most_genus_pct + "%</strong>, were coming from" +
                     " the genus <strong><i>" + count_most_genus + "</i></strong>."
                   )
@@ -438,6 +442,7 @@
                     [response["genome_id"][i], response["npdc_id"][i]],
                     response["genome_gtdb_species"][i] != ""? response["genome_gtdb_species"][i]:(response["genome_gtdb_genus"][i] + " spp."),
                     response["genome_mash_species"][i],
+                    response["contig_num"][i],
                     [response["id"][i], response["npdc_id"][i], response["contig_num"][i], response["orig_identifier"][i]],
                     response["gcf"][i],
                     response["fragmented"][i],

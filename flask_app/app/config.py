@@ -18,4 +18,5 @@ conf["email_config_path"] = path.join(conf["instance_folder"], "email_config.jso
 conf["strain_pictures_folder_path"] = path.join(conf["instance_folder"], "strain_pictures")
 
 # other app-specific configurations
-conf["knowncb_cutoff"] = 40
+conf["is_in_beta"] = True
+conf["knowncb_cutoff"] = 80

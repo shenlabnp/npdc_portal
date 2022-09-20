@@ -68,7 +68,6 @@ def portal():
     @app.context_processor
     def inject_global():
         gbal = {
-            "version": "1.0.0",
             "cur_userdata": session.get("userdata", None)
         }
 
@@ -79,6 +78,11 @@ def portal():
             last_db_updated = datetime.datetime.strptime(last_db_updated, "%Y-%m-%d %H:%M:%S")
             now_date = datetime.datetime.now()
             last_db_updated_days = (now_date - last_db_updated).days
+
+        if conf["is_in_beta"]:
+            gbal["version"] = "beta"
+        else:
+            gbal["version"] = datetime.datetime.strftime(last_db_updated, "%Y.%m.%d")
 
         # get last query db update stats
         with sqlite3.connect(conf["query_db_path"]) as con:
@@ -93,7 +97,7 @@ def portal():
         nav_items.append(("Genome database", url_for("genomes.page_genomes")))
         nav_items.append(("BGC database", url_for("bgcs.page_bgcs")))
         nav_items.append(("BLAST", url_for("query.page_main")))
-        nav_items.append(("Order Strains", url_for("strains.page_strains_ordering")))
+        nav_items.append(("Purchase Strains", url_for("strains.page_strains_ordering")))
         nav_items.append(("Help", url_for("feedback.page_feedback")))
         nav_items.append(("About NPDC", url_for("about.page_about")))
 

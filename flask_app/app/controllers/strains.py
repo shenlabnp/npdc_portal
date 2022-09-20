@@ -59,6 +59,22 @@ def page_strains_ordering():
     )
 
 
+def get_strain_name(data):
+
+    result = "Unknown bacterium"
+    if data["genome_gtdb_species"] != "":
+        result = data["genome_gtdb_species"]
+    elif data["genome_gtdb_genus"] != "":
+        result = data["genome_gtdb_genus"] + " spp."
+    elif data["empirical_genus"] != "":
+        result = "Unknown " + data["empirical_genus"]
+    elif data["empirical_category"] != "":
+        result = "Unknown " + data["empirical_category"]
+
+    return result
+
+
+
 @blueprint.route("/strains/view/<int:npdc_id>")
 def page_strains_detail(npdc_id):
 
@@ -99,15 +115,7 @@ def page_strains_detail(npdc_id):
             strain_data["mibig_hits"] = ""
             strain_data["genome_quality"] = ""
     
-        strain_data["name"] = "Unknown bacterium"
-        if strain_data["genome_gtdb_species"] != "":
-            strain_data["name"] = strain_data["genome_gtdb_species"]
-        elif strain_data["genome_gtdb_genus"] != "":
-            strain_data["name"] = strain_data["genome_gtdb_genus"] + " spp."
-        elif strain_data["empirical_genus"] != "":
-            strain_data["name"] = "Unknown " + strain_data["empirical_genus"]
-        elif strain_data["empirical_category"] != "":
-            strain_data["name"] = "Unknown " + strain_data["empirical_category"]
+        strain_data["name"] = get_strain_name(strain_data)
 
         if strain_data["collection_date"] != "":
             strain_data["collection_date"] = datetime.strftime(
@@ -152,21 +160,25 @@ def get_overview():
         result["data"] = []
 
         query_result = pd.read_sql_query((
-            "select *"
-            " from strains order by npdc_id"
+            "select strains.*, genomes.*, genomes.id as genome_id"
+            " from strains left join genomes on strains.npdc_id=genomes.npdc_id"
             " limit {} offset {}"
-        ).format(limit, offset), con)
-
+        ).format(limit, offset), con).fillna("")
+        query_result = query_result.loc[:,~query_result.columns.duplicated()]
 
         for idx, row in query_result.iterrows():
+
+            taxonomy = ""
+
             result["data"].append([
                 row["npdc_id"],
-                "-",
-                "-",
-                "-" if row["collection_date"] == "" else row["collection_date"],
+                get_strain_name(row),
+                row["genome_id"] != "",
+                "n/a" if row["collection_date"] == "" else row["collection_date"],
                 "Unknown" if row["collection_country"] == "" else row["collection_country"],
-                "-",
-                "-",
+                "n/a",
+                "n/a",
+                "n/a",
             ])
 
     return result

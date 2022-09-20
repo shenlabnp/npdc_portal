@@ -84,8 +84,11 @@ def get_overview():
         ]), con, params=tuple([*sql_filter_params, *[limit, offset]]))
         for idx, row in query_result.iterrows():
             result["data"].append([
+                (row["genome_id"], row["npdc_id"]),
+                row["genome_gtdb_genus"] + " spp." if row["genome_gtdb_species"] else row["genome_gtdb_species"],
+                row["genome_mash_species"],
                 row["contig_num"],
-                row["id"],
+                (row["id"], row["npdc_id"], row["contig_num"], row["orig_identifier"]),
                 row["gcf"],
                 row["fragmented"],
                 list(set(row["bgc_class"].split(";"))),
