@@ -19,9 +19,19 @@ def page_bgcs():
     # check login
     if not check_logged_in():
         return redirect(url_for("login.page_login"))
+        
+    # page title
+    page_title = "Biosynthetic Gene Clusters"
+    page_subtitle = (
+        ""
+    )
 
-    flash("page not implemented yet", "alert-warning")
-    return redirect(url_for("home.page_home"))
+    # render view
+    return render_template(
+        "bgcs/main.html.j2",
+        page_title=page_title,
+        page_subtitle=page_subtitle
+    )
 
 
 @blueprint.route("/api/bgcs/get_overview", methods=["GET"])
@@ -43,39 +53,31 @@ def get_overview():
 
         # fetch total records
         result["recordsTotal"] = cur.execute((
-            "select count(id)"
-            " from bgcs"
-            " where 1"
+            "select seq"
+            " from sqlite_sequence"
+            " where name like 'bgcs'"
         )).fetchall()[0][0]
 
         # fetch total records (filtered)
-        result["recordsFiltered"] = cur.execute("".join([
-            "select count(id) from (",
-                "select bgcs.*, genomes.genome_mash_species, genomes.npdc_id",
-                ", genomes.genome_gtdb_species, genomes.genome_gtdb_genus",
-                ", count(cds_id) as num_cds",
-                ", group_concat(bgc_class.name, ';') as bgc_class from bgcs",
-                " inner join bgc_class_map on bgc_class_map.bgc_id=bgcs.id",
-                " inner join bgc_class on bgc_class_map.class_id=bgc_class.id",
-                " inner join genomes on genomes.id=bgcs.genome_id",
-                " inner join cds_bgc_map on cds_bgc_map.bgc_id=bgcs.id",
-                " where 1",
-                (" and " + sql_filter) if sql_filter != "" else "",
-                " group by bgcs.id",
-            ")"
-        ]), tuple([*sql_filter_params])).fetchall()[0][0]
+        result["recordsFiltered"] = len(cur.execute("".join([
+            "select bgcs.id from bgcs",
+            " left join bgc_class_map on bgc_class_map.bgc_id=bgcs.id",
+            " left join bgc_class on bgc_class_map.class_id=bgc_class.id",
+            " left join genomes on genomes.id=bgcs.genome_id",
+            " where 1",
+            (" and " + sql_filter) if sql_filter != "" else "",
+            " group by bgcs.id"
+        ]), tuple([*sql_filter_params])).fetchall())
 
         result["data"] = []
 
         query_result = pd.read_sql_query("".join([
             "select bgcs.*, genomes.genome_mash_species, genomes.npdc_id",
             ", genomes.genome_gtdb_species, genomes.genome_gtdb_genus",
-            ", count(cds_id) as num_cds",
             ", group_concat(bgc_class.name, ';') as bgc_class from bgcs",
-            " inner join bgc_class_map on bgc_class_map.bgc_id=bgcs.id",
-            " inner join bgc_class on bgc_class_map.class_id=bgc_class.id",
-            " inner join genomes on genomes.id=bgcs.genome_id",
-            " inner join cds_bgc_map on cds_bgc_map.bgc_id=bgcs.id",
+            " left join bgc_class_map on bgc_class_map.bgc_id=bgcs.id",
+            " left join bgc_class on bgc_class_map.class_id=bgc_class.id",
+            " left join genomes on genomes.id=bgcs.genome_id",
             " where 1",
             (" and " + sql_filter) if sql_filter != "" else "",
             " group by bgcs.id",
@@ -85,7 +87,7 @@ def get_overview():
         for idx, row in query_result.iterrows():
             result["data"].append([
                 (row["genome_id"], row["npdc_id"]),
-                row["genome_gtdb_genus"] + " spp." if row["genome_gtdb_species"] else row["genome_gtdb_species"],
+                row["genome_gtdb_genus"] + " spp." if row["genome_gtdb_species"] == "" else row["genome_gtdb_species"],
                 row["genome_mash_species"],
                 row["contig_num"],
                 (row["id"], row["npdc_id"], row["contig_num"], row["orig_identifier"]),
@@ -93,7 +95,7 @@ def get_overview():
                 row["fragmented"],
                 list(set(row["bgc_class"].split(";"))),
                 (row["nt_end"] - row["nt_start"]) / 1000,
-                row["num_cds"]
+                -1
             ])
 
     return result

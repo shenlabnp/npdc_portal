@@ -263,7 +263,7 @@ def get_results_list():
                 "q": "".join([
                     "select * from (",
                         "select count(distinct hits.query_prot_id) as num_hits_unique, genomes.*",
-                        " from cds inner join " + q_blast_hits + " as hits on cds.id=hits.target_cds_id inner join (",
+                        " from " + q_blast_hits + " as hits left join cds on cds.id=hits.target_cds_id inner join (",
                             "select genomes.*, group_concat(bgcs.id) as bgcs, group_concat(bgcs.mibig_name, ';') as mibig_bgcs",
                             " from genomes left join (",
                             "    select bgcs.genome_id, bgcs.id, mibig.mibig_id, mibig.mibig_name",
@@ -297,17 +297,15 @@ def get_results_list():
                 "q": "".join([
                       "select * from (",
                         "select count(distinct hits.query_prot_id) as num_hits_unique, bgcs.*",
-                        " from cds inner join " + q_blast_hits + " as hits on cds.id=hits.target_cds_id"
+                        " from " + q_blast_hits + " as hits left join cds on cds.id=hits.target_cds_id"
                         " inner join cds_bgc_map on cds_bgc_map.cds_id=cds.id",
-                        " inner join (",
+                        " left join (",
                             "select bgcs.*, genomes.genome_mash_species, genomes.npdc_id",
                             ", genomes.genome_gtdb_species, genomes.genome_gtdb_genus",
-                            ", count(cds_id) as num_cds"
                             ", group_concat(bgc_class.name, ';') as bgc_class from bgcs",
-                            " inner join bgc_class_map on bgc_class_map.bgc_id=bgcs.id",
-                            " inner join bgc_class on bgc_class_map.class_id=bgc_class.id",
-                            " inner join genomes on genomes.id=bgcs.genome_id",
-                            " inner join cds_bgc_map on cds_bgc_map.bgc_id=bgcs.id"
+                            " left join bgc_class_map on bgc_class_map.bgc_id=bgcs.id",
+                            " left join bgc_class on bgc_class_map.class_id=bgc_class.id",
+                            " left join genomes on genomes.id=bgcs.genome_id",
                             " group by bgcs.id"
                         ") as bgcs on cds_bgc_map.bgc_id=bgcs.id",
                         " group by cds_bgc_map.bgc_id"
@@ -323,6 +321,7 @@ def get_results_list():
             }
 
             result = pd.read_sql_query((sql_query["q"]), con, params=sql_query["p"])
+            result["num_cds"] = -1
             result = {col: vals.tolist() for col, vals in result.iteritems()}
         else:
             result = ""
