@@ -271,7 +271,7 @@ def get_results_list():
                         " group by genomes.id",
                     ")",
                     " where num_hits_unique=?"
-                    " order by genome_mash_species asc"
+                    " order by avg_pct_id desc"
                 ]),
                 "p": (
                     job_id,
