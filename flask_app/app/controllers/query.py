@@ -285,19 +285,11 @@ def get_results_list():
         elif type_req == "bgc":
             sql_query = {
                 "q": "".join([
-                      "select * from (",
-                        "select count(distinct hits.query_prot_id) as num_hits_unique, bgcs.*",
-                        " from " + q_blast_hits + " as hits left join cds on cds.id=hits.target_cds_id"
-                        " inner join cds_bgc_map on cds_bgc_map.cds_id=cds.id",
-                        " left join (",
-                            "select bgcs.*, genomes.genome_mash_species, genomes.npdc_id",
-                            ", genomes.genome_gtdb_species, genomes.genome_gtdb_genus",
-                            ", group_concat(bgc_class.name, ';') as bgc_class from bgcs",
-                            " left join bgc_class_map on bgc_class_map.bgc_id=bgcs.id",
-                            " left join bgc_class on bgc_class_map.class_id=bgc_class.id",
-                            " left join genomes on genomes.id=bgcs.genome_id",
-                            " group by bgcs.id"
-                        ") as bgcs on cds_bgc_map.bgc_id=bgcs.id",
+                    "select * from (",
+                        "select count(distinct hits.query_prot_id) as num_hits_unique, bgcs.*, bgcs_cached.*",
+                        " from " + q_blast_hits + " as hits inner join cds_bgc_map on cds_bgc_map.cds_id=hits.target_cds_id",
+                        " left join bgcs on cds_bgc_map.bgc_id=bgcs.id",
+                        " left join bgcs_cached on cds_bgc_map.bgc_id=bgcs_cached.bgc_id",
                         " group by cds_bgc_map.bgc_id"
                     ")",
                     " where num_hits_unique=?"
@@ -311,7 +303,6 @@ def get_results_list():
             }
 
             result = pd.read_sql_query((sql_query["q"]), con, params=sql_query["p"])
-            result["num_cds"] = -1
             result = {col: vals.tolist() for col, vals in result.iteritems()}
         else:
             result = ""

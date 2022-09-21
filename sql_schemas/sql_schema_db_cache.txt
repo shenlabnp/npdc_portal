@@ -64,4 +64,70 @@ CREATE INDEX IF NOT EXISTS genomes_mibig_map_cached_mibig_id ON genomes_mibig_ma
 
 -- -------------------------------------------------------------
 
+-- -------------------------------------------------------------
+-- bgcs tables
+
+DROP INDEX IF EXISTS bgcs_cached_bgc_bgc_id;
+DROP INDEX IF EXISTS bgcs_cached_bgc_npdc_id;
+DROP INDEX IF EXISTS bgcs_cached_bgc_genus;
+DROP INDEX IF EXISTS bgcs_cached_bgc_species;
+DROP INDEX IF EXISTS bgcs_cached_bgc_mash_species;
+DROP INDEX IF EXISTS bgcs_cached_bgc_num_cds;
+DROP INDEX IF EXISTS bgcs_cached_bgc_mibig_hit_id;
+DROP INDEX IF EXISTS bgcs_cached_bgc_mibig_hit_name;
+DROP INDEX IF EXISTS bgcs_cached_bgc_mibig_hit_pct;
+
+DROP TABLE IF EXISTS "bgcs_cached";
+CREATE TABLE IF NOT EXISTS "bgcs_cached" (
+ "bgc_id" INTEGER NOT NULL UNIQUE,
+ "npdc_id" INTEGER NOT NULL,
+ "genus" TEXT NOT NULL,
+ "species" TEXT NOT NULL,
+ "mash_species" TEXT NOT NULL,
+ "id_class" TEXT NOT NULL,
+ "name_class" TEXT NOT NULL,
+ "num_cds" INTEGER NOT NULL,
+ "mibig_hit_id" INTEGER NOT NULL,
+ "mibig_hit_name" TEXT NOT NULL,
+ "mibig_hit_pct" REAL NOT NULL
+);
+
+INSERT INTO bgcs_cached (bgc_id, npdc_id, genus, species, mash_species, id_class, name_class, num_cds, mibig_hit_id, mibig_hit_name, mibig_hit_pct)
+SELECT bgcs.id as bgc_id,
+IFNULL(genomes.npdc_id, -1) as npdc_id,
+IFNULL(genomes.genome_gtdb_genus, "") as genus,
+IFNULL(genomes.genome_gtdb_species, "") as species,
+IFNULL(genomes.genome_mash_species, "") as mash_species,
+IFNULL(bgc_classes.id_class, "") as id_class,
+IFNULL(bgc_classes.name_class, "") as name_class,
+IFNULL(cds_count.num_cds, 0) as num_cds,
+IFNULL(bgc_mibig_hit.mibig_id, -1) as mibig_hit_id,
+IFNULL(mibig.name, "") as mibig_hit_name,
+IFNULL(bgc_mibig_hit.hit_pct, -1) as mibig_hit_pct
+FROM bgcs
+LEFT JOIN genomes ON genomes.id=bgcs.genome_id
+LEFT JOIN (
+ SELECT bgc_id, group_concat(class_id, '|') as id_class, group_concat(bgc_class.name, '|') as name_class
+ FROM bgc_class_map LEFT JOIN bgc_class ON bgc_class.id=bgc_class_map.class_id
+ GROUP BY bgc_id
+) AS bgc_classes ON bgcs.id=bgc_classes.bgc_id
+LEFT JOIN (
+ SELECT bgc_id, count(cds_id) as num_cds FROM cds_bgc_map GROUP BY bgc_id
+) AS cds_count ON bgcs.id=cds_count.bgc_id
+LEFT JOIN bgc_mibig_hit ON bgcs.id=bgc_mibig_hit.bgc_id
+LEFT JOIN mibig ON bgc_mibig_hit.mibig_id=mibig.id
+;
+
+CREATE INDEX IF NOT EXISTS bgcs_cached_bgc_bgc_id ON bgcs_cached(bgc_id);
+CREATE INDEX IF NOT EXISTS bgcs_cached_bgc_npdc_id ON bgcs_cached(npdc_id);
+CREATE INDEX IF NOT EXISTS bgcs_cached_bgc_genus ON bgcs_cached(genus);
+CREATE INDEX IF NOT EXISTS bgcs_cached_bgc_species ON bgcs_cached(species);
+CREATE INDEX IF NOT EXISTS bgcs_cached_bgc_mash_species ON bgcs_cached(mash_species);
+CREATE INDEX IF NOT EXISTS bgcs_cached_bgc_num_cds ON bgcs_cached(num_cds);
+CREATE INDEX IF NOT EXISTS bgcs_cached_bgc_mibig_hit_id ON bgcs_cached(mibig_hit_id);
+CREATE INDEX IF NOT EXISTS bgcs_cached_bgc_mibig_hit_name ON bgcs_cached(mibig_hit_name);
+CREATE INDEX IF NOT EXISTS bgcs_cached_bgc_mibig_hit_pct ON bgcs_cached(mibig_hit_pct);
+
+-- -------------------------------------------------------------
+
 COMMIT;
