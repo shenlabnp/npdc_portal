@@ -20,7 +20,7 @@ def page_home():
         pass # do nothing
         
     # page title
-    page_title = "Welcome to the NPDC!"
+    page_title = "Welcome to the NPDC Portal!"
     page_subtitle = ""
 
     # fetch data
