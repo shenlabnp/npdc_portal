@@ -18,7 +18,7 @@
           <feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
         </filter>
       </defs>
-        <image href="https://shen.scripps.ufl.edu/files/2022/03/NPs-1200x800.jpeg"></image>
+        <image href="{{ url_for('static', filename='img/homepage_backdrop.jpg') }}"></image>
         <g>
           <rect x="175" y="75" rx="5" ry="5" width="250" height="100" stroke="#555555" stroke-width="1" fill="#EBEEF1" filter="url(#f3)"></rect>
           <text text-anchor="middle" x="300" y="115" fill="#992222" font-size="25" font-weight="bold">{{ "{:,.0f}".format(strains_count) }}</text>
