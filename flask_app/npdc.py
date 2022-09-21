@@ -9,6 +9,7 @@ from sys import argv
 import json
 import datetime
 import pandas as pd
+import numpy as np
 
 # import global config
 from app.config import conf
@@ -101,6 +102,20 @@ def portal():
             cur = con.cursor()
             num_jobs_pending = cur.execute("select count(id) from jobs where status in (0, 1)").fetchone()[0]
             num_jobs_processed = cur.execute("select count(id) from jobs where status in (2, 3)").fetchone()[0]
+            last_week_date = ""#datetime.datetime.now().strftime("%Y-%m-%d")
+            last_week_finished_jobs = pd.read_sql_query((
+                "select started, finished from jobs where status in (2, 3) and started > ?"
+            ), con, params=(last_week_date, ))
+            if last_week_finished_jobs.shape[0] < 1:
+                avg_jobs_processing_time = "n/a"
+            else:
+                avg_jobs_processing_time = last_week_finished_jobs.apply(
+                    lambda row: pd.Timedelta(pd.to_datetime(row["finished"]) - pd.to_datetime(row["started"])).seconds / 60, axis=1
+                ).mean()
+                avg_jobs_processing_time = "{:,.0f} minute{}".format(
+                    avg_jobs_processing_time,
+                    "s" if avg_jobs_processing_time > 1 else ""
+                )
 
         # for navigations
         nav_items = []
@@ -128,6 +143,7 @@ def portal():
             ),
             num_jobs_pending=num_jobs_pending,
             num_jobs_processed=num_jobs_processed,
+            avg_jobs_processing_time=avg_jobs_processing_time,
             important_message=important_message
         )
 
