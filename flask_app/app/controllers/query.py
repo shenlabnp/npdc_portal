@@ -251,7 +251,7 @@ def get_results_list():
         num_query_proteins = cur.execute("select count(id) from job_db.query_proteins where jobid=?", (job_id,)).fetchall()[0][0]
 
         q_blast_hits = "".join(["(",
-            "select blast_hits.target_cds_id, blast_hits.query_prot_id",
+            "select blast_hits.target_cds_id, blast_hits.query_prot_id, blast_hits.pct_identity",
             " from job_db.query_proteins, job_db.blast_hits where query_proteins.jobid=?",
             " and query_proteins.id=blast_hits.query_prot_id",
             (" and query_proteins.id = ?" if query_protein_id != 0 else " and ?"),
@@ -262,7 +262,9 @@ def get_results_list():
             sql_query = {
                 "q": "".join([
                     "select * from (",
-                        "select count(distinct hits.query_prot_id) as num_hits_unique, genomes.*, genomes_cached.*",
+                        "select count(distinct hits.query_prot_id) as num_hits_unique,",
+                        " avg(hits.pct_identity) as avg_pct_id,",
+                        " genomes.*, genomes_cached.*",
                         " from " + q_blast_hits + " as hits left join cds on cds.id=hits.target_cds_id",
                         " left join genomes on genomes.id=cds.genome_id",
                         " left join genomes_cached on genomes.id=genomes_cached.genome_id",
@@ -286,14 +288,16 @@ def get_results_list():
             sql_query = {
                 "q": "".join([
                     "select * from (",
-                        "select count(distinct hits.query_prot_id) as num_hits_unique, bgcs.*, bgcs_cached.*",
+                        "select count(distinct hits.query_prot_id) as num_hits_unique,",
+                        " avg(hits.pct_identity) as avg_pct_id,",
+                        " bgcs.*, bgcs_cached.*",
                         " from " + q_blast_hits + " as hits inner join cds_bgc_map on cds_bgc_map.cds_id=hits.target_cds_id",
                         " left join bgcs on cds_bgc_map.bgc_id=bgcs.id",
                         " left join bgcs_cached on cds_bgc_map.bgc_id=bgcs_cached.bgc_id",
                         " group by cds_bgc_map.bgc_id"
                     ")",
                     " where num_hits_unique=?"
-                    " order by gcf asc"
+                    " order by avg_pct_id desc"
                 ]),
                 "p": (
                     job_id,
@@ -303,6 +307,7 @@ def get_results_list():
             }
 
             result = pd.read_sql_query((sql_query["q"]), con, params=sql_query["p"])
+            result["knowncb_cutoff"] = conf["knowncb_cutoff"]
             result = {col: vals.tolist() for col, vals in result.iteritems()}
         else:
             result = ""

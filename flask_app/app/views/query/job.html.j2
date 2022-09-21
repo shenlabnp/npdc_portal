@@ -136,6 +136,7 @@
         <table id="section_results_by_genome_table" class="table table-striped table-bordered table-hover nowrap">
           <thead class="thead-light">
             <tr>
+              <th>Avg. %identity</th>
               <th>Genome</th>
               <th>Name</th>
               <th>Mash cluster</th>
@@ -158,23 +159,29 @@
                 aLengthMenu: [[25, 50, 250], [25, 50, 250]],
                 iDisplayLength: 25,
                 columnDefs: [
-                  { className: "text-center", targets: [0] },
-                  { className: "text-end", targets: [4, 5, 6] },
+                  { className: "text-center", targets: [1] },
+                  { className: "text-end", targets: [0, 5, 6, 7] },
                   {
                     targets: 0,
+                    render: function(data, type, row, meta) {
+                      return data.toFixed(1) + "%";
+                    }
+                  },                  
+                  {
+                    targets: 1,
                     render: function(data, type, row, meta) {
                       let [genome_id, npdc_id] = data
                       return "<a href=\"{{ url_for('root.page') }}genomes/view/" + genome_id + "\"><button class=\"btn btn-primary\">NPDC-" + npdc_id + "</button></a>";
                     }
                   },
                   {
-                    targets: 1,
+                    targets: 2,
                     render: function(data, type, row, meta) {
                       return "<i><strong style='color: #222266;'>" + data + "</strong></i>";
                     }
                   },
                   {
-                    targets: 3,
+                    targets: 4,
                     render: function(data, type, row, meta) {
                       let html_text = "";
                       let badge_class = {
@@ -191,13 +198,13 @@
                     }
                   },
                   {
-                    targets: 4,
+                    targets: 5,
                     render: function(data, type, row, meta) {
                       return data.toFixed(1) + " %";
                     }
                   },
                   {
-                    targets: 6,
+                    targets: 7,
                     render: function(data, type, row, meta) {
                       return data.length;
                     }
@@ -216,6 +223,7 @@
         <table id="section_results_by_bgc_table" class="table table-striped table-bordered table-hover nowrap">
           <thead class="thead-light">
             <tr>
+              <th>Avg. %identity</th>
               <th>Genome</th>
               <th>Name</th>
               <th>Mash cluster</th>
@@ -226,6 +234,7 @@
               <th>BGC class</th>
               <th>Size (kb)</th>
               <th>Num. of genes</th>
+              <th>MIBiG hit</th>
             </tr>
           </thead>
           <tbody class="tbody">
@@ -241,11 +250,17 @@
                 aLengthMenu: [[25, 50, 250], [25, 50, 250]],
                 iDisplayLength: 25,
                 "columnDefs": [
-                  { className: "text-center", targets: [0, 4] },
-                  { className: "text-end", targets: [8, 9] },
-                  { visible: false, searchable: false, targets: [2, 9] },
+                  { className: "text-center", targets: [1, 5] },
+                  { className: "text-end", targets: [0, 9, 10] },
+                  { visible: false, searchable: false, targets: [3, 4, 10] },
                   {
                     targets: 0,
+                    render: function(data, type, row, meta) {
+                      return data.toFixed(1) + "%";
+                    }
+                  },
+                  {
+                    targets: 1,
                     render: function(data, type, row, meta) {
                       let [genome_id, npdc_id] = data;
                       let label = "NPDC-" + npdc_id;
@@ -253,13 +268,13 @@
                     }
                   },
                   {
-                    targets: 1,
+                    targets: 2,
                     render: function(data, type, row, meta) {
                       return "<i>" + data + "</i>";
                     }
                   },
                   {
-                    targets:4,
+                    targets:5,
                     render: function(data, type, row, meta) {
                       let [bgc_id, npdc_id, contig_num, region_name] = data;
                       let bgc_num = parseInt(region_name.split("region")[1], 10);
@@ -268,13 +283,13 @@
                     }
                   },
                   {
-                    targets: 5,
+                    targets: 6,
                     render: function(data, type, row, meta) {
                       return "GCF-" + data;
                     }
                   },
                   {
-                    targets: 6,
+                    targets: 7,
                     render: function(data, type, row, meta) {
                       let html_text = "";
                       let badge_class = {
@@ -286,13 +301,31 @@
                     }
                   },
                   {
-                    "targets": 7,
+                    "targets": 8,
                     render: function(data, type, row, meta) {
                       let html_text = "<ul class=\"list-unstyled mb-0\">";
                       data.forEach((bgc_class) => {
                         html_text += "<li>" + bgc_class + "</li>";
                       });
                       html_text += "</ul>";
+                      return html_text;
+                    }
+                  },
+                  {
+                    "targets": 11,
+                    render: function(data, type, row, meta) {
+                      let [mibig_id, mibig_name, mibig_pct, cb_cutoff] = data;
+                      let html_text = "n/a";
+
+                      if (mibig_id > -1) {
+                        html_text = "<a href='https://mibig.secondarymetabolites.org/repository/BGC" + String(mibig_id).padStart(7, '0') + "'>" + mibig_name + "</a>" + " (" + mibig_pct + "%)";
+                        if (mibig_pct >= cb_cutoff) {
+                          html_text = "<strong style='color: #222266;'>" + html_text + "</strong>";
+                        } else {
+                          html_text = "<i style='color: #999999;'>" + html_text + "</i>";
+                        }
+                      }
+
                       return html_text;
                     }
                   }
@@ -381,6 +414,7 @@
                 datatable_data = [];
                 $.each(response["id"], function(i, genome_id) {
                   datatable_data.push([
+                    response["avg_pct_id"][i],
                     [genome_id, response["npdc_id"][i]],
                     response["genome_gtdb_species"][i] != ""? response["genome_gtdb_species"][i]:(response["genome_gtdb_genus"][i] + " spp."),
                     response["genome_mash_species"][i],
@@ -443,6 +477,7 @@
                 // update datatables
                 $.each(response["id"], function(i, bgc_id) {
                   datatable_data.push([
+                    response["avg_pct_id"][i],
                     [response["genome_id"][i], response["npdc_id"][i]],
                     response["species"][i] != ""? response["species"][i]:(response["genus"][i] + " spp."),
                     response["mash_species"][i],
@@ -452,7 +487,8 @@
                     response["fragmented"][i],
                     Array.from(new Set(response["name_class"][i].split("|"))).sort(),
                     ((response["nt_end"][i] - response["nt_start"][i]) / 1000).toFixed(0),
-                    response["num_cds"][i]
+                    response["num_cds"][i],
+                    [response["mibig_hit_id"][i], response["mibig_hit_name"][i], response["mibig_hit_pct"][i], response["knowncb_cutoff"][i]]
                   ]);
                 });
                 break;
