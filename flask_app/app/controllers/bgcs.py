@@ -64,7 +64,6 @@ def get_overview():
             " from bgcs left join bgcs_cached on bgcs.id=bgcs_cached.bgc_id"
             " where 1",
             (" and " + sql_filter) if sql_filter != "" else "",
-            " group by bgcs.id"
         ]), tuple([*sql_filter_params])).fetchall())
 
         result["data"] = []
@@ -74,7 +73,6 @@ def get_overview():
             " from bgcs left join bgcs_cached on bgcs.id=bgcs_cached.bgc_id"
             " where 1",
             (" and " + sql_filter) if sql_filter != "" else "",
-            " group by bgcs.id",
             " order by contig_num, nt_start asc"
             " limit ? offset ?"
         ]), con, params=tuple([*sql_filter_params, *[limit, offset]]))
