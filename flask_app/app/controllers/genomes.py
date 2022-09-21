@@ -97,38 +97,22 @@ def get_overview():
         # fetch total records (filtered)
         result["recordsFiltered"] = cur.execute("".join([
             "select count(id) from ("
-                "select genomes.*, group_concat(distinct bgcs.id) as bgcs, group_concat(bgcs.mibig_name, ';') as mibig_bgcs",
-                " from genomes left join (",
-                "    select bgcs.genome_id, bgcs.id, mibig.mibig_id, mibig.mibig_name",
-                "    from bgcs left join (",
-                "      select bgc_id, mibig_id, mibig.name_dereplicated as mibig_name",
-                "      from bgc_mibig_hit inner join mibig on mibig.id=bgc_mibig_hit.mibig_id",
-                "      where bgc_mibig_hit.hit_pct >= ?",
-                "    ) as mibig on mibig.bgc_id=bgcs.id",
-                " ) as bgcs on genomes.id=bgcs.genome_id",
+                "select * from genomes left join genomes_cached on genomes.id=genomes_cached.genome_id",
                 " where 1",
                 (" and " + genome_filter) if genome_filter != "" else "",
                 " group by genomes.id",
             ")"
-        ]), tuple([*[conf["knowncb_cutoff"]], *genome_filter_params])).fetchall()[0][0]
+        ]), tuple([*genome_filter_params])).fetchall()[0][0]
 
         result["data"] = []
 
         query_result = pd.read_sql_query("".join([
-            "select genomes.*, group_concat(distinct bgcs.id) as bgcs, group_concat(bgcs.mibig_name, ';') as mibig_bgcs",
-            " from genomes left join (",
-            "    select bgcs.genome_id, bgcs.id, mibig.mibig_id, mibig.mibig_name",
-            "    from bgcs left join (",
-            "      select bgc_id, mibig_id, mibig.name_dereplicated as mibig_name",
-            "      from bgc_mibig_hit inner join mibig on mibig.id=bgc_mibig_hit.mibig_id",
-            "      where bgc_mibig_hit.hit_pct >= ?",
-            "    ) as mibig on mibig.bgc_id=bgcs.id",
-            " ) as bgcs on genomes.id=bgcs.genome_id",
+            "select * from genomes left join genomes_cached on genomes.id=genomes_cached.genome_id",
             " where 1",
             (" and " + genome_filter) if genome_filter != "" else "",
             " group by genomes.id",
             " limit ? offset ?"
-        ]), con, params=tuple([*[conf["knowncb_cutoff"]], *genome_filter_params, *[limit, offset]]))
+        ]), con, params=tuple([*genome_filter_params, *[limit, offset]]))
         for idx, row in query_result.iterrows():
 
             result["data"].append([
@@ -145,8 +129,8 @@ def get_overview():
                     "completeness": row["genome_qc_completeness"],
                 },
                 row["genome_gc"],
-                len(row["bgcs"].split(",")),
-                list(set(row["mibig_bgcs"].split(";"))) if row["mibig_bgcs"] else []
+                row["num_bgcs"],
+                list(set(row["name_bgcs_mibig"].split("|"))) if row["name_bgcs_mibig"] else []
             ])
 
     return result

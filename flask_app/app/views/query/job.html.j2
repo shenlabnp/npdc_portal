@@ -385,8 +385,8 @@
                         "cleaned": response["is_cleaned_up"][i],
                     },
                     response["genome_gc"][i],
-                    response["bgcs"][i] == "" ? 0 : (new Set(response["bgcs"][i].split(","))).size,
-                    response["mibig_bgcs"][i] == null ? "" : Array.from(new Set(response["mibig_bgcs"][i].split(";")))
+                    response["num_bgcs"][i],
+                    Array.from(new Set(response["name_bgcs_mibig"][i].split(";")))
                   ]);
                 });
                 break;

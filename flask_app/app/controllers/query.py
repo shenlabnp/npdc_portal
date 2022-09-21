@@ -262,20 +262,11 @@ def get_results_list():
             sql_query = {
                 "q": "".join([
                     "select * from (",
-                        "select count(distinct hits.query_prot_id) as num_hits_unique, genomes.*",
-                        " from " + q_blast_hits + " as hits left join cds on cds.id=hits.target_cds_id inner join (",
-                            "select genomes.*, group_concat(bgcs.id) as bgcs, group_concat(bgcs.mibig_name, ';') as mibig_bgcs",
-                            " from genomes left join (",
-                            "    select bgcs.genome_id, bgcs.id, mibig.mibig_id, mibig.mibig_name",
-                            "    from bgcs left join (",
-                            "      select bgc_id, mibig_id, mibig.name_dereplicated as mibig_name",
-                            "      from bgc_mibig_hit inner join mibig on mibig.id=bgc_mibig_hit.mibig_id",
-                            "      where bgc_mibig_hit.hit_pct >= ?",
-                            "    ) as mibig on mibig.bgc_id=bgcs.id",
-                            " ) as bgcs on genomes.id=bgcs.genome_id",
-                            " group by genomes.id"
-                        ") as genomes on cds.genome_id=genomes.id",
-                        " group by cds.genome_id",
+                        "select count(distinct hits.query_prot_id) as num_hits_unique, genomes.*, genomes_cached.*",
+                        " from " + q_blast_hits + " as hits left join cds on cds.id=hits.target_cds_id",
+                        " left join genomes on genomes.id=cds.genome_id",
+                        " left join genomes_cached on genomes.id=genomes_cached.genome_id",
+                        " group by genomes.id",
                     ")",
                     " where num_hits_unique=?"
                     " order by genome_mash_species asc"
@@ -283,7 +274,6 @@ def get_results_list():
                 "p": (
                     job_id,
                     query_protein_id if query_protein_id != 0 else "1",
-                    conf["knowncb_cutoff"],
                     1 if query_protein_id != 0 else num_query_proteins
                 )
             }

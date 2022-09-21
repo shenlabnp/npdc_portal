@@ -1,0 +1,67 @@
+BEGIN TRANSACTION;
+
+-- -------------------------------------------------------------
+-- genomes tables
+
+DROP INDEX IF EXISTS genomes_cached_genome_id;
+DROP INDEX IF EXISTS genomes_cached_num_cds;
+DROP INDEX IF EXISTS genomes_cached_num_bgcs;
+DROP INDEX IF EXISTS genomes_cached_num_bgcs_mibig;
+
+DROP TABLE IF EXISTS "genomes_cached";
+CREATE TABLE IF NOT EXISTS "genomes_cached" (
+ "genome_id" INTEGER NOT NULL UNIQUE,
+ "num_cds" INTEGER NOT NULL,
+ "num_bgcs" INTEGER NOT NULL,
+ "id_bgcs" TEXT NOT NULL,
+ "num_bgcs_mibig" INTEGER NOT NULL,
+ "name_bgcs_mibig" TEXT NOT NULL,
+ "id_bgcs_mibig" TEXT NOT NULL
+);
+
+INSERT INTO genomes_cached (genome_id, num_cds, num_bgcs, id_bgcs, num_bgcs_mibig, name_bgcs_mibig, id_bgcs_mibig)
+SELECT genomes.id,
+IFNULL(cds_count.num_cds, 0),
+IFNULL(bgcs_count.num_bgcs, 0),
+IFNULL(bgcs_count.id_bgcs, ''),
+IFNULL(bgcs_mibig_count.num_bgcs_mibig, 0),
+IFNULL(bgcs_mibig_count.name_bgcs_mibig, ''),
+IFNULL(bgcs_mibig_count.id_bgcs_mibig, '')
+FROM genomes
+LEFT JOIN (SELECT genome_id, count(id) as num_cds FROM cds GROUP BY genome_id) AS cds_count ON cds_count.genome_id=genomes.id
+LEFT JOIN (SELECT genome_id, count(id) as num_bgcs, group_concat(id, '|') as id_bgcs FROM bgcs GROUP BY genome_id) AS bgcs_count ON bgcs_count.genome_id=genomes.id
+LEFT JOIN (
+ SELECT genome_id, count(bgc_id) as num_bgcs_mibig,
+  group_concat(mibig.name_dereplicated, '|') as name_bgcs_mibig,
+  group_concat(mibig.id, '|') as id_bgcs_mibig
+ FROM bgc_mibig_hit
+ LEFT JOIN mibig ON bgc_mibig_hit.mibig_id=mibig.id
+ LEFT JOIN bgcs ON bgc_mibig_hit.bgc_id=bgcs.id WHERE bgc_mibig_hit.hit_pct >= --knowncb_cutoff-- GROUP BY genome_id
+) AS bgcs_mibig_count ON bgcs_mibig_count.genome_id=genomes.id
+;
+
+CREATE INDEX IF NOT EXISTS genomes_cached_genome_id ON genomes_cached(genome_id);
+CREATE INDEX IF NOT EXISTS genomes_cached_num_cds ON genomes_cached(num_cds);
+CREATE INDEX IF NOT EXISTS genomes_cached_num_bgcs ON genomes_cached(num_bgcs);
+CREATE INDEX IF NOT EXISTS genomes_cached_num_bgcs_mibig ON genomes_cached(num_bgcs_mibig);
+
+DROP INDEX  IF EXISTS genomes_mibig_map_cached_genome_id;
+DROP INDEX  IF EXISTS genomes_mibig_map_cached_mibig_id;
+
+DROP TABLE IF EXISTS genomes_mibig_map_cached_genome_id;
+CREATE TABLE IF NOT EXISTS "genomes_mibig_map_cached" (
+ "genome_id" INTEGER NOT NULL,
+ "mibig_id" INTEGER NOT NULL
+);
+
+INSERT INTO genomes_mibig_map_cached (genome_id, mibig_id)
+SELECT genome_id, mibig_id FROM bgc_mibig_hit
+LEFT JOIN bgcs ON bgcs.id=bgc_mibig_hit.bgc_id WHERE bgc_mibig_hit.hit_pct >= --knowncb_cutoff-- GROUP BY genome_id, mibig_id
+;
+
+CREATE INDEX IF NOT EXISTS genomes_mibig_map_cached_genome_id ON genomes_mibig_map_cached(genome_id);
+CREATE INDEX IF NOT EXISTS genomes_mibig_map_cached_mibig_id ON genomes_mibig_map_cached(mibig_id);
+
+-- -------------------------------------------------------------
+
+COMMIT;
