@@ -132,18 +132,8 @@ def main():
     jobs_db = path.join(instance_folder, "queries.db")
 
     if not path.exists(jobs_db):
-        print("creating jobs db ({})...".format(jobs_db))
-        with connect(jobs_db) as con:
-            cur = con.cursor()
-            schema_sql = path.join(
-                path.dirname(__file__),
-                "..",
-                "sql_schemas",
-                "sql_schema_jobs.txt",
-            )
-            with open(schema_sql, "r") as sql_script:
-                cur.executescript(sql_script.read())
-                con.commit()
+        print("database is not up-to-date, please run init_db.py first!!")
+        return(1)
 
     print("workers are running...")
     while(True):

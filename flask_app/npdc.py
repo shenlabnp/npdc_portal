@@ -20,54 +20,34 @@ from app.controllers import feedback, about, query
 
 def portal():
 
-    # check and create account database if not exists
+    # check accounts db
     if not path.exists(conf["user_db_path"]):
-        with sqlite3.connect(conf["user_db_path"]) as con:
-            cur = con.cursor()
-            cur.executescript(open(path.join(path.dirname(path.dirname(path.realpath(__file__))), "sql_schemas", "sql_schema_accounts.txt")).read())
-            con.commit()
+        print("database not up-to-date, please run init_db.py first!!")
+        return(1)
 
-            # insert countries data
-            countries_ref = pd.read_csv(path.join(path.dirname(path.dirname(path.realpath(__file__))), "sql_schemas", "country-capitals.csv"), sep=",")
-            pd.DataFrame({
-                "code": countries_ref["CountryCode"],
-                "name": countries_ref["CountryName"],
-                "lat": countries_ref["CapitalLatitude"],
-                "long": countries_ref["CapitalLongitude"],
-                "continent": countries_ref["ContinentName"]
-            }).to_sql("countries", con, index=False, if_exists="append")
+    # check queries db
+    if not path.exists(conf["query_db_path"]):
+        print("database not up-to-date, please run init_db.py first!!")
+        return(1)
 
-    # check and generate npdc_db cache tables
+    # check cache tables
     with sqlite3.connect(conf["db_path"]) as con:
         cur = con.cursor()
-        generate_new_cache = False
+        cache_updated = True
         logs_cache_generation = pd.read_sql_query((
             "select * from logs where message like 'generating db cache: %' order by time desc"
         ), con)
         if logs_cache_generation.shape[0] == 0:
-            generate_new_cache = True
+            cache_updated = False
         else:
             params={
                 x.split("=")[0]:x.split("=")[1] for x in logs_cache_generation.iloc[0]["message"].split("generating db cache: ")[-1].split(";")
             }
             if params.get("knowncb_cutoff", None) != str(conf["knowncb_cutoff"]):
-                generate_new_cache = True
-        if generate_new_cache:
-            print("generating cache tables...")
-            cur.executescript(
-                open(
-                    path.join(path.dirname(path.dirname(path.realpath(__file__))), "sql_schemas", "sql_schema_db_cache.txt")
-                ).read().replace("--knowncb_cutoff--", str(conf["knowncb_cutoff"]))
-            )
-            con.commit()
-            pd.DataFrame([{
-                "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "message": "generating db cache: knowncb_cutoff={}".format(
-                    conf["knowncb_cutoff"]
-                ),
-            }]).to_sql("logs", con, index=False, if_exists="append")
-            print("done.")
-
+                cache_updated = False
+        if not cache_updated:
+            print("database not up-to-date, please run init_db.py first!!")
+            return(1)
 
     # initiate app
     app = Flask(
