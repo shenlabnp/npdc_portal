@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import render_template, request, session, redirect, url_for
+from flask import render_template, request, session, redirect, url_for, flash
 import sqlite3
 import pandas as pd
 from datetime import datetime
