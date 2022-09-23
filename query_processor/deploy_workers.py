@@ -55,7 +55,7 @@ def deploy_jobs(pending, jobs_db, instance_folder, num_threads, ram_size_gb, use
                         ))
 
             # run DIAMOND BLASTP
-            blast_columns = "qseqid sseqid qstart qend sstart send evalue bitscore pident"
+            blast_columns = "qseqid sseqid qstart qend sstart send evalue bitscore pident slen qlen"
             diamond_blast_db_path = path.join(
                 path.dirname(__file__),
                 "..",
@@ -94,11 +94,13 @@ def deploy_jobs(pending, jobs_db, instance_folder, num_threads, ram_size_gb, use
                     "target_cds_id": blast_result["sseqid"],
                     "query_start": blast_result["qstart"],
                     "query_end": blast_result["qend"],
+                    "query_cov": abs(blast_result["qend"] - blast_result["qstart"]) / blast_result["qlen"] * 100,
                     "target_start": blast_result["sstart"],
                     "target_end": blast_result["send"],
+                    "target_cov": abs(blast_result["send"] - blast_result["sstart"]) / blast_result["slen"] * 100,
                     "evalue": blast_result["evalue"],
                     "bitscore": blast_result["bitscore"],
-                    "pct_identity": blast_result["pident"],
+                    "pct_identity": blast_result["pident"]
                 }).to_sql("blast_hits", connect(jobs_db), index=False, if_exists="append")
 
             # update status

@@ -11,6 +11,8 @@ conf = {
 }
 
 conf["db_path"] = path.join(conf["instance_folder"], "db_data/npdc_portal.db")
+conf["genome_folder_path"] = path.join(conf["instance_folder"], "db_data/genome_files/")
+conf["bgc_folder_path"] = path.join(conf["instance_folder"], "db_data/bgc_files/")
 conf["user_db_path"] = path.join(conf["instance_folder"], "accounts.db")
 conf["query_db_path"] = path.join(conf["instance_folder"], "queries.db")
 conf["session_key_path"] = path.join(conf["instance_folder"], "session_key.txt")
@@ -20,3 +22,4 @@ conf["strain_pictures_folder_path"] = path.join(conf["instance_folder"], "strain
 # other app-specific configurations
 conf["is_in_beta"] = True
 conf["knowncb_cutoff"] = 80
+conf["consecutive_download_duration"] = 60 # in seconds

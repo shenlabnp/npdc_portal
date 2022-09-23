@@ -28,7 +28,32 @@
         {% if strain_data["genome_id"] == "n/a"  %}
           <button class="btn btn-primary disabled">Genome data unavailable</button>
         {% else %}
-          <button class="btn btn-primary">Download Genome</button>
+          <button id="download_genome_btn" class="btn btn-primary">Download Genome</button>
+          <script type="text/javascript">
+            $(document).ready(function() {
+              $("#download_genome_btn").click(function() {
+                let modal_content = "";
+                modal_content += "<div class='row text-center'>";
+                modal_content += "<div class='col'>" + 
+                  "<button class='btn btn-primary' id='btn_download_genome_fasta'>Nucleotide Fasta (.fna)</button>" +
+                  "</div>";
+                modal_content += "<div class='col'>" + 
+                  "<button class='btn btn-primary' id='btn_download_genome_genbank'>Annotated GenBank (.gbk)</button>" +
+                  "</div>";
+                modal_content += "<div class='row'>";
+                showModal("Download Genome: {{ "NPDC{:06d}".format(strain_data["npdc_id"]) }}", modal_content, on_show=function(){
+                  $("#btn_download_genome_fasta").click(function() {
+                    hideModal();
+                    location.href = "{{ url_for('genomes.page_genomes_download', genome_id=strain_data['genome_id']) }}?filetype=fasta";
+                  });
+                  $("#btn_download_genome_genbank").click(function() {
+                    hideModal();
+                    location.href = "{{ url_for('genomes.page_genomes_download', genome_id=strain_data['genome_id']) }}?filetype=genbank";
+                  });
+                }, on_close=function(){})
+              });
+            })
+          </script>
         {% endif %}
         </div>
       </div>

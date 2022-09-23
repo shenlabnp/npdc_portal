@@ -61,6 +61,7 @@ CREATE TABLE "bgcs" (
  "id" INTEGER PRIMARY KEY AUTOINCREMENT,
  "genome_id" INTEGER NOT NULL,
  "contig_num" INTEGER NOT NULL,
+ "region_num" INTEGER NOT NULL,
  "nt_start" INTEGER NOT NULL,
  "nt_end" INTEGER NOT NULL,
  "fragmented" INTEGER NOT NULL,
@@ -70,6 +71,9 @@ CREATE TABLE "bgcs" (
 );
 CREATE INDEX IF NOT EXISTS bgcs_genome_id ON bgcs(genome_id);
 CREATE INDEX IF NOT EXISTS bgcs_contig_num ON bgcs(contig_num);
+CREATE INDEX IF NOT EXISTS bgcs_region_num ON bgcs(region_num);
+CREATE INDEX IF NOT EXISTS bgcs_nt_start ON bgcs(nt_start);
+CREATE INDEX IF NOT EXISTS bgcs_nt_end ON bgcs(nt_end);
 CREATE INDEX IF NOT EXISTS bgcs_fragmented ON bgcs(fragmented);
 CREATE INDEX IF NOT EXISTS bgcs_gcf ON bgcs(gcf);
 
@@ -119,6 +123,9 @@ CREATE TABLE IF NOT EXISTS "cds" (
 );
 CREATE INDEX IF NOT EXISTS cds_genome_id ON cds(genome_id);
 CREATE INDEX IF NOT EXISTS cds_contig_num ON cds(contig_num);
+CREATE INDEX IF NOT EXISTS cds_nt_start ON cds(nt_start);
+CREATE INDEX IF NOT EXISTS cds_nt_end ON cds(nt_end);
+CREATE INDEX IF NOT EXISTS cds_strand ON cds(strand);
 
 CREATE TABLE IF NOT EXISTS cds_bgc_map (
  cds_id INTEGER NOT NULL UNIQUE,

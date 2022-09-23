@@ -1,0 +1,41 @@
+{% extends "layout.html.j2" %}
+{% block content %}
+
+  <div class="row mb-4">
+    <div class="col-8">
+      <div class="row">
+        <div class="col">
+          <h1 id="page_title">BGC ID: {{ bgc_data["name"] }}</h1>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-4 text-end">
+      <div class="row me-2">
+        <div class="col">
+          <button id="download_bgc_btn" class="btn btn-primary">Download BGC</button>
+          <script type="text/javascript">
+            $(document).ready(function() {
+              $("#download_bgc_btn").click(function() {
+                let modal_content = "";
+                modal_content += "<div class='row text-center'>";
+                modal_content += "<div class='col'>" + 
+                  "<button class='btn btn-primary' id='btn_download_bgc_regiongbk'>Region GenBank (.gbk)</button>" +
+                  "</div>";
+                modal_content += "<div class='row'>";
+                showModal("Download BGC: {{ bgc_data["name"] }}", modal_content, on_show=function(){
+                  $("#btn_download_bgc_regiongbk").click(function() {
+                    hideModal();
+                    location.href = "{{ url_for('bgcs.page_bgcs_download', bgc_id=bgc_data['bgc_id']) }}?filetype=regiongbk";
+                  });
+                }, on_close=function(){})
+              });
+            })
+          </script>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <hr />
+{% endblock %}

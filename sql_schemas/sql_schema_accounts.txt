@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS "users" (
  "num_login" INTEGER NOT NULL DEFAULT 0,
  "last_login" TEXT
 );
+CREATE INDEX IF NOT EXISTS users_num_login ON users(num_login);
+CREATE INDEX IF NOT EXISTS users_last_login ON users(last_login);
 
 DROP TABLE IF EXISTS "user_details";
 CREATE TABLE IF NOT EXISTS "user_details" (
@@ -25,6 +27,13 @@ CREATE TABLE IF NOT EXISTS "user_details" (
  FOREIGN KEY("job_title") REFERENCES job_titles("code"),
  FOREIGN KEY("country") REFERENCES countries("code")
 );
+CREATE INDEX IF NOT EXISTS user_details_user_id ON user_details(user_id);
+CREATE INDEX IF NOT EXISTS user_details_is_academics ON user_details(is_academics);
+CREATE INDEX IF NOT EXISTS user_details_job_title ON user_details(job_title);
+CREATE INDEX IF NOT EXISTS user_details_country ON user_details(country);
+CREATE INDEX IF NOT EXISTS user_details_have_nih_funding ON user_details(have_nih_funding);
+CREATE INDEX IF NOT EXISTS user_details_have_nih_funding ON user_details(have_nih_funding);
+CREATE INDEX IF NOT EXISTS user_details_have_other_funding ON user_details(have_other_funding);
 
 DROP TABLE IF EXISTS "job_titles";
 CREATE TABLE IF NOT EXISTS "job_titles" (
@@ -49,5 +58,27 @@ CREATE TABLE IF NOT EXISTS "countries" (
  "long" REAL NOT NULL,
  "continent" TEXT NOT NULL
 );
+CREATE INDEX IF NOT EXISTS countries_code ON countries(code);
+CREATE INDEX IF NOT EXISTS countries_name ON countries(name);
+CREATE INDEX IF NOT EXISTS countries_lat ON countries(lat);
+CREATE INDEX IF NOT EXISTS countries_long ON countries(long);
+CREATE INDEX IF NOT EXISTS countries_continent ON countries(continent);
+
+DROP TABLE IF EXISTS "user_downloads";
+CREATE TABLE IF NOT EXISTS "user_downloads" (
+ "user_id" INTEGER NOT NULL,
+ "npdc_id" INTEGER NOT NULL,
+ "count_download_genome" INTEGER NOT NULL DEFAULT 0,
+ "last_download_genome" TEXT,
+ "count_download_bgc" INTEGER NOT NULL DEFAULT 0,
+ "last_download_bgc" TEXT,
+ FOREIGN KEY("user_id") REFERENCES users("id")
+);
+CREATE INDEX IF NOT EXISTS user_downloads_user_id ON user_downloads(user_id);
+CREATE INDEX IF NOT EXISTS user_downloads_npdc_id ON user_downloads(npdc_id);
+CREATE INDEX IF NOT EXISTS user_downloads_count_download_genome ON user_downloads(count_download_genome);
+CREATE INDEX IF NOT EXISTS user_downloads_last_download_genome ON user_downloads(last_download_genome);
+CREATE INDEX IF NOT EXISTS user_downloads_count_download_bgc ON user_downloads(count_download_bgc);
+CREATE INDEX IF NOT EXISTS user_downloads_last_download_bgc ON user_downloads(last_download_bgc);
 
 COMMIT;

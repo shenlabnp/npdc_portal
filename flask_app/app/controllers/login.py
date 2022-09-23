@@ -134,7 +134,7 @@ def page_register():
         email_sender = Mail(current_app)
         msg = Message(
             "Your NPDC Database account",
-            sender=current_app.config["MAIL_USERNAME"],
+            sender=current_app.config["MAIL_SEND_AS"],
             recipients=[userdata["email"]]
         )
         msg.html = (

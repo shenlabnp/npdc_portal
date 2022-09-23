@@ -1,0 +1,9 @@
+{
+	"MAIL_SERVER": "smtp.xxx.com",
+	"MAIL_PORT": 587,
+	"MAIL_USERNAME": "xxx@ufl.edu",
+	"MAIL_PASSWORD": "xxx",
+	"MAIL_USE_TLS": true,
+	"MAIL_USE_SSL": false,
+    "MAIL_SEND_AS": "noreply@npdc.com"
+}

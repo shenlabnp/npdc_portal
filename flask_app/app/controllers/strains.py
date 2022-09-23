@@ -74,7 +74,6 @@ def get_strain_name(data):
     return result
 
 
-
 @blueprint.route("/strains/view/<int:npdc_id>")
 def page_strains_detail(npdc_id):
 
@@ -88,8 +87,13 @@ def page_strains_detail(npdc_id):
             " from strains left join genomes on strains.npdc_id=genomes.npdc_id"
             " where strains.npdc_id=?"
             " limit 1"
-        ),  con, params=(npdc_id, )).fillna("").iloc[0]
+        ),  con, params=(npdc_id, )).fillna("")
 
+        if strain_data.shape[0] < 1:
+            flash("can't find strain id", "alert-danger")
+            return redirect(url_for("home.page_home"))
+
+        strain_data = strain_data.iloc[0]
         strain_data = strain_data.groupby(strain_data.index).first()
 
         if strain_data["genome_id"] != "":

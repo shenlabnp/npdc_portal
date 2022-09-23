@@ -39,8 +39,10 @@ CREATE TABLE IF NOT EXISTS blast_hits (
  target_cds_id INTEGER NOT NULL,
  query_start INTEGER NOT NULL,
  query_end INTEGER NOT NULL,
+ query_cov REAL NOT NULL,
  target_start INTEGER NOT NULL,
  target_end INTEGER NOT NULL,
+ target_cov REAL NOT NULL,
  evalue REAL NOT NULL,
  bitscore INTEGER NOT NULL,
  pct_identity REAL NOT NULL,
@@ -50,3 +52,10 @@ CREATE INDEX IF NOT EXISTS hits_target_cds ON blast_hits(target_cds_id);
 CREATE INDEX IF NOT EXISTS hits_evalue ON blast_hits(evalue);
 CREATE INDEX IF NOT EXISTS hits_bitscore ON blast_hits(bitscore);
 CREATE INDEX IF NOT EXISTS hits_pct_identity ON blast_hits(pct_identity);
+CREATE INDEX IF NOT EXISTS hits_query_cov ON blast_hits(query_cov);
+CREATE INDEX IF NOT EXISTS hits_target_cov ON blast_hits(target_cov);
+CREATE INDEX IF NOT EXISTS hits_query_start ON blast_hits(query_start);
+CREATE INDEX IF NOT EXISTS hits_target_start ON blast_hits(target_start);
+CREATE INDEX IF NOT EXISTS hits_query_end ON blast_hits(query_end);
+CREATE INDEX IF NOT EXISTS hits_target_end ON blast_hits(target_end);
+CREATE INDEX IF NOT EXISTS hits_query_prot_id ON blast_hits(query_prot_id);
