@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-from flask import render_template
+from flask import render_template, redirect
 import sqlite3
+from datetime import datetime
 
 # import global config
 from ..config import conf
@@ -43,4 +44,19 @@ def page_home():
         page_subtitle=page_subtitle,
         strains_count=strains_count,
         genomes_count=genomes_count
+    )
+
+
+@blueprint.route("/countdown")
+def page_launch_countdown():
+
+    launch_datetime = datetime.strptime(conf["launch_datetime"], "%Y-%m-%d %H:%M:%S")
+    seconds_to_launch = (launch_datetime - datetime.now()).total_seconds()
+
+    if seconds_to_launch <= 0:
+        return redirect(url_for("home.page_home"))
+
+    return render_template(
+        "home/countdown.html.j2",
+        launch_datetime=launch_datetime.strftime("%Y-%m-%dT%H:%M:%S")
     )

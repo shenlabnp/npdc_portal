@@ -20,6 +20,7 @@ conf["email_config_path"] = path.join(conf["instance_folder"], "email_config.jso
 conf["strain_pictures_folder_path"] = path.join(conf["instance_folder"], "strain_pictures")
 
 # other app-specific configurations
-conf["is_in_beta"] = True
+conf["is_in_beta"] = False
+conf["launch_datetime"] = "1901-01-01 00:00:00"
 conf["knowncb_cutoff"] = 80
 conf["consecutive_download_duration"] = 60 # in seconds

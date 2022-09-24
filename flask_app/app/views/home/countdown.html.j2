@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Coming soon: NPDC portal</title>
+    <meta charset="utf-8" />
+    <meta name="application-name" content="NPDC-dashboard" />
+    <meta name="description" content="NPDC Portal" />
+    <meta name="author" content="Satria Kautsar / Shen Lab" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}" />
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/tagsinput.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/typeahead.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/datatables.min.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/jqcloud.min.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+  </head>
+  <body data-gr-c-s-loaded="true" cz-shortcut-listen="true">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/svg.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/tagsinput.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/typeahead.bundle.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/plotly-latest.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/datatables.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jqcloud.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/arrower.js') }}"></script>
+    <div class="container-fluid">
+      <div class="row text-center mt-4">
+      </div>
+      <div class="row text-center mt-4">
+        <div class="col-4"></div>
+        <div class="col-4">
+          <img src="{{ url_for('static', filename='img/logo.png') }}" class="img-fluid">
+        </div>
+        <div class="col-4"></div>
+      </div>
+      <div class="row text-center mt-4">
+        <div class="col">
+          <h2 style="color: #ED7D30;">go live in:</h2>
+          <h1 id="countdown_timer"></h1>
+        </div>
+      </div>
+    </div>
+
+    <script type="text/javascript">
+      $(document).ready(function() {
+        let countDownDate = new Date("{{ launch_datetime }}").getTime();
+        let x = setInterval(function() {
+
+          // Get today's date and time
+          let now = new Date().getTime();
+
+          // Find the distance between now and the count down date
+          let distance = countDownDate - now;
+
+          // Time calculations for days, hours, minutes and seconds
+          let days = Math.floor(distance / (1000 * 60 * 60 * 24));
+          let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+          let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+          // Display the result in the element with id="demo"
+          $("#countdown_timer").html(days + "d " + hours + "h "
+          + minutes + "m " + seconds + "s ");
+
+          // If the count down is finished, write some text
+          if (distance < 0) {
+            clearInterval(x);
+            location.href = "{{ url_for('home.page_home') }}";
+          }
+        }, 1000);
+      });
+      
+    </script>
+  </body>
+</html>

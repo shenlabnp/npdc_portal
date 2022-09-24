@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
-from flask import Flask, redirect, url_for, session
+from flask import Flask, redirect, url_for, session, render_template, request
 from os import path
 import sqlite3
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.serving import run_simple
 from sys import argv
 import json
-import datetime
+from datetime import datetime
 import pandas as pd
 import numpy as np
 
@@ -77,6 +77,18 @@ def portal():
     app.register_blueprint(about.blueprint)
     app.register_blueprint(query.blueprint)
 
+    @app.before_request
+    def before_request():
+        if request.path == url_for('home.page_launch_countdown'):
+            pass
+        elif "/static" in request.path:
+            pass
+        else:
+            launch_datetime = datetime.strptime(conf["launch_datetime"], "%Y-%m-%d %H:%M:%S")
+            seconds_to_launch = (launch_datetime - datetime.now()).total_seconds()
+            if seconds_to_launch > 0:
+                return redirect(url_for("home.page_launch_countdown"))
+
     # app-specific contexts #
     @app.context_processor
     def inject_global():
@@ -88,21 +100,21 @@ def portal():
         with sqlite3.connect(conf["db_path"]) as con:
             cur = con.cursor()
             last_db_updated, = cur.execute("select logs.time from logs where message like 'START' limit 1").fetchone()
-            last_db_updated = datetime.datetime.strptime(last_db_updated, "%Y-%m-%d %H:%M:%S")
-            now_date = datetime.datetime.now()
+            last_db_updated = datetime.strptime(last_db_updated, "%Y-%m-%d %H:%M:%S")
+            now_date = datetime.now()
             last_db_updated_days = (now_date - last_db_updated).days
 
         if conf["is_in_beta"]:
             gbal["version"] = "beta"
         else:
-            gbal["version"] = datetime.datetime.strftime(last_db_updated, "%Y.%m.%d")
+            gbal["version"] = datetime.strftime(last_db_updated, "%Y.%m.%d")
 
         # get last query db update stats
         with sqlite3.connect(conf["query_db_path"]) as con:
             cur = con.cursor()
             num_jobs_pending = cur.execute("select count(id) from jobs where status in (0, 1)").fetchone()[0]
             num_jobs_processed = cur.execute("select count(id) from jobs where status in (2, 3)").fetchone()[0]
-            last_week_date = ""#datetime.datetime.now().strftime("%Y-%m-%d")
+            last_week_date = ""#datetime.now().strftime("%Y-%m-%d")
             last_week_finished_jobs = pd.read_sql_query((
                 "select started, finished from jobs where status in (2, 3) and started > ?"
             ), con, params=(last_week_date, ))
