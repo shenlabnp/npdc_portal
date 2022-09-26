@@ -3,35 +3,78 @@
   {% include "basic_header.html.j2" %}
 
   <div class="row">
-    <div class="col text-left">
-      Mission of the NPDC
+    <div class="col text-center">
+      The <a href="https://shen.scripps.ufl.edu"> Shen Lab </a> at the Universitry of Florida Scripps Biomedical Research, located in Jupiter, Florida, has launched a large-scale sequencing campaign to explore the 125,127 strains in NPDC's world's-largest actinobacterial strain collection, dramatically increasing the number of actinobacterial genomes currently available.
     </div>
   </div>
-          
-          <div class="row mt-4">
-            <div class="col">
-              <strong>(i)</strong> Develop a shared state-of-the-art actinobacterial strain collection and genome database to revitalize natural products discovery <br \>
-              <strong>(ii)</strong> Serve the broad scientific community to promote research and development on natural products and associated applications <br \>
+  
+  <div></div>
+
+  <div class="row">
+    <div class="col text-left">
+      <h6>Mission of the NPDC</h6>
+             <p> <strong>(i)</strong> Develop a shared state-of-the-art actinobacterial strain collection and genome database to revitalize natural products discovery <br \>
+              <strong>(ii)</strong> Serve the broad scientific community to promote research and development on natural products and associated applications <br \> </p>
             </div>
           </div>
 
-          <div class="row mt-4">
-            <div class=",m,mcol">
-              Over the past two decades, ~23,000 non-pathogenic actinobacterial genomes have been sequenced and made publicly available. We have initiated a large-scale genome sequencing campaign to sequence all actinobacterial strains at NPDC over the next five years, ultimately quintupling the number of actinobacterial genomes currently available.
+   <div class="row">
+    <div class="col text-left">
+      <h6>Description of the NPDC</h6>
+              <p> The Actinobacterial Strain Collection at the <a href="https://shen.scripps.ufl.edu/natural-product-discovery-center-npdc"> Natural Products Discovery Center </a> NPDC at UF Scripps currently contains a total of 125,127 strains, of which at least 62,325 are actinobacteria, 14,465 other bacteria, and 48,334 unidentified. These strains were isolated <strong> over the last eight decades,</strong> allowing for the capture of irreproducible natural product diversity caused ny evolution and changes in environmental cues. The 62,328 actinobacteria in the collection, spanning at least 88 genera, were isolated from <strong>69 different countries</strong> with different climates and ecological factors that will further increase the chemical diversity of the natural products waiting to be discovered. The potential for natural product discovery from the NPDC at UF Scripps is immense. Assuming about 30 biosynthetic gene clusters (BGCs) per strain, the collection's 125,000 strains could encode mpre than <strong>3.75 million BGCs</strong>, potentially producing more than 3.75 million natural products. In reference to known natural products that have been isolated from bacteria (about 40,000), this leaves millions of compounds to be discovered. Although many strains may produce the same or very similar products, these redundancies are unlikely to fundamentally reduce the total number of novel natural products encoded in the NPDC. The millions of new BGCs will also serve as an <strong>unprecedented treasure trove </strong> for discovery of new enzymes and biocatalysts, while enabling a suite of innovative synthetic biology applications. </p>    
             </div>
           </div>
 
-          <div class="row mt-4">
-            <div class="col">
-              NPDC: The actinobacterial strain collection at the Natural Products Discovery Center (NPDC) at UF Scripps currently contains a total of 125,127 strains, of which at least 62,328 are actinobacteria, 14,465 other bacteria, and 48,334 unidentified. These strains were isolated over the last eight decades, with the majority acquired between 1940s to the 2010s. The wide time range of collection has allowed for capture of chemical diversity based on evolution and environmental cues, which change over time and are impossible to reproduce in laboratory settings today. The 62,328 actinobacteria in the collection, spanning at least 88 different genera, were isolated from 69 different countries with different climate and ecology factors that further increase natural product structural diversity.  Although these statistics, as well as taxonomic data, are incomplete, the fraction of the strains whose information is available provides a glimpse into the vast spatial, temporal, and taxonomic diversity of the entire collection.​
-            </div>
-          </div>
-          
-          <div class="row mt-4">
-            <div class="col">
-          The potential number of natural products awaiting discovery from the actinobacterial strain collection at UF Scripps is immense. Estimated on the assumption of ~30 biosynthetic gene clusters (BGCs) per strain, the ~125K strains in the collection could encode more than 3.75 million BGCs, i.e., the potential of producing more than 3.75 million natural products.  In reference to the ~40,000 natural products that have been isolated from bacteria to date, of which about half (~20,000) are from actinobacteria, the current number of known natural products is only ~1% of this value, leaving millions of compounds to be discovered.  Of course, there will be redundancies with many strains producing the same natural products or structurally similar congeners.  However, these redundancies are unlikely to fundamentally reduce the total number of natural products waiting for discovery.  The estimated 3.75 million BGCs will also serve as an unprecedented treasure trove for enzyme and biocatalyst discovery and synthetic biology applications.
-            </div>
-          </div>
+   <div class="row">
+    <div class="col text-left">
+      <h6>Technical Details on Strain Growth and Sequencing:</h6>
+      <p> <strong> Reads Processing </strong> </br> 
+        BBDuk [1] was used to remove contaminants, trim reads that contained adapter sequence and homopolymers of G's of size 5 or more at the ends of the reads, remove reads containing 1 or more 'N' bases or having length <= 51 bp or 33% of the full read length. Reads mapped with BBMap [1] to masked human references at 93% identity were separated into a chaff file. Further, reads aligned to masked common microbial contaminants were separated into a chaff file. </br>
+
+       <strong> Assembly </strong> </br>
+
+        The following steps were then performed for assembly: (1) artifact filtered and normalized Illumina reads were assembled with SPAdes (version v3.14.1; –phred-offset 33 –cov-cutoff auto -t 16 -m 64 –careful -k 25,55,95) [2]; (2) contigs were discarded if the length was <1kb (BBTools reformat.sh: minlength=1000 ow=t). 
+
+      <strong> Genomes QC </strong> </br>
+
+      CheckM [3] was used to calculate the contamination and completeness level of genomes. Genomes having >=95% completeness and <=10% contamination were kept, while others are discarded. </br>
+
+      <strong> Annotations </strong> </br>
+
+      GTDB-Toolkit [4] was used to annotate the taxonomy of genomes. Prokka [5] was used to predict and annotate coding sequences in the genomes, while antiSMASH [6] was used to predict the biosynthetic gene clusters. </br>
+
+      <strong>References:</strong> </br> 
+
+        1. B. Bushnell: BBTools software package (version 38.90), URL https://bbtools.jgi.doe.gov. </br> 
+
+        2. Bankevich A, et.al, SPAdes: a new genome assembly algorithm and its applications to single–cell sequencing. J Comput Biol 2012; 19:455–77. </br> 
+
+        3. Parks DH, Imelfort M, Skennerton CT, Hugenholtz P, Tyson GW. CheckM: assessing the quality of microbial genomes recovered from isolates, single cells, and metagenomes. Genome Res. 2015 Jul;25(7):1043-55.  </br> 
+
+        4. Pierre-Alain Chaumeil, Aaron J Mussig, Philip Hugenholtz, Donovan H Parks, GTDB-Tk: a toolkit to classify genomes with the Genome Taxonomy Database, Bioinformatics, Volume 36, Issue 6, 15 March 2020, Pages 1925–1927. </br> 
+
+      5. Torsten Seemann, Prokka: rapid prokaryotic genome annotation, Bioinformatics, Volume 30, Issue 14, 15 July 2014, Pages 2068–2069. </br> 
+
+      6. Kai Blin, Simon Shaw, Katharina Steinke, Rasmus Villebro, Nadine Ziemert,  </br> 
+        </div>
+        </div>
+
+  <div class="row">
+    <div class="col text-left">
+      <h6>Our Collaborators:</h6>
+       <img src="{{ url_for('static', filename='img/CollaboratorsLogos.jpg') }}"class="img-fluid">
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col text-left">
+      <h6>Helpful References:</h6> 
+      <p> Kalkreuter, E.; Pan, G.; Cepeda, A. J.; Shen, B. Targeting bacterial genomes for natural product discovery: opportunities, challenges, and strategies. Trends Pharmacol. Sci. 2020, 41, 13-26. </br>
+      Steele, A. D.; Teijaro, C. N.; Yang, D.; Shen, B. Leveraging a large microbial strain collection for natural product discovery. J. Biol. Chem. 2019, 194, 16567-16576. </p> 
+    </div>
+  </div>
+
+
 
         </div>
       </div>
