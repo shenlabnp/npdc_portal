@@ -6,3 +6,6 @@ instance/*
 !instance/dummy.txt
 !instance/*/dummy.txt
 !instance/*.template
+!instance/strain_pictures
+instance/strain_pictures/*
+!instance/strain_pictures/dummy.txt
