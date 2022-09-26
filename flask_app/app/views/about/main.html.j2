@@ -9,26 +9,74 @@
   </div>
   
   <div></div>
-
-  <div class="row">
-    <div class="col text-left">
-      <h6>Mission of the NPDC</h6>
-             <p> <strong>(i)</strong> Develop a shared state-of-the-art actinobacterial strain collection and genome database to revitalize natural products discovery <br \>
+  <div class="row mb-4">
+    <div class="col">
+      <div class="bs-component">
+        <div class="accordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="heading_mission">
+               <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse_mission" aria-expanded="true" aria-controls="collapse_mission">
+                <strong>Mission of the NPDC</strong>
+              </button>
+            </h2>
+            <div id="collapse_mission" class="accordion-collapse collapse show" aria-labelledby="heading_mission">
+              <div class="accordion-body">
+                <div class="row">
+                      <div class="col">
+                        <p> <strong>(i)</strong> Develop a shared state-of-the-art actinobacterial strain collection and genome database to revitalize natural products discovery <br \>
               <strong>(ii)</strong> Serve the broad scientific community to promote research and development on natural products and associated applications <br \> </p>
-            </div>
+                     </div>
+                   </div>
+                </div>      
+              </div>
+             </div>
           </div>
+        </div>
+      </div>      
+    </div>
 
-   <div class="row">
-    <div class="col text-left">
-      <h6>Description of the NPDC</h6>
-              <p> The Actinobacterial Strain Collection at the <a href="https://shen.scripps.ufl.edu/natural-product-discovery-center-npdc"> Natural Products Discovery Center </a> NPDC at UF Scripps currently contains a total of 125,127 strains, of which at least 62,325 are actinobacteria, 14,465 other bacteria, and 48,334 unidentified. These strains were isolated <strong> over the last eight decades,</strong> allowing for the capture of irreproducible natural product diversity caused ny evolution and changes in environmental cues. The 62,328 actinobacteria in the collection, spanning at least 88 genera, were isolated from <strong>69 different countries</strong> with different climates and ecological factors that will further increase the chemical diversity of the natural products waiting to be discovered. The potential for natural product discovery from the NPDC at UF Scripps is immense. Assuming about 30 biosynthetic gene clusters (BGCs) per strain, the collection's 125,000 strains could encode mpre than <strong>3.75 million BGCs</strong>, potentially producing more than 3.75 million natural products. In reference to known natural products that have been isolated from bacteria (about 40,000), this leaves millions of compounds to be discovered. Although many strains may produce the same or very similar products, these redundancies are unlikely to fundamentally reduce the total number of novel natural products encoded in the NPDC. The millions of new BGCs will also serve as an <strong>unprecedented treasure trove </strong> for discovery of new enzymes and biocatalysts, while enabling a suite of innovative synthetic biology applications. </p>    
-            </div>
+ <div></div>
+<div class="row mb-4">
+    <div class="col">
+      <div class="bs-component">
+        <div class="accordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="heading_descrip">
+              <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse_descrip" aria-expanded="true" aria-controls="collapse_descrip">
+                <strong>Description of the NPDC:</strong>
+              </button>
+            </h2>
+            <div id="collapse_descrip" class="accordion-collapse collapse show" aria-labelledby="heading_descrip">
+              <div class="accordion-body">
+                <div class="row">
+                      <div class="col">
+                        <p> The Actinobacterial Strain Collection at the <a href="https://shen.scripps.ufl.edu/natural-product-discovery-center-npdc"> Natural Products Discovery Center </a> NPDC at UF Scripps currently contains a total of 125,127 strains, of which at least 62,325 are actinobacteria, 14,465 other bacteria, and 48,334 unidentified. These strains were isolated <strong> over the last eight decades,</strong> allowing for the capture of irreproducible natural product diversity caused ny evolution and changes in environmental cues. The 62,328 actinobacteria in the collection, spanning at least 88 genera, were isolated from <strong>69 different countries</strong> with different climates and ecological factors that will further increase the chemical diversity of the natural products waiting to be discovered. The potential for natural product discovery from the NPDC at UF Scripps is immense. Assuming about 30 biosynthetic gene clusters (BGCs) per strain, the collection's 125,000 strains could encode mpre than <strong>3.75 million BGCs</strong>, potentially producing more than 3.75 million natural products. In reference to known natural products that have been isolated from bacteria (about 40,000), this leaves millions of compounds to be discovered. Although many strains may produce the same or very similar products, these redundancies are unlikely to fundamentally reduce the total number of novel natural products encoded in the NPDC. The millions of new BGCs will also serve as an <strong>unprecedented treasure trove </strong> for discovery of new enzymes and biocatalysts, while enabling a suite of innovative synthetic biology applications. </p> 
+                      </div>
+                   </div>
+                </div>      
+              </div>
+             </div>
           </div>
-
-   <div class="row">
-    <div class="col text-left">
-      <h6>Technical Details on Strain Growth and Sequencing:</h6>
-      <p> <strong> Reads Processing </strong> </br> 
+        </div>
+      </div>      
+    </div>
+   
+<div></div>
+<div class="row mb-4">
+    <div class="col">
+      <div class="bs-component">
+        <div class="accordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="heading_technic">
+              <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse_technic" aria-expanded="true" aria-controls="collapse_technic">
+                <strong>Technical Details on Strain Growth and Sequencing:</strong>
+              </button>
+            </h2>
+            <div id="collapse_technic" class="accordion-collapse collapse show" aria-labelledby="heading_technic">
+              <div class="accordion-body">
+                <div class="row">
+                      <div class="col">
+                        <p> <strong> Reads Processing </strong> </br> 
         BBDuk [1] was used to remove contaminants, trim reads that contained adapter sequence and homopolymers of G's of size 5 or more at the ends of the reads, remove reads containing 1 or more 'N' bases or having length <= 51 bp or 33% of the full read length. Reads mapped with BBMap [1] to masked human references at 93% identity were separated into a chaff file. Further, reads aligned to masked common microbial contaminants were separated into a chaff file. </br>
 
        <strong> Assembly </strong> </br>
@@ -55,26 +103,69 @@
 
       5. Torsten Seemann, Prokka: rapid prokaryotic genome annotation, Bioinformatics, Volume 30, Issue 14, 15 July 2014, Pages 2068–2069. </br> 
 
-      6. Kai Blin, Simon Shaw, Katharina Steinke, Rasmus Villebro, Nadine Ziemert,  </br> 
+      6. Kai Blin, Simon Shaw, Katharina Steinke, Rasmus Villebro, Nadine Ziemert,  </p>
+                      </div>
+                   </div>
+                </div>      
+              </div>
+             </div>
+          </div>
         </div>
-        </div>
-
-  <div class="row">
-    <div class="col text-left">
-      <h6>Our Collaborators:</h6>
-       <img src="{{ url_for('static', filename='img/CollaboratorsLogos.jpg') }}"class="img-fluid">
+      </div>      
     </div>
-  </div>
 
-  <div class="row">
-    <div class="col text-left">
-      <h6>Helpful References:</h6> 
-      <p> Kalkreuter, E.; Pan, G.; Cepeda, A. J.; Shen, B. Targeting bacterial genomes for natural product discovery: opportunities, challenges, and strategies. Trends Pharmacol. Sci. 2020, 41, 13-26. </br>
+   <div></div>
+   <div class="row mb-4">
+    <div class="col">
+      <div class="bs-component">
+        <div class="accordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="heading_collabo">
+              <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse_collabo" aria-expanded="true" aria-controls="collapse_collabo">
+                <strong>Our Collaborators:</strong>
+              </button>
+            </h2>
+            <div id="collapse_collabo" class="accordion-collapse collapse show" aria-labelledby="heading_collabo">
+              <div class="accordion-body">
+                <div class="row">
+                      <div class="col">
+                       <img src="{{ url_for('static', filename='img/CollaboratorsLogos.jpg') }}"class="img-fluid">
+                      </div>
+                   </div>
+                </div>      
+              </div>
+             </div>
+          </div>
+        </div>
+      </div>      
+    </div>
+
+   <div></div>
+   <div class="row mb-4">
+    <div class="col">
+      <div class="bs-component">
+        <div class="accordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="heading_helpful">
+              <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse_helpful" aria-expanded="true" aria-controls="collapse_helpful">
+                <strong>Helpful References:</strong>
+              </button>
+            </h2>
+            <div id="collapse_helpful" class="accordion-collapse collapse show" aria-labelledby="heading_helpful">
+              <div class="accordion-body">
+                <div class="row">
+                      <div class="col">
+                       <p> Kalkreuter, E.; Pan, G.; Cepeda, A. J.; Shen, B. Targeting bacterial genomes for natural product discovery: opportunities, challenges, and strategies. Trends Pharmacol. Sci. 2020, 41, 13-26. </br>
       Steele, A. D.; Teijaro, C. N.; Yang, D.; Shen, B. Leveraging a large microbial strain collection for natural product discovery. J. Biol. Chem. 2019, 194, 16567-16576. </p> 
+                      </div>
+                   </div>
+                </div>      
+              </div>
+             </div>
+          </div>
+        </div>
+      </div>      
     </div>
-  </div>
-
-
 
         </div>
       </div>
