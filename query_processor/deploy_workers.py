@@ -25,7 +25,7 @@ def fetch_pending_jobs(jobs_db):
         )).fetchall()]
 
 
-def deploy_jobs(pending, jobs_db, instance_folder, num_threads, ram_size_gb, use_srun):
+def deploy_jobs(pending, jobs_db, npdc_db, instance_folder, num_threads, ram_size_gb, use_srun):
     for job_id in pending:
         print("PROCESSING: job#{}".format(job_id))
         # update status to "PROCESSING"
@@ -89,9 +89,26 @@ def deploy_jobs(pending, jobs_db, instance_folder, num_threads, ram_size_gb, use
                 )
                 blast_result.columns = blast_columns.split(" ")
                 blast_result = blast_result.sort_values(by=["qseqid", "bitscore"], ascending=False)
+                # fetch bgc_id and genome_id for the proteins
+                all_target_cds_ids = [int(cds_id) for cds_id in blast_result["sseqid"].unique()]
+                cds_to_genome_id = pd.read_sql((
+                    "select id as cds_id, genome_id from cds where id in ({})"
+                ).format(
+                    ",".join(["?"]*len(all_target_cds_ids))
+                ), connect(npdc_db), params=tuple([*all_target_cds_ids]))
+                cds_to_genome_id = cds_to_genome_id.groupby("cds_id").apply(lambda x: x.iloc[0])["genome_id"].to_dict()
+                cds_to_bgc_id = pd.read_sql((
+                    "select cds_id, bgc_id from cds_bgc_map where cds_id in ({})"
+                ).format(
+                    ",".join(["?"]*len(all_target_cds_ids))
+                ), connect(npdc_db), params=(tuple([*all_target_cds_ids])))
+                cds_to_bgc_id = cds_to_bgc_id.groupby("cds_id").apply(lambda x: x.iloc[0])["bgc_id"].to_dict()
+                # insert into db
                 pd.DataFrame({
                     "query_prot_id": blast_result["qseqid"],
                     "target_cds_id": blast_result["sseqid"],
+                    "target_bgc_id": blast_result["sseqid"].map(lambda x: cds_to_bgc_id.get(int(x), -1)),
+                    "target_genome_id": blast_result["sseqid"].map(lambda x: cds_to_genome_id[int(x)]),
                     "query_start": blast_result["qstart"],
                     "query_end": blast_result["qend"],
                     "query_cov": abs(blast_result["qend"] - blast_result["qstart"]) / blast_result["qlen"] * 100,
@@ -132,6 +149,7 @@ def main():
         "instance"
     )
     jobs_db = path.join(instance_folder, "queries.db")
+    npdc_db = path.join(instance_folder, "db_data", "npdc_portal.db")
 
     if not path.exists(jobs_db):
         print("database is not up-to-date, please run init_db.py first!!")
@@ -144,7 +162,7 @@ def main():
             print("deploying {} jobs...".format(
                 len(pending)
             ))
-            deploy_jobs(pending, jobs_db, instance_folder, num_threads, ram_size_gb, use_srun)
+            deploy_jobs(pending, jobs_db, npdc_db, instance_folder, num_threads, ram_size_gb, use_srun)
 
         sleep(5)
 

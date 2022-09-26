@@ -130,10 +130,14 @@ def page_strains_detail(npdc_id):
 
         strain_data = strain_data.replace("", "n/a").replace("Unknown", "n/a").to_dict()
 
+    # page title
+    page_title = "NPDC{:06d}".format(strain_data["npdc_id"])
+
     # render view
     return render_template(
         "strains/detail.html.j2",
-        strain_data=strain_data
+        strain_data=strain_data,
+        page_title=page_title
     )
 
 

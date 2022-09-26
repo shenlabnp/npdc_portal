@@ -54,14 +54,35 @@ def page_bgcs_detail(bgc_id):
             return redirect(url_for("home.page_home"))
 
         bgc_data = bgc_data.iloc[0]
-        bgc_data["name"] = get_bgc_name(bgc_data)
         bgc_data = bgc_data.to_dict()
+        bgc_data["name"] = get_bgc_name(bgc_data)
+        bgc_data["strain_name"] = get_strain_name(bgc_data)
+        bgc_data["annotation_tool"] = "antiSMASH v5.1.1"
+        bgc_data["knowncb_cutoff"] = conf["knowncb_cutoff"]
+        bgc_data["num_related_bgcs"] = pd.read_sql_query((
+            "select count(id) from bgcs"
+            " where id<>? and gcf=?"
+        ), sqlite3.connect(conf["db_path"]), params=(bgc_data["bgc_id"], bgc_data["gcf"])).iloc[0, 0]
+
+    page_title = bgc_data["name"]
 
     # render view
     return render_template(
         "bgcs/detail.html.j2",
-        bgc_data = bgc_data
+        bgc_data = bgc_data,
+        page_title=page_title
     )
+
+
+def get_strain_name(data):
+
+    result = "Unknown bacterium"
+    if data["species"] != "":
+        result = data["species"]
+    elif data["genus"] != "":
+        result = data["genus"] + " spp."
+
+    return result
 
 
 def get_bgc_name(row):
@@ -157,6 +178,44 @@ def page_bgcs_download(bgc_id):
     return send_file(bgc_file_path, as_attachment=True, download_name=bgc_file_delivery_name)
 
 
+@blueprint.route("/api/bgc/get_arrower_objects")
+def get_arrower_objects():
+    """ for arrower js """
+    result = {}
+    bgc_ids = map(int, request.args.get('bgc_id', type=str).split(","))
+
+    with sqlite3.connect(conf["db_path"]) as con:
+        cur = con.cursor()
+
+        for bgc_id in bgc_ids:
+            bgc_data = pd.read_sql((
+                "select * from bgcs left join bgcs_cached on bgcs.id=bgcs_cached.bgc_id where bgc_id=?"
+            ), con, params=(bgc_id,)).iloc[0]
+            data = {
+                "id": get_bgc_name(bgc_data),
+                "start": int(bgc_data["nt_start"]),
+                "end": int(bgc_data["nt_end"]),
+            }
+            # get cds
+            data["orfs"] = []
+            for idx, row in pd.read_sql((
+                "select * from cds_bgc_map left join cds on cds.id=cds_bgc_map.cds_id"
+                " where bgc_id=?"
+            ), con, params=(bgc_id,)).iterrows():
+                orf = {
+                    "start": int(row["nt_start"]),
+                    "end": int(row["nt_end"]),
+                    "strand": int(row["strand"])
+                }
+                orf["id"] = row["locus_tag"] + " (" + row["annotation"] + ")"
+                orf["domains"] = []
+                data["orfs"].append(orf)
+            # append
+            result[bgc_id] = data
+
+    return result
+
+
 @blueprint.route("/api/bgcs/get_overview", methods=["GET"])
 def get_overview():
     """ for bgcs overview tables """
@@ -170,9 +229,16 @@ def get_overview():
 
         sql_filter = "1"
         sql_filter_params = []
+        if request.args.get("exclude_bgcs", "") != "":
+            bgc_ids = [int(bgc_id) for bgc_id in request.args.get("exclude_bgcs").split(",")]
+            sql_filter += " and bgc_id not in ({})".format(",".join(["?"]*len(bgc_ids)))
+            sql_filter_params.extend(bgc_ids)
         if request.args.get("genome_id", "") != "":
             sql_filter += " and genome_id=?"
             sql_filter_params.append(request.args.get("genome_id"))
+        if request.args.get("gcf", "") != "":
+            sql_filter += " and gcf=?"
+            sql_filter_params.append(request.args.get("gcf"))            
 
         # fetch total records
         result["recordsTotal"] = cur.execute((

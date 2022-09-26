@@ -112,7 +112,120 @@
             </h2>
             <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo">
               <div class="accordion-body">
-                ...
+                <div class="row text-center">
+                  <div class="col">
+                    <button class="btn btn-primary m-2 blast_result_download_btn" style="height: 100%; padding: 2em;" dltype="blast_table">Download BLAST tabular result (.txt)</button>
+                    <button class="btn btn-primary m-2 blast_result_download_btn" style="height: 100%; padding: 2em;" dltype="fasta_proteins">
+                      Download protein hits multiFASTA<br/>(for generating SSN)
+                    </button>
+                    <button class="btn btn-primary m-2 blast_result_download_btn" style="height: 100%; padding: 2em;" dltype="fasta_bgcs">
+                      Download BGC hits multiFASTA<br/>+ Cytoscape annotation file<br />(for generating GNN)
+                    </button>
+                    <script type="text/javascript">
+                      $(document).ready(function() {
+                        $(".blast_result_download_btn").click(function() {
+                          let file_type = $(this).attr("dltype");
+                          switch (file_type) {
+                            case "fasta_bgcs":
+                              let selected_prot = $("input[name='select_result_protein']:checked");
+                              let prot_ids = [selected_prot.val()];
+                              if (prot_ids[0] == "0") {
+                                prot_ids = [];
+                                $("input[name='select_result_protein']").each(function() {
+                                  let prot_id = $(this).val();
+                                  if (prot_id != "0") {
+                                    prot_ids.push(prot_id);
+                                  }
+                                });
+                              }
+                              $(".blast_result_download_btn").addClass("disabled");
+                              $(".btn_download_blast_hits").addClass("disabled");
+                              $.ajax({
+                                url: "{{ url_for("query.page_download_result", job_id=job_id) }}" +
+                                "?filetype=" + file_type + "&query_prot_ids=" + prot_ids.join(",") +
+                                "&action=prepare",
+                                dataType: "text",
+                                data: {},
+                                failure: function(response) {
+                                  alert("fail to fetch data, please refresh the page.")
+                                  $(".blast_result_download_btn").removeClass("disabled");
+                                  $(".btn_download_blast_hits").removeClass("disabled");
+                                },
+                                success: function (response) {
+                                  if (response == "ok") {
+                                    $(".blast_result_download_btn").removeClass("disabled");
+                                    $(".btn_download_blast_hits").removeClass("disabled");
+                                    hideModal();
+                                    location.href = "{{ url_for("query.page_download_result", job_id=job_id) }}" +
+                                      "?filetype=" + file_type + "&query_prot_ids=" + prot_ids.join(",") +
+                                      "&action=download";
+                                  } else {
+                                    alert("fail to fetch data, please refresh the page.")
+                                    $(".blast_result_download_btn").removeClass("disabled");
+                                    $(".btn_download_blast_hits").removeClass("disabled");
+                                  }
+                                }
+                              });
+                              break;
+                            case "blast_table":
+                            case "fasta_proteins":
+                              let modal_content = "";
+                              $("input[name='select_result_protein']").each(function() {
+                                let prot_id = $(this).val();
+                                let prot_name = $(this).next(".form-check-label").text();
+                                if (prot_id != "0") {
+                                  modal_content += "<div class='row text-center m-2'>";
+                                  modal_content += "<div class='col'>" + 
+                                    "<button class='btn btn-primary btn_download_blast_hits' protid='" +
+                                     prot_id +
+                                     "'>" + prot_name + "</button>" +
+                                    "</div>";
+                                  modal_content += "</div>";
+                                }
+                              });
+                              showModal("Select protein query:", modal_content, on_show=function(){
+                                $(".btn_download_blast_hits").click(function() {
+                                  $(".blast_result_download_btn").addClass("disabled");
+                                  $(".btn_download_blast_hits").addClass("disabled");
+                                  $.ajax({
+                                    url: "{{ url_for('query.page_download_result', job_id=job_id) }}" +
+                                      "?filetype=" + file_type +
+                                      "&query_prot_id=" + $(this).attr("protid") +
+                                      "&action=prepare",
+                                    dataType: "text",
+                                    data: {},
+                                    indexValue: { file_type: file_type, protid: $(this).attr("protid") },
+                                    failure: function(response) {
+                                      alert("fail to fetch data, please refresh the page.")
+                                      $(".blast_result_download_btn").removeClass("disabled");
+                                      $(".btn_download_blast_hits").removeClass("disabled");
+                                    },
+                                    success: function (response) {
+                                      console.log(response);
+                                      if (response == "ok") {
+                                        $(".blast_result_download_btn").removeClass("disabled");
+                                        $(".btn_download_blast_hits").removeClass("disabled");
+                                        hideModal();
+                                        location.href = "{{ url_for('query.page_download_result', job_id=job_id) }}" +
+                                            "?filetype=" + this.indexValue.file_type +
+                                            "&query_prot_id=" + this.indexValue.protid +
+                                            "&action=download";
+                                      } else {
+                                        alert("fail to fetch data, please refresh the page.")
+                                        $(".blast_result_download_btn").removeClass("disabled");
+                                        $(".btn_download_blast_hits").removeClass("disabled");
+                                      }
+                                    }
+                                  });
+                                  });
+                              }, on_close=function(){})
+                              break;
+                          }
+                        });
+                      });
+                    </script>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

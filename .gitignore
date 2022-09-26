@@ -9,3 +9,6 @@ instance/*
 !instance/strain_pictures
 instance/strain_pictures/*
 !instance/strain_pictures/dummy.txt
+!instance/tmp_download
+instance/tmp_download/*
+!instance/tmp_download/dummy.txt

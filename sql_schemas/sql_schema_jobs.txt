@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS query_proteins (
 CREATE TABLE IF NOT EXISTS blast_hits (
  query_prot_id INTEGER NOT NULL,
  target_cds_id INTEGER NOT NULL,
+ target_bgc_id INTEGER NOT NULL,
+ target_genome_id INTEGER NOT NULL,
  query_start INTEGER NOT NULL,
  query_end INTEGER NOT NULL,
  query_cov REAL NOT NULL,
@@ -49,6 +51,8 @@ CREATE TABLE IF NOT EXISTS blast_hits (
  FOREIGN KEY(query_prot_id) REFERENCES query_proteins(id)
 );
 CREATE INDEX IF NOT EXISTS hits_target_cds ON blast_hits(target_cds_id);
+CREATE INDEX IF NOT EXISTS hits_target_cds ON blast_hits(target_bgc_id);
+CREATE INDEX IF NOT EXISTS hits_target_cds ON blast_hits(target_genome_id);
 CREATE INDEX IF NOT EXISTS hits_evalue ON blast_hits(evalue);
 CREATE INDEX IF NOT EXISTS hits_bitscore ON blast_hits(bitscore);
 CREATE INDEX IF NOT EXISTS hits_pct_identity ON blast_hits(pct_identity);

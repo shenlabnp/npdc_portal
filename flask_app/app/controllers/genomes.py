@@ -225,3 +225,70 @@ def get_overview():
             ])
 
     return result
+
+
+@blueprint.route("/api/genomes/get_cds_list", methods=["GET"])
+def get_cds_list():
+    """ for cds overview tables """
+    result = {}
+    result["draw"] = request.args.get('draw', type=int)
+    limit = request.args.get('length', type=int)
+    offset = request.args.get('start', type=int)
+
+    bgc_id = request.args.get("bgc_id", "")
+    genome_id = request.args.get("genome_id", "")
+    if bgc_id == "" and genome_id == "":
+        return "" # need to specify either genome_id or bgc_id
+
+    with sqlite3.connect(conf["db_path"]) as con:
+        cur = con.cursor()
+
+        query_filter = "1"
+        query_filter_params = []
+        if genome_id != "":
+            query_filter += " and genome_id=?"
+            query_filter_params.append(genome_id)
+        if bgc_id != "":
+            query_filter += " and bgc_id=?"
+            query_filter_params.append(bgc_id)
+
+        # fetch total records
+        result["recordsTotal"] = cur.execute("".join([
+            "select count(id) from ("
+                "select * from cds left join cds_bgc_map on cds.id=cds_bgc_map.cds_id",
+                " where 1",
+                (" and " + query_filter) if query_filter != "" else "",
+            ")"
+        ]), tuple([*query_filter_params])).fetchall()[0][0]
+
+        # do other filters here
+        #...
+
+        # fetch total records (filtered)
+        result["recordsFiltered"] = cur.execute("".join([
+            "select count(id) from ("
+                "select * from cds left join cds_bgc_map on cds.id=cds_bgc_map.cds_id",
+                " where 1",
+                (" and " + query_filter) if query_filter != "" else "",
+            ")"
+        ]), tuple([*query_filter_params])).fetchall()[0][0]
+
+        result["data"] = []
+
+        query_result = pd.read_sql_query("".join([
+            "select * from cds left join cds_bgc_map on cds.id=cds_bgc_map.cds_id",
+            " where 1",
+            (" and " + query_filter) if query_filter != "" else "",
+            " limit ? offset ?"
+        ]), con, params=tuple([*query_filter_params, *[limit, offset]]))
+        for idx, row in query_result.iterrows():
+
+            result["data"].append([
+                row["nt_start"],
+                row["nt_end"],
+                row["nt_end"] - row["nt_start"],
+                row["locus_tag"],
+                row["annotation"]
+            ])
+
+    return result
