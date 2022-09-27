@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS jobs (
  finished TEXT,
  deleted TEXT,
  status INTEGER NOT NULL,
+ last_result_downloaded TEXT,
  FOREIGN KEY(status) REFERENCES status_enum(code)
 );
 CREATE INDEX IF NOT EXISTS jobs_started ON jobs(started);
@@ -25,6 +26,7 @@ CREATE INDEX IF NOT EXISTS jobs_finished ON jobs(finished);
 CREATE INDEX IF NOT EXISTS jobs_deleted ON jobs(deleted);
 CREATE INDEX IF NOT EXISTS jobs_userid ON jobs(userid);
 CREATE INDEX IF NOT EXISTS jobs_status ON jobs(status);
+CREATE INDEX IF NOT EXISTS jobs_last_result_downloaded ON jobs(last_result_downloaded);
 
 CREATE TABLE IF NOT EXISTS query_proteins (
  id INTEGER PRIMARY KEY AUTOINCREMENT,

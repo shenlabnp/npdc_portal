@@ -112,17 +112,54 @@
             </h2>
             <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo">
               <div class="accordion-body">
-                <div class="row text-center">
+                <div class="row text-center blast_result_download_btn_progress d-none">
                   <div class="col">
-                    <button class="btn btn-primary m-2 blast_result_download_btn" style="height: 100%; padding: 2em;" dltype="blast_table">Download BLAST tabular result (.txt)</button>
-                    <button class="btn btn-primary m-2 blast_result_download_btn" style="height: 100%; padding: 2em;" dltype="fasta_proteins">
-                      Download protein hits multiFASTA<br/>(for generating SSN)
-                    </button>
-                    <button class="btn btn-primary m-2 blast_result_download_btn" style="height: 100%; padding: 2em;" dltype="fasta_bgcs">
-                      Download BGC hits multiFASTA<br/>+ Cytoscape annotation file<br />(for generating GNN)
-                    </button>
+                    Processing previous download command, please wait..
+                    <div class='spinner-border' role='status'></div>
+                  </div>
+                </div>
+                <div class="row text-center blast_result_download_btn_container d-none">
+                  <div class="col">
+                    <div class="row">
+                      <div class="col">
+                        Please select the files you want to download below. If you have previously submitted a download request and it have finished processing, you can click the same button again to download the files. For downloading genomes and BGCs, please go to their respective detail page (click on the genome/BGC names below).
+                      </div>
+                    </div>
+                    <div class="row m-2">
+                      <div class="col">
+                        <button class="btn btn-primary m-2 blast_result_download_btn" style="padding: 2em;" dltype="blast_table">Download BLAST tabular result (.txt)</button>
+                        <button class="btn btn-primary m-2 blast_result_download_btn" style="padding: 2em;" dltype="fasta_proteins">
+                          Download protein hits multiFASTA
+                        </button>
+                        <button class="btn btn-primary m-2 blast_result_download_btn" style="padding: 2em;" dltype="fasta_bgcs">
+                          Download BGC hits multiFASTA
+                        </button>
+                      </div>
+                    </div>
                     <script type="text/javascript">
+                      function checkDownloads() {
+                        $.ajax({
+                          url: "{{ url_for("query.page_download_result", job_id=job_id) }}" +
+                                "?action=check",
+                          datatype: "text",
+                          failure: function(response) {
+                            alert("fail to fetch data, please refresh the page.");
+                          },
+                          success: function (response) {
+                            if (response == "pending_processing") {
+                              $(".blast_result_download_btn_container").addClass("d-none");
+                              $(".blast_result_download_btn_progress").removeClass("d-none");
+                              setTimeout(checkDownloads, 5000);
+                            } else {
+                              $(".blast_result_download_btn_progress").addClass("d-none");
+                              $(".blast_result_download_btn_container").removeClass("d-none");
+                            }
+                          }
+                        })
+                      }
+
                       $(document).ready(function() {
+                        checkDownloads();
                         $(".blast_result_download_btn").click(function() {
                           let file_type = $(this).attr("dltype");
                           switch (file_type) {
@@ -138,8 +175,6 @@
                                   }
                                 });
                               }
-                              $(".blast_result_download_btn").addClass("disabled");
-                              $(".btn_download_blast_hits").addClass("disabled");
                               $.ajax({
                                 url: "{{ url_for("query.page_download_result", job_id=job_id) }}" +
                                 "?filetype=" + file_type + "&query_prot_ids=" + prot_ids.join(",") +
@@ -148,21 +183,22 @@
                                 data: {},
                                 failure: function(response) {
                                   alert("fail to fetch data, please refresh the page.")
-                                  $(".blast_result_download_btn").removeClass("disabled");
-                                  $(".btn_download_blast_hits").removeClass("disabled");
                                 },
                                 success: function (response) {
-                                  if (response == "ok") {
-                                    $(".blast_result_download_btn").removeClass("disabled");
-                                    $(".btn_download_blast_hits").removeClass("disabled");
-                                    hideModal();
-                                    location.href = "{{ url_for("query.page_download_result", job_id=job_id) }}" +
-                                      "?filetype=" + file_type + "&query_prot_ids=" + prot_ids.join(",") +
-                                      "&action=download";
-                                  } else {
-                                    alert("fail to fetch data, please refresh the page.")
-                                    $(".blast_result_download_btn").removeClass("disabled");
-                                    $(".btn_download_blast_hits").removeClass("disabled");
+                                  hideModal();
+                                  switch (response) {
+                                    case "pending_processing":
+                                    case "processed":
+                                      checkDownloads();
+                                      break;
+                                    case "wrong_request":
+                                      alert("fail to fetch data, please refresh the page.");
+                                      break;
+                                    case "ready":
+                                      location.href = "{{ url_for("query.page_download_result", job_id=job_id) }}" +
+                                        "?filetype=" + file_type + "&query_prot_ids=" + prot_ids.join(",") +
+                                        "&action=download";
+                                      break;
                                   }
                                 }
                               });
@@ -185,8 +221,6 @@
                               });
                               showModal("Select protein query:", modal_content, on_show=function(){
                                 $(".btn_download_blast_hits").click(function() {
-                                  $(".blast_result_download_btn").addClass("disabled");
-                                  $(".btn_download_blast_hits").addClass("disabled");
                                   $.ajax({
                                     url: "{{ url_for('query.page_download_result', job_id=job_id) }}" +
                                       "?filetype=" + file_type +
@@ -197,27 +231,26 @@
                                     indexValue: { file_type: file_type, protid: $(this).attr("protid") },
                                     failure: function(response) {
                                       alert("fail to fetch data, please refresh the page.")
-                                      $(".blast_result_download_btn").removeClass("disabled");
-                                      $(".btn_download_blast_hits").removeClass("disabled");
                                     },
                                     success: function (response) {
-                                      console.log(response);
-                                      if (response == "ok") {
-                                        $(".blast_result_download_btn").removeClass("disabled");
-                                        $(".btn_download_blast_hits").removeClass("disabled");
-                                        hideModal();
-                                        location.href = "{{ url_for('query.page_download_result', job_id=job_id) }}" +
-                                            "?filetype=" + this.indexValue.file_type +
-                                            "&query_prot_id=" + this.indexValue.protid +
+                                      hideModal();
+                                      switch (response) {
+                                        case "pending_processing":
+                                        case "processed":
+                                          checkDownloads();
+                                          break;
+                                        case "wrong_request":
+                                          alert("fail to fetch data, please refresh the page.");
+                                          break;
+                                        case "ready":
+                                          location.href = "{{ url_for("query.page_download_result", job_id=job_id) }}" +
+                                            "?filetype=" + file_type + "&query_prot_ids=" + prot_ids.join(",") +
                                             "&action=download";
-                                      } else {
-                                        alert("fail to fetch data, please refresh the page.")
-                                        $(".blast_result_download_btn").removeClass("disabled");
-                                        $(".btn_download_blast_hits").removeClass("disabled");
+                                          break;
                                       }
                                     }
                                   });
-                                  });
+                                });
                               }, on_close=function(){})
                               break;
                           }

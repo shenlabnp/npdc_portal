@@ -8,6 +8,7 @@ import re
 from zipfile import ZipFile
 from tempfile import TemporaryDirectory
 from os import path, remove
+import glob
 
 # import global config
 from ..config import conf
@@ -325,7 +326,7 @@ def page_download_result(job_id):
 
     # check login
     if not check_logged_in():
-        return redirect(url_for("login.page_login"))
+        return "not_authorized"
 
     # get job data
     job_data = pd.read_sql((
@@ -335,151 +336,74 @@ def page_download_result(job_id):
     ), sqlite3.connect(conf["query_db_path"]), params=(session["userid"], job_id, "PROCESSED"))
 
     if job_data.shape[0] != 1:
-        flash("Can't find the specified job id (might be deleted, pending, or expired)", "alert-danger")
-        return redirect(url_for("query.page_main"))
+        return "wrong_request"
 
-    with sqlite3.connect(conf["query_db_path"]) as con:
-        cur = con.cursor()
-        cur.execute("ATTACH DATABASE ? AS npdc_db", (conf["db_path"],))
+    # check request type
+    action = request.args.get("action", type=str)
+    if action not in ["check", "prepare", "download"]:
+        return "wrong_request"
 
-        # check request type
-        file_type = request.args.get("filetype", type=str)
-        action = request.args.get("action", type=str)
-        if action not in ["prepare", "download"]:
-            flash("wrong request", "alert-danger")
+    # check if there is any pending download process
+    for fp in glob.iglob(path.join(conf["temp_download_folder"], "blast-{}-*.pending".format(job_id))):
+        return "pending_processing"
+
+    if action == "check":
+        return "free"
+
+    # build output filename
+    file_type = request.args.get("filetype", type=str)    
+    if file_type in ["fasta_proteins", "blast_table"]:
+        query_prot_id = request.args.get("query_prot_id", type=str)
+        if not query_prot_id:
+            return "wrong_request"
+        query_prot_ids = [int(query_prot_id)]
+    elif file_type == "fasta_bgcs":
+        query_prot_ids = request.args.get("query_prot_ids", type=str)
+        if not query_prot_ids:
+            return "wrong_request"
+        query_prot_ids = [int(prot_id) for prot_id in query_prot_ids.split(",")]
+    else:
+        return "wrong_request"
+
+    output_filepath = path.join(conf["temp_download_folder"], "blast-{}-{}-{}.zip".format(
+        job_id,
+        file_type,
+        ",".join([str(prot_id) for prot_id in query_prot_ids])
+    ))
+
+    if action == "prepare":
+        if path.exists(output_filepath):
+            return "ready"
+        else:
+            # put on the pending file
+            with open(output_filepath + ".pending", "w") as out:
+                out.write("")
+                return "processed"
+
+    elif action == "download":
+        
+        # check if on cooldown
+        if job_data["last_result_downloaded"] != None:
+            sec_since_last_download = (
+                datetime.now() - datetime.strptime(job_data["last_result_downloaded"], "%Y-%m-%d %H:%M:%S")
+            ).total_seconds()
+            if sec_since_last_download > -1 and sec_since_last_download < conf["consecutive_download_duration"]:
+                flash("download on cooldown<br/>(please wait {:.0f}s)".format(
+                    conf["consecutive_download_duration"] - sec_since_last_download
+                ), "alert-danger")
+                return redirect(url_for("query.page_job", job_id=job_id))
+
+        # check if file exists
+        if path.exists(output_filepath):
+            with sqlite3.connect(conf["query_db_path"]) as con:
+                con.cursor().execute((
+                    "update jobs"
+                    " set last_result_downloaded=?"
+                    " where job_id=?"
+                ), (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), job_id))
+            return send_file(
+                output_filepath, as_attachment=True, download_name=path.basename(output_filepath)
+            )
+        else:
+            flash("can't find results file", "alert-danger")
             return redirect(url_for("query.page_job", job_id=job_id))
-
-        if file_type in ["fasta_proteins", "blast_table"]:
-            query_prot_id = request.args.get("query_prot_id", type=str)
-            if not query_prot_id:
-                flash("wrong request", "alert-danger")
-                return redirect(url_for("query.page_job", job_id=job_id))
-            query_prot_id = int(query_prot_id)
-            output_filename = "blast-{}-{}-{}".format(
-                job_id,
-                file_type,
-                query_prot_id
-            )
-            if path.exists(path.join(conf["temp_download_folder"], output_filename + ".zip")):
-                if action == "download":
-                    return send_file(
-                        path.join(conf["temp_download_folder"], output_filename + ".zip")
-                        , as_attachment=True, download_name=output_filename + ".zip"
-                    )
-                elif action == "prepare":
-                    return "ok"
-            else:
-                if action == "download":
-                    flash("wrong request", "alert-danger")
-                    return redirect(url_for("query.page_job", job_id=job_id))
-
-        elif file_type == "fasta_bgcs":
-            query_prot_ids = request.args.get("query_prot_ids", type=str)
-            if not query_prot_ids:
-                flash("wrong request", "alert-danger")
-                return redirect(url_for("query.page_job", job_id=job_id))
-            query_prot_ids = [int(prot_id) for prot_id in query_prot_ids.split(",")]
-            output_filename = "blast-{}-{}-{}".format(
-                job_id,
-                file_type,
-                ",".join([str(prot_id) for prot_id in query_prot_ids])
-            )
-            if path.exists(path.join(conf["temp_download_folder"], output_filename + ".zip")):
-                if action == "download":
-                    return send_file(
-                        path.join(conf["temp_download_folder"], output_filename + ".zip")
-                        , as_attachment=True, download_name=output_filename + ".zip"
-                    )
-                elif action == "prepare":
-                    return "ok"
-            else:
-                if action == "download":
-                    flash("wrong request", "alert-danger")
-                    return redirect(url_for("query.page_job", job_id=job_id))
-
-        else:
-            flash("wrong request", "alert-danger")
-            return redirect(url_for("home.page_home"))
-
-        zipped = ZipFile(path.join(conf["temp_download_folder"], "{}.zip".format(output_filename)), "w")
-        error_ = False
-        with TemporaryDirectory() as temp_dir:
-
-            if file_type in ["fasta_bgcs", "fasta_proteins"]:
-
-                if not error_:
-                    # generate fasta file
-                    out_fasta = path.join(temp_dir, "cds.fasta")
-                    if file_type == "fasta_proteins":
-                        query_cds = (
-                            "SELECT DISTINCT target_cds_id as cds_id FROM blast_hits"
-                            " WHERE query_prot_id=?"
-                            " ORDER BY target_cds_id ASC"
-                        )
-                        params_ = [query_prot_id]
-                    elif file_type == "fasta_bgcs":
-                        query_cds = (
-                            "SELECT DISTINCT cds_bgc_map.cds_id as cds_id FROM ("
-                                "SELECT bgc_id FROM ("
-                                    "SELECT target_bgc_id AS bgc_id, count(distinct query_prot_id) AS count_hits FROM blast_hits"
-                                    " WHERE query_prot_id IN ({}) AND target_bgc_id>-1"
-                                    " GROUP BY target_bgc_id"
-                                ") AS bgc_hits WHERE bgc_hits.count_hits=?"
-                            ") AS list_bgc LEFT JOIN npdc_db.cds_bgc_map ON cds_bgc_map.bgc_id=list_bgc.bgc_id"
-                            " ORDER BY cds_bgc_map.cds_id ASC"
-                        ).format(",".join(["?"]*len(query_prot_ids)))
-                        params_ = list(
-                            [*query_prot_ids, *[len(query_prot_ids)]]
-                        )
-                    df_ = pd.read_sql("".join([
-                        "SELECT cds.* FROM"
-                        " (" + query_cds + ") AS cds_to_pull"
-                        " LEFT JOIN cds ON cds_to_pull.cds_id=cds.id"
-                    ]), con, params=tuple([*params_]))
-                    cds_to_pull = [int(x) for x in df_["id"]]
-                    if len(cds_to_pull) > 0:
-                        with open(out_fasta, "w") as output_fasta:
-                            with open(conf["cds_fasta_path"], "r") as input_fasta:
-                                i = 0
-                                to_pull = cds_to_pull.pop(0)
-                                for line in input_fasta:
-                                    if (i % 2) == 1: # AA section
-                                        cur_id = (i // 2) + 1
-                                        if cur_id > to_pull:
-                                            # something is wrong
-                                            error_ = True
-                                            break
-                                        elif cur_id == to_pull:
-                                            # write down fasta
-                                            output_fasta.write(">{}\n{}\n".format(
-                                                cur_id,
-                                                line.rstrip("\n")
-                                            ))
-                                            if len(cds_to_pull) > 0:
-                                                # pop a new cds id
-                                                to_pull = cds_to_pull.pop(0)
-                                            else:
-                                                break
-                                    i += 1
-                        if not error_:
-                            zipped.write(out_fasta, "cds.fasta")
-                    else:
-                        error_ = True
-
-                # generate cytoscape annotation file
-                if not error_:
-                    out_cyto = path.join(temp_dir, "metadata.tsv")
-                    df_.to_csv(out_cyto, sep="\t")
-                    zipped.write(out_cyto, "metadata.tsv")
-
-            elif file_type == "blast_table":
-
-                # generate blast results
-
-                pass
-
-        if error_:
-            remove(path.join(conf["temp_download_folder"], "{}.zip".format(output_filename)))
-            return "error"
-        else:
-            return "ok"
