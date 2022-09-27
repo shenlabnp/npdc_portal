@@ -104,12 +104,10 @@ def main():
                                     cur_id = (i // 2) + 1
                                     if cur_id > to_pull:
                                         # something is wrong
-                                        print(cur_id, to_pull)
                                         error_ = True
                                         break
                                     elif cur_id == to_pull:
                                         # write down fasta
-                                        print(cur_id, to_pull)
                                         output_fasta.write(">{}\n{}\n".format(
                                             cur_id,
                                             line.rstrip("\n")
