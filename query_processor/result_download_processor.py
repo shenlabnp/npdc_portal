@@ -148,11 +148,14 @@ def main():
 
 def fire_worker(tup):
     use_srun, fp = tup
-    subprocess.run("{}python {} {}".format(
-        "srun -c 2 -n 1 --mem=8G -t 1000 " if use_srun else "",
-        path.abspath(__file__),
-        fp
-    ), shell=True)
+    try:
+        subprocess.check_output("{}python {} {}".format(
+            "srun -c 2 -n 1 --mem=8G -t 1000 " if use_srun else "",
+            path.abspath(__file__),
+            fp
+        ), shell=True)
+    except subprocess.CalledProcessError as e:
+        print(e.output)
 
 
 def fetch_pool(num_threads: int):
