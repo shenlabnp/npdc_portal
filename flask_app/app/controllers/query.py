@@ -333,10 +333,12 @@ def page_download_result(job_id):
         "SELECT jobs.*, status_enum.name as status_desc"
         " FROM jobs, status_enum"
         " WHERE userid=? AND jobs.id=? and status_desc=? and jobs.status=status_enum.code"
-    ), sqlite3.connect(conf["query_db_path"]), params=(session["userid"], job_id, "PROCESSED"))
+    ), sqlite3.connect(conf["query_db_path"]), params=(session["userid"], job_id, "PROCESSED")).fillna("")
 
     if job_data.shape[0] != 1:
         return "wrong_request"
+    else:
+        job_data = job_data.iloc[0]
 
     # check request type
     action = request.args.get("action", type=str)
@@ -383,7 +385,7 @@ def page_download_result(job_id):
     elif action == "download":
         
         # check if on cooldown
-        if job_data["last_result_downloaded"] != None:
+        if job_data["last_result_downloaded"] != "":
             sec_since_last_download = (
                 datetime.now() - datetime.strptime(job_data["last_result_downloaded"], "%Y-%m-%d %H:%M:%S")
             ).total_seconds()
@@ -399,7 +401,7 @@ def page_download_result(job_id):
                 con.cursor().execute((
                     "update jobs"
                     " set last_result_downloaded=?"
-                    " where job_id=?"
+                    " where id=?"
                 ), (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), job_id))
             return send_file(
                 output_filepath, as_attachment=True, download_name=path.basename(output_filepath)

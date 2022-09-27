@@ -181,6 +181,7 @@
                                 "&action=prepare",
                                 dataType: "text",
                                 data: {},
+                                indexValue: { file_type: file_type, prot_ids: prot_ids },
                                 failure: function(response) {
                                   alert("fail to fetch data, please refresh the page.")
                                 },
@@ -196,7 +197,7 @@
                                       break;
                                     case "ready":
                                       location.href = "{{ url_for("query.page_download_result", job_id=job_id) }}" +
-                                        "?filetype=" + file_type + "&query_prot_ids=" + prot_ids.join(",") +
+                                        "?filetype=" + this.indexValue.file_type + "&query_prot_ids=" + this.indexValue.prot_ids.join(",") +
                                         "&action=download";
                                       break;
                                   }
@@ -244,7 +245,7 @@
                                           break;
                                         case "ready":
                                           location.href = "{{ url_for("query.page_download_result", job_id=job_id) }}" +
-                                            "?filetype=" + file_type + "&query_prot_ids=" + prot_ids.join(",") +
+                                            "?filetype=" + this.indexValue.file_type + "&query_prot_id=" + this.indexValue.protid +
                                             "&action=download";
                                           break;
                                       }
