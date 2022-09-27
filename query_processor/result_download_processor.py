@@ -86,12 +86,27 @@ def main():
                     cur = con.cursor()
                     cur.execute("ATTACH DATABASE ? AS npdc_db", (npdc_db,))
                     df_ = pd.read_sql("".join([
-                        "SELECT *",
+                        "SELECT {}".format(", ".join([
+                            "cds_to_pull.cds_id as cds_id",
+                            "genomes.genome_gtdb_genus as genus",
+                            "genomes.genome_gtdb_species as species",
+                            "genomes.genome_mash_species as mash_cluster",
+                            "genomes.npdc_id as npdc_id",
+                            "cds.contig_num as contig",
+                            "cds.nt_start as loc_start",
+                            "cds.nt_end as loc_end",
+                            "cds.strand as loc_end",
+                            "bgcs.region_num as bgc",
+                            "bgcs.gcf as gcf",
+                            "bgcs_cached.name_class as bgc_class",
+                            "bgcs.fragmented as bgc_fragmented"
+                        ])),
                         " FROM (" + query_cds + ") AS cds_to_pull",
-                        " LEFT JOIN cds ON cds_to_pull.cds_id=cds.id"
-                        " LEFT JOIN genomes ON cds.genome_id=genomes.id"
-                        " LEFT JOIN bgcs ON cds_to_pull.bgc_id=bgcs.id"
-                        " ORDER BY cds_id ASC"
+                        " LEFT JOIN cds ON cds.id=cds_to_pull.cds_id",
+                        " LEFT JOIN genomes ON genomes.id=cds.genome_id",
+                        " LEFT JOIN genomes_cached ON genomes_cached.genome_id=cds.genome_id",
+                        " LEFT JOIN bgcs ON bgcs.id=cds_to_pull.bgc_id",
+                        " LEFT JOIN bgcs_cached ON bgcs_cached.bgc_id=cds_to_pull.bgc_id"
                     ]), con, params=tuple([*params_]))
                 cds_to_pull = [int(x) for x in df_["cds_id"]]
                 if len(cds_to_pull) > 0:
@@ -126,6 +141,11 @@ def main():
                 # generate cytoscape annotation file
                 if not error_:
                     out_cyto = path.join(temp_dir, "metadata.tsv")
+                    df_["bgc"] = df_.apply(lambda row: "NPDC-{}:r{}c{}".format(
+                        row["npdc_id"],
+                        row["contig"],
+                        row["bgc"]
+                    ), axis=1)
                     df_.to_csv(out_cyto, sep="\t", index=False)
                     zipped.write(out_cyto, "metadata.tsv")
 
@@ -138,26 +158,60 @@ def main():
                     with open(out_blast, "w") as fp:
                         fp.write("")
                     for prot_id in query_prot_ids:
+                        prot_name = pd.read_sql(
+                            "SELECT name FROM query_proteins WHERE id=?",
+                            con,
+                            params=(prot_id,)
+                        ).iloc[0, 0]
                         df_ = pd.read_sql("".join([
-                            "SELECT {}".format(", ".join([
-                                "blast_hits.query_prot_id",
-                                "blast_hits.target_cds_id",
-                                "blast_hits.pct_identity",
-                                "blast_hits.evalue",
-                                "blast_hits.bitscore",
-                                "blast_hits.query_start",
-                                "blast_hits.query_end",
-                                "blast_hits.target_start",
-                                "blast_hits.target_end"
+                            "SELECT hits.*, {}".format(", ".join([
+                                "cds.id as cds_id",
+                                "genomes.genome_gtdb_genus as genus",
+                                "genomes.genome_gtdb_species as species",
+                                "genomes.genome_mash_species as mash_cluster",
+                                "genomes.npdc_id as npdc_id",
+                                "cds.contig_num as contig",
+                                "cds.nt_start as loc_start",
+                                "cds.nt_end as loc_end",
+                                "cds.strand as loc_end",
+                                "bgcs.region_num as bgc",
+                                "bgcs.gcf as gcf",
+                                "bgcs_cached.name_class as bgc_class",
+                                "bgcs.fragmented as bgc_fragmented"
                             ])),
-                            " FROM blast_hits",
-                            " WHERE query_prot_id=?",
-                            " ORDER BY bitscore DESC"
-                        ]), con, params=tuple([*[prot_id]]))
+                            " FROM (SELECT {}".format(", ".join([
+                                    "blast_hits.query_prot_id as bls_query",
+                                    "blast_hits.target_cds_id as bls_subject",
+                                    "blast_hits.pct_identity as bls_pident",
+                                    "blast_hits.evalue as bls_evalue",
+                                    "blast_hits.bitscore as bls_bitscore",
+                                    "blast_hits.query_start as bls_qstart",
+                                    "blast_hits.query_end as bls_qend",
+                                    "blast_hits.target_start as bls_sstart",
+                                    "blast_hits.target_end as bls_send",
+                                    "blast_hits.target_bgc_id as bgc_id",
+                                    "blast_hits.target_genome_id as genome_id"
+                                ])),
+                                " FROM blast_hits",
+                                " WHERE query_prot_id=?",
+                                " ORDER BY bitscore DESC",
+                                ") as hits",
+                            " LEFT JOIN cds ON cds.id=hits.bls_subject",
+                            " LEFT JOIN genomes ON genomes.id=hits.genome_id",
+                            " LEFT JOIN genomes_cached ON genomes_cached.genome_id=hits.genome_id",
+                            " LEFT JOIN bgcs ON bgcs.id=hits.bgc_id",
+                            " LEFT JOIN bgcs_cached ON bgcs_cached.bgc_id=hits.bgc_id",
+                        ]), con, params=tuple([*[prot_id]])).fillna("")
+                        df_["bls_query"] = prot_name
+                        df_["bgc"] = df_.apply(lambda row: "NPDC-{}:r{}c{}".format(
+                            row["npdc_id"],
+                            row["contig"],
+                            row["bgc"]
+                        ), axis=1)
                         with open(out_blast, "a") as fp:
                             fp.write("".join([
                                 "# DIAMOND-blastp (npdc.rc.ufl.edu)\n",
-                                "# Query: {}\n".format(prot_id),
+                                "# Query: {}\n".format(prot_name),
                                 "# Database: npdc\n",
                                 "# Fields: {}\n".format(
                                     ", ".join([
@@ -174,9 +228,23 @@ def main():
                                 ),
                                 "# {} hits found".format(df_.shape[0])
                             ]))
-                        df_.to_csv(out_blast, mode="a", index=False, header=False, sep="\t")
+                        df_.loc[
+                            :,
+                            df_.columns[df_.columns.str.startswith("bls_")]
+                        ].to_csv(
+                            out_blast, mode="a", index=False, header=False, sep="\t"
+                        )
                         with open(out_blast, "a") as fp:
                             fp.write("\n")
+
+                        out_blast_metadata = path.join(temp_dir, "metadata_{}.txt".format(prot_name))
+                        df_.loc[
+                            :,
+                            df_.columns[~df_.columns.str.startswith("bls_")]
+                        ].to_csv(
+                            out_blast_metadata, index=False, header=True, sep="\t"
+                        )
+                        zipped.write(out_blast_metadata, "metadata_{}.tsv".format(prot_name))
                 zipped.write(out_blast, "blast_tabular_result.txt")
 
         if error_:
