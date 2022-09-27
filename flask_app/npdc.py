@@ -136,7 +136,7 @@ def portal():
         nav_items.append(("Genome database", url_for("genomes.page_genomes")))
         nav_items.append(("BGC database", url_for("bgcs.page_bgcs")))
         nav_items.append(("BLAST", url_for("query.page_main")))
-        nav_items.append(("Purchase Strains", url_for("strains.page_strains_ordering")))
+        nav_items.append(("Order Strains", url_for("strains.page_strains_ordering")))
         nav_items.append(("Help", url_for("feedback.page_feedback")))
         nav_items.append(("About NPDC", url_for("about.page_about")))
 
