@@ -123,15 +123,61 @@ def main():
                 else:
                     error_ = True
 
-            # generate cytoscape annotation file
-            if not error_:
-                out_cyto = path.join(temp_dir, "metadata.tsv")
-                df_.to_csv(out_cyto, sep="\t", index=False)
-                zipped.write(out_cyto, "metadata.tsv")
+                # generate cytoscape annotation file
+                if not error_:
+                    out_cyto = path.join(temp_dir, "metadata.tsv")
+                    df_.to_csv(out_cyto, sep="\t", index=False)
+                    zipped.write(out_cyto, "metadata.tsv")
 
             elif file_type == "blast_table":
-                pass
                 # generate blast results
+                with connect(jobs_db) as con:
+                    cur = con.cursor()
+                    cur.execute("ATTACH DATABASE ? AS npdc_db", (npdc_db,))
+                    out_blast = path.join(temp_dir, "blast_tabular_result.txt")
+                    with open(out_blast, "w") as fp:
+                        fp.write("")
+                    for prot_id in query_prot_ids:
+                        df_ = pd.read_sql("".join([
+                            "SELECT {}".format(", ".join([
+                                "blast_hits.query_prot_id",
+                                "blast_hits.target_cds_id",
+                                "blast_hits.pct_identity",
+                                "blast_hits.evalue",
+                                "blast_hits.bitscore",
+                                "blast_hits.query_start",
+                                "blast_hits.query_end",
+                                "blast_hits.target_start",
+                                "blast_hits.target_end"
+                            ])),
+                            " FROM blast_hits",
+                            " WHERE query_prot_id=?",
+                            " ORDER BY bitscore DESC"
+                        ]), con, params=tuple([*[prot_id]]))
+                        with open(out_blast, "a") as fp:
+                            fp.write("".join([
+                                "# DIAMOND-blastp (npdc.rc.ufl.edu)\n",
+                                "# Query: {}\n".format(prot_id),
+                                "# Database: npdc\n",
+                                "# Fields: {}\n".format(
+                                    ", ".join([
+                                        "query acc.ver",
+                                        "subject acc.ver",
+                                        "%% identity",
+                                        "evalue",
+                                        "bit score",
+                                        "q. start",
+                                        "q. end",
+                                        "s. start",
+                                        "s. end"
+                                    ])
+                                ),
+                                "# {} hits found".format(df_.shape[0])
+                            ]))
+                        df_.to_csv(out_blast, mode="a", index=False, header=False, sep="\t")
+                        with open(out_blast, "a") as fp:
+                            fp.write("\n")
+                zipped.write(out_blast, "blast_tabular_result.txt")
 
         if error_:
             print("ERROR processing " + zip_output_file)
