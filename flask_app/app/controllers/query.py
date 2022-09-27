@@ -348,6 +348,8 @@ def page_download_result(job_id):
     # check if there is any pending download process
     for fp in glob.iglob(path.join(conf["temp_download_folder"], "blast-{}-*.pending".format(job_id))):
         return "pending_processing"
+    for fp in glob.iglob(path.join(conf["temp_download_folder"], "blast-{}-*.pending.locked".format(job_id))):
+        return "pending_processing"
 
     if action == "check":
         return "free"

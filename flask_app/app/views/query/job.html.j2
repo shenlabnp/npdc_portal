@@ -114,7 +114,7 @@
               <div class="accordion-body">
                 <div class="row text-center blast_result_download_btn_progress d-none">
                   <div class="col">
-                    Processing previous download command, please wait..
+                    Processing download request, please wait..
                     <div class='spinner-border' role='status'></div>
                   </div>
                 </div>
@@ -122,12 +122,14 @@
                   <div class="col">
                     <div class="row">
                       <div class="col">
-                        Please select the files you want to download below. If you have previously submitted a download request and it have finished processing, you can click the same button again to download the files. For downloading genomes and BGCs, please go to their respective detail page (click on the genome/BGC names below).
+                        Please select the files you want to download below. If you have previously submitted a download request and it have finished processing, you can click the same button again to download the files.
                       </div>
                     </div>
                     <div class="row m-2">
                       <div class="col">
-                        <button class="btn btn-primary m-2 blast_result_download_btn" dltype="blast_table">Download BLAST tabular result (.txt)</button>
+                        <button class="btn btn-primary m-2 blast_result_download_btn" dltype="blast_table">
+                          Download BLAST tabular result (.txt)
+                        </button>
                         <button class="btn btn-primary m-2 blast_result_download_btn" dltype="fasta_proteins">
                           Download protein hits multiFASTA
                         </button>
@@ -136,6 +138,12 @@
                         </button>
                       </div>
                     </div>
+                    <div class="row">
+                      <div class="col">
+                        For downloading genomes and BGCs, please go to their respective detail page (click on the genome/BGC names on the table below).
+                      </div>
+                    </div>
+
                     <script type="text/javascript">
                       function checkDownloads() {
                         $.ajax({
@@ -639,6 +647,11 @@
                   ]);
                 });
                 break;
+            }
+            if (datatable_data.length < 1) {
+              $(".blast_result_download_btn").addClass("disabled");
+            } else {
+              $(".blast_result_download_btn").removeClass("disabled");
             }
             
             $("#section_results_by_" + show_result + "_summary").html(summary_content);
