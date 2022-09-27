@@ -407,5 +407,5 @@ def page_download_result(job_id):
                 output_filepath, as_attachment=True, download_name=path.basename(output_filepath)
             )
         else:
-            flash("can't find results file", "alert-danger")
+            flash("can't find results file (please report this via the feedback form)", "alert-danger")
             return redirect(url_for("query.page_job", job_id=job_id))
