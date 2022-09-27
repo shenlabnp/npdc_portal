@@ -96,13 +96,19 @@ def deploy_jobs(pending, jobs_db, npdc_db, instance_folder, num_threads, ram_siz
                 ).format(
                     ",".join(["?"]*len(all_target_cds_ids))
                 ), connect(npdc_db), params=tuple([*all_target_cds_ids]))
-                cds_to_genome_id = cds_to_genome_id.groupby("cds_id").apply(lambda x: x.iloc[0])["genome_id"].to_dict()
+                if cds_to_genome_id.shape[0] > 0:
+                    cds_to_genome_id = cds_to_genome_id.groupby("cds_id").apply(lambda x: x.iloc[0])["genome_id"].to_dict()
+                else:
+                    cds_to_genome_id = {}
                 cds_to_bgc_id = pd.read_sql((
                     "select cds_id, bgc_id from cds_bgc_map where cds_id in ({})"
                 ).format(
                     ",".join(["?"]*len(all_target_cds_ids))
                 ), connect(npdc_db), params=(tuple([*all_target_cds_ids])))
-                cds_to_bgc_id = cds_to_bgc_id.groupby("cds_id").apply(lambda x: x.iloc[0])["bgc_id"].to_dict()
+                if cds_to_bgc_id.shape[0] > 0:
+                    cds_to_bgc_id = cds_to_bgc_id.groupby("cds_id").apply(lambda x: x.iloc[0])["bgc_id"].to_dict()
+                else:
+                    cds_to_bgc_id = {}
                 # insert into db
                 pd.DataFrame({
                     "query_prot_id": blast_result["qseqid"],
