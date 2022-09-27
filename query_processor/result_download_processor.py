@@ -150,7 +150,7 @@ def fire_worker(tup):
     use_srun, fp = tup
     try:
         subprocess.check_output("{}python {} {}".format(
-            "srun -c 2 -n 1 --mem=8G -t 1000 " if use_srun else "",
+            "srun -c 1 -n 1 --mem=8G -t 25 " if use_srun else "",
             path.abspath(__file__),
             fp
         ), shell=True)
