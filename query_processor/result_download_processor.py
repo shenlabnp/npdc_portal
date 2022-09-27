@@ -148,6 +148,7 @@ def main():
 
 def fire_worker(tup):
     use_srun, fp = tup
+    print("processing " + fp)
     try:
         subprocess.check_output("{}python {} {}".format(
             "srun -c 1 -n 1 --mem=8G -t 25 " if use_srun else "",
