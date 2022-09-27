@@ -25,4 +25,4 @@ conf["temp_download_folder"] = path.join(conf["instance_folder"], "tmp_download"
 conf["is_in_beta"] = False
 conf["launch_datetime"] = "1901-01-01 00:00:00"
 conf["knowncb_cutoff"] = 80
-conf["consecutive_download_duration"] = 60 # in seconds
+conf["consecutive_download_duration"] = 15 # in seconds
