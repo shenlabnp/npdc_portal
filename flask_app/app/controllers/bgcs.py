@@ -203,8 +203,8 @@ def get_arrower_objects():
                 " where bgc_id=?"
             ), con, params=(bgc_id,)).iterrows():
                 orf = {
-                    "start": int(row["nt_start"]),
-                    "end": int(row["nt_end"]),
+                    "start": int(row["nt_start"]) - int(bgc_data["nt_start"]),
+                    "end": int(row["nt_end"]) - int(bgc_data["nt_start"]),
                     "strand": int(row["strand"])
                 }
                 orf["id"] = row["locus_tag"] + " (" + row["annotation"] + ")"
