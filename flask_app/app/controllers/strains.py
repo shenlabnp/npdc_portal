@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import render_template, request, session, redirect, url_for, flash
+from flask import render_template, request, session, redirect, url_for, flash, current_app
 import sqlite3
 import pandas as pd
 from datetime import datetime
@@ -46,7 +46,7 @@ def page_strains_ordering():
         return redirect(url_for("login.page_login"))
         
     # page title
-    page_title = "Order a strain"
+    page_title = "Request a strain"
     page_subtitle = (
         ""
     )
@@ -55,7 +55,8 @@ def page_strains_ordering():
     return render_template(
         "strains/ordering.html.j2",
         page_title=page_title,
-        page_subtitle=page_subtitle
+        page_subtitle=page_subtitle,
+        mailto_target=current_app.config["MAIL_SEND_ORDER_TO"]
     )
 
 
@@ -132,6 +133,17 @@ def page_strains_detail(npdc_id):
 
         strain_data = strain_data.replace("", "n/a").to_dict()
 
+    # userdata
+    with sqlite3.connect(conf["user_db_path"]) as con:
+        user_data = pd.read_sql_query((
+            "select users.*,user_details.*,countries.name as country_name, job_titles.name as job_name"
+            " from users"
+            " left join user_details on user_details.user_id=users.id"
+            " left join countries on user_details.country=countries.code"
+            " left join job_titles on user_details.job_title=job_titles.id"
+            " where users.id like ?"
+        ), con=con, params=(session['userid'],)).iloc[0].to_dict()
+
     # page title
     page_title = "NPDC{:06d}".format(strain_data["npdc_id"])
 
@@ -139,7 +151,10 @@ def page_strains_detail(npdc_id):
     return render_template(
         "strains/detail.html.j2",
         strain_data=strain_data,
-        page_title=page_title
+        page_title=page_title,
+        mailto_target=current_app.config["MAIL_SEND_ORDER_TO"],
+        user_fullname=user_data["first_name"] + " " + user_data["last_name"],
+        user_country=user_data["country_name"]
     )
 
 

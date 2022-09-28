@@ -2,29 +2,74 @@
 {% block content %}
   {% include "basic_header.html.j2" %}
 
-To order specific strain(s) from the collection, please reach out to us via e-mail: <br /> <br />
+   <div class="row mb-4">
+    <div class="col">
+      <div class="bs-component">
+        <div class="accordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="heading_how">
+              <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse_how" aria-expanded="true" aria-controls="collapse_how">
+                <strong>Requesting a strain</strong>
+              </button>
+            </h2>
+            <div id="collapse_how" class="accordion-collapse collapse show" aria-labelledby="heading_how">
+              <div class="accordion-body">
 
-<form action="mailto:ben.shen@ufl.edu" method="get" enctype="text/plain">
-  <div>
-    <label for="name">Name:
-      <input type="text" name="name" id="name" />
-    </label>
-  </div>
-  <div>
-    <label for="email">Email:
-      <input type="text" name="email" id="email" />
-    </label>
-  </div>
-  <div>
-    <label>Message:</label>
-    <br />
-    <textarea name="comments" rows="12" cols="35"></textarea>
-  </div>
-  <div>
-    <input type="submit" name="submit" value="Send" />
-    <input type="reset" name="reset" value="Clear Form" />
-  </div>
-</form>
+      <p style="text-align: justify">
+      To request a strain, navigate to the strain page via the <a href="{{ url_for("strains.page_strains") }}">strain collection</a>, <a href="{{ url_for("genomes.page_genomes") }}">genome database</a>, or <a href="{{ url_for("bgcs.page_bgcs") }}">BGC database pages</a>. In the top right corner, click the “Request Strain” button to initiate a pre-filled email. Please edit the email to include your name, your PI's name, and your institution's name.
+      <br />
+      <br />Once a request is received, the NPDC team will be in touch to coordinate any payment, shipping, and material transfer agreement (MTA) details necessary.
+To help us cover our costs and to allow us to continue providing this service to the community, we do charge <strong>$600 USD</strong> per strain, plus shipping, handling, and any applicable tax (so bundling multiple strains is a good idea).
+      </p>
+                </div>      
+              </div>
+             </div>
+          </div>
+        </div>
+      </div>      
+    </div>
+
+   <div class="row mb-4">
+    <div class="col">
+      <div class="bs-component">
+        <div class="accordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="heading_how">
+              <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapse_how" aria-expanded="true" aria-controls="collapse_how">
+                <strong>E-mail template</strong>
+              </button>
+            </h2>
+            <div id="collapse_how" class="accordion-collapse collapse show" aria-labelledby="heading_how">
+              <div class="accordion-body">
+
+      <p>
+      Please follow this e-mail template (will be pre-filled when you click the "Request Strain" button):
+      <br /><br />
+
+      <div class="mb-2">
+      <strong>E-mail send to:</strong>
+      <br />
+      {{ mailto_target }}
+      </div>
+      <div class="mb-2">
+      <strong>Email Subject Line:</strong>
+      <br />
+      Request for [strain name] [NPDC ID]
+      </div>
+      <div class="mb-2">
+      <strong>Email Text:</strong>
+      <br />
+      I would like to request [strain name] [NPDC ID]. My name is [requestor’s name], and I work at [institution’s name] under the direction of [principal investigator’s name].
+      </div>
+      </p>
+
+                </div>      
+              </div>
+             </div>
+          </div>
+        </div>
+      </div>      
+    </div>
 
 
 {% endblock %}

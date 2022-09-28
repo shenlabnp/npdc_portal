@@ -5,5 +5,7 @@
 	"MAIL_PASSWORD": "xxx",
 	"MAIL_USE_TLS": true,
 	"MAIL_USE_SSL": false,
-    "MAIL_SEND_AS": "noreply@npdc.com"
+    "MAIL_SEND_AS": "noreply@npdc.com",
+    "MAIL_SEND_FEEDBACKS_TO": "noreply@npdc.com",
+    "MAIL_SEND_ORDER_TO": "noreply@npdc.com"
 }

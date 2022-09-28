@@ -59,7 +59,15 @@
       </div>
       <div class="row m-2">
         <div class="col">
-          <button class="btn btn-info">Purchase Strain</button>
+          <button id="btn_request_strain" class="btn btn-info">Request Strain</button>
+          <script type="text/javascript">
+            $("#btn_request_strain").click(function() {
+              let mail_target = "{{ mailto_target }}";
+              let mail_subject = "Request for {{ strain_data["name"] }} ({{ "NPDC-{}".format(strain_data["npdc_id"]) }})";
+              let mail_body = "I would like to request {{ strain_data["name"] }} ({{ "NPDC-{}".format(strain_data["npdc_id"]) }}). My name is {{ user_fullname }}, and I work at [institution_name], {{ user_country }}, under the direction of [principal investigator’s name].";
+              location.href = "mailto:" + mail_target + "?subject=" + mail_subject + "&body=" + mail_body;
+            });
+          </script>
         </div>
       </div>
     </div>

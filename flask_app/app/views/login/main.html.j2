@@ -10,7 +10,7 @@
   <div class="row">
      <div class="col-3">
        <div class="h4 btn-secondary text-center p-2">Existing users</div>
-       <form method="post">
+       <form id="form_login" method="post">
           <div class="form-group mb-4">
              <label>Username</label>
              <input type="text" name="username" class="form-control" placeholder="User Name" required>
@@ -26,7 +26,7 @@
      </div>
      <div class="col-9">
        <div class="h4 btn-secondary text-center p-2">New users</div>
-       <form method="post" action="{{ url_for('root.page') }}register">
+       <form id="form_register" method="post" action="{{ url_for('root.page') }}register">
           <div class="form-group mb-4">
              <label>Username</label>
              <input type="text" name="username" class="form-control" placeholder="User Name" required>
@@ -49,7 +49,7 @@
           <div class="form-group mb-4">
             <div class="row">
                <div class="col-2">
-                  <label>Category </label>
+                  <label>Category</label>
                </div>
                <div class="col-10 text-start btn-group" role="group">
                 <input type="radio" class="btn-check btn-outline-secondary" name="category" id="category_academia" value="academia" checked>
@@ -70,7 +70,8 @@
           <div class="form-group mb-4">
              <label>Institution's country</label>
              <select class="form-select" id="country" name="country" required>
-               {% for idx, name in countries %}
+               <option value="US">United States</option>
+               {% for idx, name in countries if idx != "US" %}
                <option value="{{ idx }}">{{ name }}</option>
                {% endfor %}
              </select>
@@ -97,7 +98,7 @@
               </div>
           </div>
           <div class="form-group mb-4 text-end">
-            <button type="submit" class="btn btn-primary">Sign up</button>
+            <button type="button" id="signup_btn" class="btn btn-primary">Sign up</button>
           </div>
           <script type="text/javascript">
             function check_category() {
@@ -113,6 +114,32 @@
                   check_category();
                });
                check_category();
+               $("#signup_btn").click(function() {
+                  if (!$("#form_register")[0].reportValidity()) {
+                     return False;
+                  }
+                  let modal_content = "";
+                  modal_content += "<div class='row text-justify m-2'><div class='col'>" + "<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>" + "</div>";
+                  modal_content += "<div class='row text-center'><div class='col'>" + "<input class='form-check-input' type='checkbox' id='agree_terms' />" + "<label class='form-check-label' for='agree_terms'>&nbsp;&nbsp;I agree</label>" + "</div></div>";
+                  modal_content += "<div class='row text-center m-2'><div class='col'>" + "<button id='form_register_submit' class='btn btn-primary disabled' type='button'>Submit</button>" + "</div>";
+                  showModal("Terms & Conditions", modal_content,
+                     on_show=function(){
+                        $("#agree_terms").change(function() {
+                           if ($(this).is(":checked")) {
+                              $("#form_register_submit").removeClass("disabled");
+                           } else {
+                              $("#form_register_submit").addClass("disabled");
+                           }
+                        });
+                        $("#agree_terms").trigger("change");
+                        $("#form_register_submit").click(function() {
+                           hideModal();
+                           $("#form_register").submit();
+                        });
+                     }, on_close=function(){
+                        //..
+                     })
+                  })
             });
           </script>
        </form>

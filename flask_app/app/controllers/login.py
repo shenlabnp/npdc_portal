@@ -28,7 +28,8 @@ def page_login():
     if request.method == 'POST':        
         with sqlite3.connect(conf["user_db_path"]) as con:
             cur_userdata =  pd.read_sql_query((
-                "select * from users where username like ? and token like ?"
+                "select *"
+                " from users where username like ? and token like ?"
             ), con=con, params=(request.form['username'], request.form['token']))
             if cur_userdata.shape[0] == 1:
                 session["userdata"] = cur_userdata.iloc[0].to_dict()
@@ -145,11 +146,17 @@ def page_register():
             userdata["username"],
             userdata["token"]
         )
-        email_sender.send(msg)
+        try:
+            email_sender.send(msg)
+        except:
+            con.cursor().execute("delete from user_details where user_id=?", (userdata["id"],));
+            con.cursor().execute("delete from users where id=?", (userdata["id"],));
+            flash("failed to send the e-mail token (have you checked if you entered a valid e-mail?)", "alert-danger")
+            return redirect(url_for("login.page_register"))
 
         # render view
         flash("registration success! please check your e-mail for login information", "alert-success")
-        return redirect(url_for("home.page_home"))
+        return redirect(url_for("home.page_login"))
 
 
 @blueprint.route("/logout")
