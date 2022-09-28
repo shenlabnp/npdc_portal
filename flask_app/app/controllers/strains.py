@@ -83,8 +83,10 @@ def page_strains_detail(npdc_id):
 
     with sqlite3.connect(conf["db_path"]) as con:
         strain_data = pd.read_sql_query((
-            "select strains.*, genomes.*, genomes.id as genome_id"
+            "select strains.*, genomes.*, genomes.id as genome_id,"
+            " strains_cached.alt_ids, strains_cached.medias"
             " from strains left join genomes on strains.npdc_id=genomes.npdc_id"
+            " left join strains_cached on strains.npdc_id=strains_cached.npdc_id"
             " where strains.npdc_id=?"
             " limit 1"
         ),  con, params=(npdc_id, )).fillna("")

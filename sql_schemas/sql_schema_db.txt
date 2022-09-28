@@ -22,6 +22,30 @@ CREATE INDEX IF NOT EXISTS strains_collection_region ON strains(collection_regio
 CREATE INDEX IF NOT EXISTS strains_empirical_category ON strains(empirical_genus);
 CREATE INDEX IF NOT EXISTS strains_empirical_genus ON strains(empirical_species);
 
+DROP TABLE IF EXISTS "strains_alt_ids";
+CREATE TABLE IF NOT EXISTS "strains_alt_ids" (
+ "npdc_id" INTEGER NOT NULL,
+ "alt_id" TEXT NOT NULL,
+ FOREIGN KEY("npdc_id") REFERENCES strains("npdc_id")
+);
+CREATE INDEX IF NOT EXISTS strains_alt_ids_alt_id ON strains_alt_ids(alt_id);
+
+DROP TABLE IF EXISTS "media";
+CREATE TABLE IF NOT EXISTS "media" (
+ "code" TEXT PRIMARY KEY,
+ "name" TEXT NOT NULL,
+ "desc" TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS media_name ON media(name);
+
+DROP TABLE IF EXISTS "strains_media";
+CREATE TABLE IF NOT EXISTS "strains_media" (
+ "npdc_id" INTEGER NOT NULL,
+ "media_code" TEXT NOT NULL,
+ FOREIGN KEY("npdc_id") REFERENCES strains("npdc_id")
+);
+CREATE INDEX IF NOT EXISTS strains_media_media_code ON strains_media(media_code);
+
 DROP TABLE IF EXISTS "genomes";
 CREATE TABLE "genomes" (
  "id" INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -17,7 +17,7 @@
       <div class="row">
         <div class="col" style="font-size: large;">
           Other IDs:
-          <span>n/a</span>
+          <span>{{ ", ".join(strain_data["alt_ids"].split("|")) }}</span>
         </div>
       </div>
     </div>
@@ -163,7 +163,7 @@
             <div class="accordion-item">
               <h2 class="accordion-header">
                 <button class="accordion-button" type="button" aria-expanded="true">
-                  <strong>Media for Growth: Modified TSB</strong>
+                  <strong>Media for Growth: {{ ", ".join(strain_data["medias"].split("|")) if strain_data["medias"] != "" else "n/a" }}</strong>
                 </button>
               </h2>
           </div>

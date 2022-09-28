@@ -1,6 +1,33 @@
 BEGIN TRANSACTION;
 
 -- -------------------------------------------------------------
+-- strain tables
+
+DROP INDEX IF EXISTS strains_cached_npdc_id;
+DROP INDEX IF EXISTS strains_cached_alt_ids;
+DROP INDEX IF EXISTS strains_cached_medias;
+
+DROP TABLE IF EXISTS "strains_cached";
+CREATE TABLE IF NOT EXISTS "strains_cached" (
+ "npdc_id" INTEGER NOT NULL UNIQUE,
+ "alt_ids" TEXT,
+ "medias" TEXT
+);
+
+INSERT INTO strains_cached (npdc_id, alt_ids, medias)
+SELECT strains.npdc_id,
+IFNULL(alt_ids.alt_ids, ""),
+IFNULL(medias.medias, "")
+FROM strains
+LEFT JOIN (SELECT npdc_id, group_concat(alt_id, '|') as alt_ids FROM strains_alt_ids GROUP BY npdc_id) AS alt_ids ON alt_ids.npdc_id=strains.npdc_id
+LEFT JOIN (SELECT npdc_id, group_concat(media.name, '|') as medias FROM strains_media LEFT JOIN media ON media.code=strains_media.media_code GROUP BY npdc_id) AS medias ON medias.npdc_id=strains.npdc_id
+;
+
+CREATE INDEX IF NOT EXISTS strains_cached_npdc_id ON strains_cached(npdc_id);
+CREATE INDEX IF NOT EXISTS strains_cached_alt_ids ON strains_cached(alt_ids);
+CREATE INDEX IF NOT EXISTS strains_cached_medias ON strains_cached(medias);
+
+-- -------------------------------------------------------------
 -- genomes tables
 
 DROP INDEX IF EXISTS genomes_cached_genome_id;
