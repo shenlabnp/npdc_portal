@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sqlite3
-from flask import render_template, request, session, redirect, url_for
+from flask import render_template, request, session, redirect, url_for, current_app
 
 # import global config
 from ..config import conf
@@ -27,5 +27,6 @@ def page_feedback():
     return render_template(
         "feedback/main.html.j2",
         page_title=page_title,
-        page_subtitle=page_subtitle
+        page_subtitle=page_subtitle,
+        mailto_target=current_app.config["MAIL_SEND_ORDER_TO"]
     )

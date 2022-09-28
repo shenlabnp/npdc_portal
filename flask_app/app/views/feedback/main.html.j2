@@ -2,27 +2,43 @@
 {% block content %}
   {% include "basic_header.html.j2" %}
 
-<form action="mailto:ben.shen@ufl.edu" method="get" enctype="text/plain">
-  <div>
-    <label for="name">Name:
-      <input type="text" name="name" id="name" />
+  <form id="form_feedback">
+  <div class="row m-2">
+    <div class="col">
+      Found bugs/errors in the database? Got any question(s) about the collection? Please send us your feedback via e-mail via the pre-filling form below:
+    </div>
+  </div>
+  <div class="row m-2">
+    <div class="col">
+    <label for="name">Subject:
+      <input type="text" name="name" id="feedback_subject" required/>
     </label>
   </div>
-  <div>
-    <label for="email">Email:
-      <input type="text" name="email" id="email" />
-    </label>
   </div>
-  <div>
-    <label>Questions/comments:</label>
+  <div class="row m-2">
+    <div class="col">
+    <label>Questions / comments:</label>
     <br />
-    <textarea name="comments" rows="12" cols="35"></textarea>
+    <textarea id="feedback_body" rows="12" cols="35" required></textarea>
   </div>
-  <div>
-    <input type="submit" name="submit" value="Send" />
-    <input type="reset" name="reset" value="Clear Form" />
   </div>
-</form>
+  <div class="row m-2">
+    <div class="col">
+    <button type="button" class="btn btn-primary" id="btn_send_feedback">Send</button>
+  </div>
+  </div>
+  </form>
+  <script type="text/javascript">
+    $("#btn_send_feedback").click(function() {
+      if (!$("#form_feedback")[0].reportValidity()) {
+         return False;
+      }
+      let mail_target = "{{ mailto_target }}";
+      let mail_subject = "[Feedback] " + $("#feedback_subject").val();
+      let mail_body = $("#feedback_body").val();
+      location.href = "mailto:" + mail_target + "?subject=" + mail_subject + "&body=" + mail_body;
+    });
+  </script>
 
 
 {% endblock %}
