@@ -135,7 +135,7 @@ def page_bgcs_download(bgc_id):
     # check file type
     file_type = request.args.get("filetype", type=str)
     if file_type == "regiongbk":
-        bgc_file_path = path.join(conf["bgc_folder_path"], "{}.gbk".format(bgc_data["bgc_id"]))
+        bgc_file_path = path.join(conf["bgc_folder_path"], str(bgc_data["genome_id"]), "{}.gbk".format(bgc_data["bgc_id"]))
         bgc_file_delivery_name = get_bgc_name(bgc_data) + ".gbk"
     else:
         flash("wrong request", "alert-danger")
@@ -199,7 +199,8 @@ def get_arrower_objects():
             # get cds
             data["orfs"] = []
             for idx, row in pd.read_sql((
-                "select * from cds_bgc_map left join cds on cds.id=cds_bgc_map.cds_id"
+                "select cds.nt_start, cds.nt_end, cds.strand, cds.locus_tag, cds.annotation"
+                " from cds_bgc_map left join cds on cds.id=cds_bgc_map.cds_id"
                 " where bgc_id=?"
             ), con, params=(bgc_id,)).iterrows():
                 orf = {

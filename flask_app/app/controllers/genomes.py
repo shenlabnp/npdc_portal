@@ -112,10 +112,10 @@ def page_genomes_download(genome_id):
     # check file type
     file_type = request.args.get("filetype", type=str)
     if file_type == "genbank":
-        genome_file_path = path.join(conf["genome_folder_path"], "{}.gbk".format(genome_data["id"]))
+        genome_file_path = path.join(conf["genome_folder_path"], str(genome_data["id"]), "{}.gbk".format(genome_data["id"]))
         genome_file_delivery_name = "NPDC{:06d}.gbk".format(genome_data["npdc_id"])
     elif file_type == "fasta":
-        genome_file_path = path.join(conf["genome_folder_path"], "{}.fna".format(genome_data["id"]))
+        genome_file_path = path.join(conf["genome_folder_path"], str(genome_data["id"]), "{}.fna".format(genome_data["id"]))
         genome_file_delivery_name = "NPDC{:06d}.fna".format(genome_data["npdc_id"])
     else:
         flash("wrong request", "alert-danger")
@@ -254,8 +254,8 @@ def get_cds_list():
 
         # fetch total records
         result["recordsTotal"] = cur.execute("".join([
-            "select count(id) from ("
-                "select * from cds left join cds_bgc_map on cds.id=cds_bgc_map.cds_id",
+            "select count(id) from (",
+                "select cds.id from cds left join cds_bgc_map on cds.id=cds_bgc_map.cds_id",
                 " where 1",
                 (" and " + query_filter) if query_filter != "" else "",
             ")"
@@ -266,8 +266,8 @@ def get_cds_list():
 
         # fetch total records (filtered)
         result["recordsFiltered"] = cur.execute("".join([
-            "select count(id) from ("
-                "select * from cds left join cds_bgc_map on cds.id=cds_bgc_map.cds_id",
+            "select count(id) from (",
+                "select cds.id from cds left join cds_bgc_map on cds.id=cds_bgc_map.cds_id",
                 " where 1",
                 (" and " + query_filter) if query_filter != "" else "",
             ")"
@@ -276,7 +276,8 @@ def get_cds_list():
         result["data"] = []
 
         query_result = pd.read_sql_query("".join([
-            "select * from cds left join cds_bgc_map on cds.id=cds_bgc_map.cds_id",
+            "select cds.nt_start, cds.nt_end, cds.locus_tag, cds.annotation, cds.aa_seq",
+            " from cds left join cds_bgc_map on cds.id=cds_bgc_map.cds_id",
             " where 1",
             (" and " + query_filter) if query_filter != "" else "",
             " limit ? offset ?"
@@ -288,7 +289,8 @@ def get_cds_list():
                 row["nt_end"],
                 row["nt_end"] - row["nt_start"],
                 row["locus_tag"],
-                row["annotation"]
+                row["annotation"],
+                row["aa_seq"]
             ])
 
     return result

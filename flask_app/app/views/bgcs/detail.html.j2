@@ -188,6 +188,7 @@
                           <th>length (AA)</th>
                           <th>locus tag</th>
                           <th>annotation</th>
+                          <th>sequence</th>
                         </tr>
                       </thead>
                       <tbody class="tbody">
@@ -217,6 +218,16 @@
                                   render: function(data, type, row, meta) {
                                     return (data / 3).toFixed(0);
                                   }                              
+                              },
+                              {
+                                  targets: 5,
+                                  render: function(data, type, row, meta) {
+                                    let btn = $("<button class=\"btn btn-primary\" data-seq='" + data + "'>copy</button>")
+                                    btn.click(function() {
+                                      copy_to_clipboard($(this).attr("data-seq"));
+                                    })
+                                    return btn;
+                                  }
                               }
                             ]
                           });
