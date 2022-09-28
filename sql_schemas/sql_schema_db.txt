@@ -143,6 +143,7 @@ CREATE TABLE IF NOT EXISTS "cds" (
  "strand" INTEGER NOT NULL,
  "locus_tag" TEXT,
  "annotation" TEXT,
+ "aa_seq" TEXT,
  FOREIGN KEY("genome_id") REFERENCES genomes("id")
 );
 CREATE INDEX IF NOT EXISTS cds_genome_id ON cds(genome_id);
