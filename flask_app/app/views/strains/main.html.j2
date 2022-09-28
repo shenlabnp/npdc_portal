@@ -97,6 +97,39 @@
 	        	render: function(data, type, row, meta) {
 	        		return data? "<span class='badge m-1 bg-success'>Yes</span>" : "<span class='badge m-1 bg-secondary'>No</span>";
 	        	}
+	        },
+	        {
+	        	targets: 5,
+	        	render: function(data, type, row, meta) {
+              let html_text = "<ul class=\"list-unstyled mb-0\">";
+              data.forEach((media) => {
+                html_text += "<li>" + media + "</li>";
+              });
+              html_text += "</ul>";
+              return html_text;
+	        	}
+	        },
+	        {
+	        	targets: 6,
+	        	render: function(data, type, row, meta) {
+              let html_text = "<ul class=\"list-unstyled mb-0\">";
+              data.forEach((alt_id) => {
+                html_text += "<li>" + alt_id + "</li>";
+              });
+              html_text += "</ul>";
+              return html_text;
+	        	}
+	        },
+	        {
+	        	targets: 7,
+	        	render: function(data, type, row, meta) {
+              let html_text = "<ul class=\"list-unstyled mb-0\">";
+              data.forEach((comment) => {
+                html_text += "<li>" + comment + "</li>";
+              });
+              html_text += "</ul>";
+              return html_text;
+	        	}
 	        }
 				]
 			});

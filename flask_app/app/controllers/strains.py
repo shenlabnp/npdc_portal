@@ -130,7 +130,7 @@ def page_strains_detail(npdc_id):
 
         strain_data["picture_available"] = path.exists(path.join(conf["strain_pictures_folder_path"], "{}.jpg".format(strain_data["npdc_id"])))
 
-        strain_data = strain_data.replace("", "n/a").replace("Unknown", "n/a").to_dict()
+        strain_data = strain_data.replace("", "n/a").to_dict()
 
     # page title
     page_title = "NPDC{:06d}".format(strain_data["npdc_id"])
@@ -170,8 +170,10 @@ def get_overview():
         result["data"] = []
 
         query_result = pd.read_sql_query((
-            "select strains.*, genomes.*, genomes.id as genome_id"
+            "select strains.*, genomes.*, genomes.id as genome_id,"
+            " strains_cached.alt_ids, strains_cached.medias"
             " from strains left join genomes on strains.npdc_id=genomes.npdc_id"
+            " left join strains_cached on strains.npdc_id=strains_cached.npdc_id"
             " limit {} offset {}"
         ).format(limit, offset), con).fillna("")
         query_result = query_result.loc[:,~query_result.columns.duplicated()]
@@ -185,10 +187,10 @@ def get_overview():
                 get_strain_name(row),
                 row["genome_id"] != "",
                 "n/a" if row["collection_date"] == "" else row["collection_date"],
-                "Unknown" if row["collection_country"] == "" else row["collection_country"],
-                "n/a",
-                "n/a",
-                "n/a",
+                "n/a" if row["collection_country"] == "" else row["collection_country"],
+                row["medias"].split("|"),
+                row["alt_ids"].split("|"),
+                row["comment"].split(";"),
             ])
 
     return result
