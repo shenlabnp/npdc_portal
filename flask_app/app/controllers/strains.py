@@ -188,9 +188,9 @@ def get_overview():
                 row["genome_id"] != "",
                 "n/a" if row["collection_date"] == "" else row["collection_date"],
                 "n/a" if row["collection_country"] == "" else row["collection_country"],
-                row["medias"].split("|"),
-                row["alt_ids"].split("|"),
-                row["comment"].split(";"),
+                [media for media in row["medias"].split("|") if media != ""],
+                [alt_id for alt_id in row["alt_ids"].split("|") if alt_id != ""],
+                [comment for comment in row["comment"].split(";") if comment != ""],
             ])
 
     return result

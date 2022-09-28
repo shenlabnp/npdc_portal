@@ -106,7 +106,7 @@
                 html_text += "<li>" + media + "</li>";
               });
               html_text += "</ul>";
-              return html_text;
+              return data.length < 1? "n/a":html_text;
 	        	}
 	        },
 	        {
@@ -117,7 +117,7 @@
                 html_text += "<li>" + alt_id + "</li>";
               });
               html_text += "</ul>";
-              return html_text;
+              return data.length < 1? "n/a":html_text;
 	        	}
 	        },
 	        {
@@ -128,7 +128,7 @@
                 html_text += "<li>" + comment + "</li>";
               });
               html_text += "</ul>";
-              return html_text;
+              return data.length < 1? "n/a":html_text;
 	        	}
 	        }
 				]
