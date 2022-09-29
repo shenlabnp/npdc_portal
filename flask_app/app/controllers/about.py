@@ -14,10 +14,6 @@ blueprint = Blueprint('about', __name__)
 
 @blueprint.route("/about")
 def page_about():
-
-    # check login
-    if not check_logged_in():
-        return redirect(url_for("login.page_login"))
         
     # page title
     page_title = "About NPDC"
