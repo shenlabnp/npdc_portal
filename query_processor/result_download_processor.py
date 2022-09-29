@@ -64,10 +64,12 @@ def main():
                 if file_type == "fasta_proteins":
                     query_cds = (
                         "SELECT DISTINCT target_cds_id as cds_id, target_bgc_id as bgc_id FROM blast_hits"
-                        " WHERE query_prot_id=?"
+                        " WHERE query_prot_id IN ({})"
                         " ORDER BY target_cds_id ASC"
+                    ).format(",".join(["?"]*len(query_prot_ids)))
+                    params_ = list(
+                        [*query_prot_ids]
                     )
-                    params_ = query_prot_ids
                 elif file_type == "fasta_bgcs":
                     query_cds = (
                         "SELECT DISTINCT cds_bgc_map.cds_id as cds_id, cds_bgc_map.bgc_id as bgc_id FROM ("
