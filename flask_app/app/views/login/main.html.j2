@@ -119,9 +119,18 @@
                      return False;
                   }
                   let modal_content = "";
-                  modal_content += "<div class='row text-justify m-2'><div class='col'>" + "<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>" + "</div>";
-                  modal_content += "<div class='row text-center'><div class='col'>" + "<input class='form-check-input' type='checkbox' id='agree_terms' />" + "<label class='form-check-label' for='agree_terms'>&nbsp;&nbsp;I agree</label>" + "</div></div>";
-                  modal_content += "<div class='row text-center m-2'><div class='col'>" + "<button id='form_register_submit' class='btn btn-primary disabled' type='button'>Submit</button>" + "</div>";
+                  modal_content += "<div class='row m-2'><div class='col'>" +
+                     "<ul class='list-group'>" +
+                        "<li class='list-group-item'>1. NPDC genomes downloaded from the NPDC Genome Portal may not be uploaded to any other databases or made public without prior written consent from the director of the NPDC.</li>" +
+                        "<li class='list-group-item'>2. Upon completion of the contract, the requestor is responsible for handling of biological material consistent with legal requirements.</li>" +
+                        "<li class='list-group-item'>3. By making a request, the requestor affirms that they are familiar with all relevant safety protocols and have access to any necessary equipment, training, and facilities.</li>" +
+                        "<li class='list-group-item'>4. Due to the nature of bacterial strains, they may be hazardous beyond the knowledge of NPDC. They may also vary in quality due to reasons beyond the control of NPDC.</li>" +
+                        "<li class='list-group-item'>5. NPDC assumes no responsibility for any damage or delays during the shipping of the bacterial strains.</li>" +
+                        "<li class='list-group-item'>6. NPDC reserves the right to reject any request or make a strain unavailable without any prior notice.</li>" +
+                     "</ul>" +
+                  "</div>";
+                  modal_content += "<div class='row text-center mt-4'><div class='col'>" + "<input class='form-check-input' type='checkbox' id='agree_terms' />" + "<label class='form-check-label' for='agree_terms'>&nbsp;&nbsp;I agree</label>" + "</div></div>";
+                  modal_content += "<div class='row text-center mt-2'><div class='col'>" + "<button id='form_register_submit' class='btn btn-primary disabled' type='button'>Submit</button>" + "</div>";
                   showModal("Terms & Conditions", modal_content,
                      on_show=function(){
                         $("#agree_terms").change(function() {
