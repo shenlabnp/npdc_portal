@@ -108,7 +108,7 @@ def main():
                         " LEFT JOIN bgcs ON bgcs.id=cds_to_pull.bgc_id",
                         " LEFT JOIN bgcs_cached ON bgcs_cached.bgc_id=cds_to_pull.bgc_id"
                     ]), con, params=tuple([*params_]))
-                cds_to_pull = [int(x) for x in df_["cds_id"]]
+                cds_to_pull = sorted([int(x) for x in df_["cds_id"]])
                 if len(cds_to_pull) > 0:
                     with open(out_fasta, "w") as output_fasta:
                         with open(cds_fasta_path, "r") as input_fasta:
