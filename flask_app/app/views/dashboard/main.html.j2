@@ -136,7 +136,7 @@
 					<tbody>
 						{% for npdc_id, count_genomes, count_bgcs in user_downloads %}
 							<tr>
-								<td>{{ status }}</td>
+								<td>{{ npdc_id }}</td>
 								<td>{{ "{:,}".format(count_genomes) }}</td>
 								<td>{{ "{:,}".format(count_bgcs) }}</td>
 							</tr>
