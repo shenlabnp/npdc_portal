@@ -68,7 +68,7 @@ def main():
                         " ORDER BY target_cds_id ASC"
                     ).format(",".join(["?"]*len(query_prot_ids)))
                     params_ = list(
-                        [*query_prot_ids]
+                        [*query_prot_ids,]
                     )
                 elif file_type == "fasta_bgcs":
                     query_cds = (
