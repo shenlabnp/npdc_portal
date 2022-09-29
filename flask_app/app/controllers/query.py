@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sqlite3
-from flask import render_template, request, session, redirect, url_for, flash, send_file
+from flask import render_template, request, session, redirect, url_for, flash, send_file, current_app
 import pandas as pd
 from datetime import datetime
 import re
@@ -109,7 +109,8 @@ def page_job(job_id):
         job_status=job_data["status_desc"],
         job_submitted=job_data["submitted"][:16],
         job_finished=job_data["finished"][:16] if job_data["finished"] else "",
-        job_proteins=job_data["proteins"]
+        job_proteins=job_data["proteins"],
+        genome_limit=current_app.config["blast_genome_limit"]
     )
 
 

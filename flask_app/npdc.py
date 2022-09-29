@@ -67,6 +67,10 @@ def portal():
     for key, val in (json.load(open(conf["email_config_path"], "r"))).items():
         app.config[key] = val
 
+    # other app configuration
+    for key, val in (json.load(open(conf["app_config_path"], "r"))).items():
+        app.config[key] = val
+
     # register controllers
     app.register_blueprint(root.blueprint)
     app.register_blueprint(login.blueprint)

@@ -12,6 +12,7 @@ from multiprocessing import cpu_count
 import pandas as pd
 import numpy as np
 import subprocess
+import json
 
 
 def fetch_pending_jobs(jobs_db):
@@ -25,7 +26,7 @@ def fetch_pending_jobs(jobs_db):
         )).fetchall()]
 
 
-def deploy_jobs(pending, jobs_db, npdc_db, instance_folder, num_threads, ram_size_gb, use_srun):
+def deploy_jobs(pending, jobs_db, npdc_db, instance_folder, num_threads, ram_size_gb, use_srun, num_genomes_limit):
     for job_id in pending:
         print("PROCESSING: job#{}".format(job_id))
         # update status to "PROCESSING"
@@ -39,16 +40,18 @@ def deploy_jobs(pending, jobs_db, npdc_db, instance_folder, num_threads, ram_siz
             con.commit()
 
         with TemporaryDirectory() as temp_dir:
-            # create fasta input
-            fasta_input_path = path.join(temp_dir, "input.fasta")
-            with open(fasta_input_path, "w") as oo:
-                for idx, row in pd.read_sql((
+            query_proteins = pd.read_sql((
                     "select id,aa_seq from query_proteins"
                     " where jobid=?"
                     ),
                 con=connect(jobs_db),
                 params=(job_id,)
-                ).iterrows():
+                )
+
+            # create fasta input
+            fasta_input_path = path.join(temp_dir, "input.fasta")
+            with open(fasta_input_path, "w") as oo:
+                for idx, row in query_proteins.iterrows():
                     oo.write(">{}\n{}\n".format(
                         row["id"],
                         row["aa_seq"]
@@ -81,7 +84,7 @@ def deploy_jobs(pending, jobs_db, npdc_db, instance_folder, num_threads, ram_siz
             except subprocess.CalledProcessError as e:
                 status = -1
 
-            if status == 2 and (path.getsize(blast_output_path) > 0): # else, no hit's produced
+            if status != -1 and (path.getsize(blast_output_path) > 0): # else, no hit's produced
                 # process BLAST result
                 blast_result = pd.read_csv(
                     blast_output_path, sep="\t", header=None
@@ -108,8 +111,8 @@ def deploy_jobs(pending, jobs_db, npdc_db, instance_folder, num_threads, ram_siz
                     cds_to_bgc_id = cds_to_bgc_id.groupby("cds_id").apply(lambda x: x.iloc[0])["bgc_id"].to_dict()
                 else:
                     cds_to_bgc_id = {}
-                # insert into db
-                pd.DataFrame({
+
+                blast_result = pd.DataFrame({
                     "query_prot_id": blast_result["qseqid"],
                     "target_cds_id": blast_result["sseqid"],
                     "target_bgc_id": blast_result["sseqid"].map(lambda x: cds_to_bgc_id.get(int(x), -1)),
@@ -123,7 +126,21 @@ def deploy_jobs(pending, jobs_db, npdc_db, instance_folder, num_threads, ram_siz
                     "evalue": blast_result["evalue"],
                     "bitscore": blast_result["bitscore"],
                     "pct_identity": blast_result["pident"]
-                }).to_sql("blast_hits", connect(jobs_db, timeout=60), index=False, if_exists="append")
+                })
+
+                # limit only to x best hit genomes
+                per_genome = blast_result.groupby("target_genome_id").apply(
+                    lambda rows: pd.Series({
+                        "avg_score": rows["bitscore"].mean(),
+                        "unique_query_counts": rows["query_prot_id"].nunique()
+                    })
+                ).sort_values(by=["unique_query_counts", "avg_score"], ascending=False).iloc[:num_genomes_limit]
+                blast_result = blast_result[blast_result["target_genome_id"].isin(per_genome.index)]
+
+                # insert into db
+                blast_result.to_sql("blast_hits", connect(jobs_db, timeout=60), index=False, if_exists="append")
+                status = 2
+
 
             # update status
             with connect(jobs_db) as con:
@@ -160,6 +177,11 @@ def main():
         print("database is not up-to-date, please run init_db.py first!!")
         return(1)
 
+    # load config
+    conf = {}
+    for key, val in (json.load(open(path.join(instance_folder, "app_config.json"), "r"))).items():
+        conf[key] = val
+
     # fetch jobs in process that got interrupted previously, re-set to pending
     with connect(jobs_db) as con:
         cur = con.cursor()
@@ -179,7 +201,7 @@ def main():
             print("deploying {} jobs...".format(
                 len(pending)
             ))
-            deploy_jobs(pending, jobs_db, npdc_db, instance_folder, num_threads, ram_size_gb, use_srun)
+            deploy_jobs(pending, jobs_db, npdc_db, instance_folder, num_threads, ram_size_gb, use_srun, conf["blast_genome_limit"])
 
         sleep(5)
 
