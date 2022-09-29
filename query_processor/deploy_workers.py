@@ -160,6 +160,18 @@ def main():
         print("database is not up-to-date, please run init_db.py first!!")
         return(1)
 
+    # fetch jobs in process that got interrupted previously, re-set to pending
+    with connect(jobs_db) as con:
+        cur = con.cursor()
+        status_enums = pd.read_sql(("select * from status_enum where 1"), con)
+        status_enums.index = status_enums["name"]
+        status_enums = status_enums["code"].to_dict()
+        cur.execute(("update jobs set status=? where status=?"), (
+            status_enums["PENDING"],            
+            status_enums["PROCESSING"]
+        ))
+
+
     print("workers are running...")
     while(True):
         pending = fetch_pending_jobs(jobs_db)
