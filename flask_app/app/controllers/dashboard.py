@@ -51,6 +51,7 @@ def page_dashboard():
         " from users left join user_details on users.id=user_details.user_id"
         " left join job_titles on job_titles.id=user_details.job_title"
         " where user_details.is_academics=1"
+        " group by name"
     ),  sqlite3.connect(conf["user_db_path"])).values.tolist()
 
     users_jobs_nonacademia = pd.read_sql_query((
@@ -60,6 +61,7 @@ def page_dashboard():
         " ifnull(sum(user_details.have_other_funding), 0) as num_other_funding"
         " from users left join user_details on users.id=user_details.user_id"
         " where user_details.is_academics=0"
+        " group by name"
     ),  sqlite3.connect(conf["user_db_path"])).values.tolist()
 
     blast_queries = pd.read_sql_query((
