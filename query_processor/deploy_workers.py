@@ -123,7 +123,7 @@ def deploy_jobs(pending, jobs_db, npdc_db, instance_folder, num_threads, ram_siz
                     "evalue": blast_result["evalue"],
                     "bitscore": blast_result["bitscore"],
                     "pct_identity": blast_result["pident"]
-                }).to_sql("blast_hits", connect(jobs_db), index=False, if_exists="append")
+                }).to_sql("blast_hits", connect(jobs_db, timeout=60), index=False, if_exists="append")
 
             # update status
             with connect(jobs_db) as con:
