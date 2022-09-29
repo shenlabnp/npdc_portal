@@ -112,7 +112,7 @@ def portal():
             gbal["version"] = datetime.strftime(last_db_updated, "%Y.%m.%d")
 
         # get last query db update stats
-        with sqlite3.connect(conf["query_db_path"]) as con:
+        with sqlite3.connect(conf["query_db_path"], timeout=60) as con:
             cur = con.cursor()
             num_jobs_pending = cur.execute("select count(id) from jobs where status in (0, 1)").fetchone()[0]
             num_jobs_processed = cur.execute("select count(id) from jobs where status in (2, 3)").fetchone()[0]

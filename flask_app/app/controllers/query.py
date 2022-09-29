@@ -46,7 +46,7 @@ def page_main():
             "select count(jobs.id) from jobs,status_enum"
             " where userid=? and jobs.status=status_enum.code"
             " and status_enum.code in ('PENDING', 'PROCESSING')"
-        ), sqlite3.connect(conf["query_db_path"]), params=(session["userid"],)).iloc[0, 0]
+        ), sqlite3.connect(conf["query_db_path"], timeout=60), params=(session["userid"],)).iloc[0, 0]
         if user_jobs_pending_count > 0:
             flash("Failed to submit query: you still have a submission in progress", "alert-danger")
             return redirect(url_for("query.page_main"))
@@ -81,7 +81,7 @@ def page_job(job_id):
         "SELECT jobs.*, status_enum.name as status_desc"
         " FROM jobs, status_enum"
         " WHERE userid=? AND jobs.id=? and jobs.status=status_enum.code"
-    ), sqlite3.connect(conf["query_db_path"]), params=(session["userid"], job_id))
+    ), sqlite3.connect(conf["query_db_path"], timeout=60), params=(session["userid"], job_id))
 
     if job_data.shape[0] != 1:
         flash("Can't find the specified job id", "alert-danger")
@@ -93,7 +93,7 @@ def page_job(job_id):
     job_data["proteins"] = {row["id"]: row["name"] for idx, row in pd.read_sql((
         "SELECT id, name FROM query_proteins"
         " WHERE jobid=?"
-    ), sqlite3.connect(conf["query_db_path"]), params=(job_id,)).iterrows()}
+    ), sqlite3.connect(conf["query_db_path"], timeout=60), params=(job_id,)).iterrows()}
 
     # page title
     page_title = "Query result: job #{}".format(job_id)
@@ -165,7 +165,7 @@ def get_list():
     limit = request.args.get('length', type=int)
     offset = request.args.get('start', type=int)
 
-    with sqlite3.connect(conf["query_db_path"]) as con:
+    with sqlite3.connect(conf["query_db_path"], timeout=60) as con:
         cur = con.cursor()
 
         # fetch total records
@@ -208,7 +208,7 @@ def get_list():
 
 def submit_new_job(user_id, input_proteins):
     
-    with sqlite3.connect(conf["query_db_path"]) as con:
+    with sqlite3.connect(conf["query_db_path"], timeout=60) as con:
 
         # submit job and get the new id back
         cur = con.cursor()
@@ -333,7 +333,7 @@ def page_download_result(job_id):
         "SELECT jobs.*, status_enum.name as status_desc"
         " FROM jobs, status_enum"
         " WHERE userid=? AND jobs.id=? and status_desc=? and jobs.status=status_enum.code"
-    ), sqlite3.connect(conf["query_db_path"]), params=(session["userid"], job_id, "PROCESSED")).fillna("")
+    ), sqlite3.connect(conf["query_db_path"], timeout=60), params=(session["userid"], job_id, "PROCESSED")).fillna("")
 
     if job_data.shape[0] != 1:
         return "wrong_request"
@@ -399,7 +399,7 @@ def page_download_result(job_id):
 
         # check if file exists
         if path.exists(output_filepath):
-            with sqlite3.connect(conf["query_db_path"]) as con:
+            with sqlite3.connect(conf["query_db_path"], timeout=60) as con:
                 con.cursor().execute((
                     "update jobs"
                     " set last_result_downloaded=?"
