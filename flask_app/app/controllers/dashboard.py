@@ -51,11 +51,10 @@ def page_dashboard():
     users_jobs_academia = list(sorted(users_jobs_academia.value_counts().to_dict().items(), key=lambda x: x[1], reverse=True))
 
     users_jobs_nonacademia = pd.read_sql_query((
-        "select job_titles.name from users left join user_details on users.id=user_details.user_id"
-        " left join job_titles on job_titles.id=user_details.job_title"
+        "select count(users.id) from users left join user_details on users.id=user_details.user_id"
         " where user_details.is_academics=0"
-    ),  sqlite3.connect(conf["user_db_path"])).iloc[:, 0]
-    users_jobs_nonacademia = list(sorted(users_jobs_nonacademia.value_counts().to_dict().items(), key=lambda x: x[1], reverse=True))
+    ),  sqlite3.connect(conf["user_db_path"])).iloc[0, 0]
+    users_jobs_nonacademia = [["n/a", users_jobs_nonacademia]]
 
     blast_queries = pd.read_sql_query((
         "select status_enum.name, count(jobs.id) from jobs left join status_enum on jobs.status=status_enum.code"

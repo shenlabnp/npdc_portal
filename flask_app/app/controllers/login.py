@@ -124,7 +124,7 @@ def page_register():
          "first_name": request.form.get("firstname"),
          "last_name": request.form.get("lastname"),
          "is_academics": request.form.get("category") == "academia",
-         "job_title": request.form.get("jobtitle"),
+         "job_title": request.form.get("jobtitle") if request.form.get("category") == "academia" else None,
          "country": request.form.get("country"),
          "have_nih_funding": 1 if request.form.get("funding_nih") else 0,
          "have_nsf_funding": 1 if request.form.get("funding_nsf") else 0,
