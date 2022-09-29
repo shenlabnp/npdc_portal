@@ -37,31 +37,40 @@
 			</div>
 		</div>
 		<div class="row m-2 mt-4">
-			<div class="col-4">
+			<div class="col-6">
 				<table class="table">
 					<thead>
 						<tr>
 							<th scope="col">Category</th>
 							<th scope="col">Count</th>
+							<th scope="col">NIH funding</th>
+							<th scope="col">NSF funding</th>
+							<th scope="col">Other US funding</th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr>
-							<td colspan="2" class="text-center">Academia</td>
+							<td colspan="5" class="text-center">Academia</td>
 						</tr>
-						{% for title, count in users_jobs_academia %}
+						{% for title, count, count_nih, count_nsf, count_other in users_jobs_academia %}
 							<tr>
 								<td>{{ title }}</td>
 								<td>{{ "{:,}".format(count) }}</td>
+								<td>{{ "{:,}".format(count_nih) }}</td>
+								<td>{{ "{:,}".format(count_nsf) }}</td>
+								<td>{{ "{:,}".format(count_other) }}</td>
 							</tr>
 						{% endfor %}
 						<tr>
-							<td colspan="2" class="text-center">Non-Academia</td>
+							<td colspan="5" class="text-center">Non-Academia</td>
 						</tr>
-						{% for title, count in users_jobs_nonacademia %}
+						{% for title, count, count_nih, count_nsf, count_other in users_jobs_nonacademia %}
 							<tr>
 								<td>{{ title }}</td>
 								<td>{{ "{:,}".format(count) }}</td>
+								<td>{{ "{:,}".format(count_nih) }}</td>
+								<td>{{ "{:,}".format(count_nsf) }}</td>
+								<td>{{ "{:,}".format(count_other) }}</td>
 							</tr>
 						{% endfor %}
 					</tbody>

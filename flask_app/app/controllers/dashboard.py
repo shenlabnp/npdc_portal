@@ -44,17 +44,23 @@ def page_dashboard():
     users_countries = list(sorted(users_countries.value_counts().to_dict().items(), key=lambda x: x[1], reverse=True))
 
     users_jobs_academia = pd.read_sql_query((
-        "select job_titles.name from users left join user_details on users.id=user_details.user_id"
+        "select job_titles.name as name, count(users.id) as count_users,"
+        " ifnull(sum(user_details.have_nih_funding), 0) as num_nih_funding,"
+        " ifnull(sum(user_details.have_nsf_funding), 0) as num_nsf_funding,"
+        " ifnull(sum(user_details.have_other_funding), 0) as num_other_funding"
+        " from users left join user_details on users.id=user_details.user_id"
         " left join job_titles on job_titles.id=user_details.job_title"
         " where user_details.is_academics=1"
-    ),  sqlite3.connect(conf["user_db_path"])).iloc[:, 0]
-    users_jobs_academia = list(sorted(users_jobs_academia.value_counts().to_dict().items(), key=lambda x: x[1], reverse=True))
+    ),  sqlite3.connect(conf["user_db_path"])).values.tolist()
 
     users_jobs_nonacademia = pd.read_sql_query((
-        "select count(users.id) from users left join user_details on users.id=user_details.user_id"
+        "select 'n/a' as name, count(users.id) as count_users,"
+        " ifnull(sum(user_details.have_nih_funding), 0) as num_nih_funding,"
+        " ifnull(sum(user_details.have_nsf_funding), 0) as num_nsf_funding,"
+        " ifnull(sum(user_details.have_other_funding), 0) as num_other_funding"
+        " from users left join user_details on users.id=user_details.user_id"
         " where user_details.is_academics=0"
-    ),  sqlite3.connect(conf["user_db_path"])).iloc[0, 0]
-    users_jobs_nonacademia = [["n/a", users_jobs_nonacademia]]
+    ),  sqlite3.connect(conf["user_db_path"])).values.tolist()
 
     blast_queries = pd.read_sql_query((
         "select status_enum.name, count(jobs.id) from jobs left join status_enum on jobs.status=status_enum.code"
