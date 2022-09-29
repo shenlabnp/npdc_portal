@@ -156,7 +156,7 @@ def page_register():
 
         # render view
         flash("registration success! please check your e-mail for login information", "alert-success")
-        return redirect(url_for("home.page_login"))
+        return redirect(url_for("home.page_home"))
 
 
 @blueprint.route("/logout")
