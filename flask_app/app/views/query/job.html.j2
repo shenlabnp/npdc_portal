@@ -306,10 +306,10 @@
           <script type="text/javascript">
             $(document).ready(function(){
               $("#section_results_by_genome_table").DataTable({
-                searching: false,
-                ordering:  false,
+                searching: true,
+                ordering:  true,
                 serverSide: false,
-                responsive: false,
+                responsive: true,
                 processing: true,
                 aLengthMenu: [[25, 50, 250], [25, 50, 250]],
                 iDisplayLength: 25,
@@ -397,17 +397,17 @@
           <script type="text/javascript">
             $(document).ready(function(){
               $("#section_results_by_bgc_table").DataTable({
-                searching: false,
-                ordering:  false,
+                searching: true,
+                ordering:  true,
                 serverSide: false,
-                responsive: false,
+                responsive: true,
                 processing: true,
                 aLengthMenu: [[25, 50, 250], [25, 50, 250]],
                 iDisplayLength: 25,
                 "columnDefs": [
                   { className: "text-center", targets: [1, 5] },
                   { className: "text-end", targets: [0, 9, 10] },
-                  { visible: false, searchable: false, targets: [3, 4, 10] },
+                  { visible: false, searchable: false, targets: [4, 10] },
                   {
                     targets: 0,
                     render: function(data, type, row, meta) {
