@@ -18,6 +18,7 @@ from app.config import conf
 from app.controllers import root, login
 from app.controllers import home, strains, genomes, bgcs
 from app.controllers import feedback, about, query
+from app.controllers import dashboard
 
 def portal():
 
@@ -76,6 +77,7 @@ def portal():
     app.register_blueprint(feedback.blueprint)
     app.register_blueprint(about.blueprint)
     app.register_blueprint(query.blueprint)
+    app.register_blueprint(dashboard.blueprint)
 
     @app.before_request
     def before_request():

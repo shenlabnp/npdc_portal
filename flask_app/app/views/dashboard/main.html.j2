@@ -1,0 +1,152 @@
+{% extends "layout.html.j2" %}
+{% block content %}
+	{% if not dashboard_accessible %}
+		<div class="row">
+			<div class="col">
+				<form action="{{ url_for('dashboard.page_dashboard') }}" method="POST">
+					<input type="password" name="key"></input>
+					<input type="submit"></input>
+				</form>
+			</div>
+		</div>
+	{% else %}
+		<meta http-equiv="Refresh" content="5" />
+		<div class="row">
+			<div class="col">
+				<a href="{{ url_for('dashboard.page_dashboard') }}?action=logout">logout</a>
+			</div>
+		</div>
+
+		<div class="row m-2">
+			<div class="col">
+				Users registered:
+				<strong>{{ "{:,}".format(num_registered_user) }}</strong>
+			</div>
+		</div>
+
+		<div class="row m-2">
+			<div class="col">
+				Users logging in today:
+				<strong>{{ num_login_today }}</strong>
+			</div>
+		</div>
+
+		<div class="row m-2">
+			<div class="col">
+				<u>Users demography</u>
+			</div>
+		</div>
+		<div class="row m-2 mt-4">
+			<div class="col-4">
+				<table class="table">
+					<thead>
+						<tr>
+							<th scope="col">Category</th>
+							<th scope="col">Count</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td colspan="2" class="text-center">Academia</td>
+						</tr>
+						{% for title, count in users_jobs_academia %}
+							<tr>
+								<td>{{ title }}</td>
+								<td>{{ "{:,}".format(count) }}</td>
+							</tr>
+						{% endfor %}
+						<tr>
+							<td colspan="2" class="text-center">Non-Academia</td>
+						</tr>
+						{% for title, count in users_jobs_nonacademia %}
+							<tr>
+								<td>{{ title }}</td>
+								<td>{{ "{:,}".format(count) }}</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<div class="row m-2 mt-4">
+			<div class="col-4">
+				<table class="table">
+					<thead>
+						<tr>
+							<th scope="col">Country</th>
+							<th scope="col">Count</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for country, count in users_countries %}
+							<tr>
+								<td>{{ country }}</td>
+								<td>{{ "{:,}".format(count) }}</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<div class="row m-2">
+			<div class="col">
+				<u>BLAST query</u>
+			</div>
+		</div>
+
+		<div class="row m-2 mt-4">
+			<div class="col-4">
+				<table class="table">
+					<thead>
+						<tr>
+							<th scope="col">BLAST Query status</th>
+							<th scope="col">Count</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for status, count in blast_queries %}
+							<tr>
+								<td>{{ status }}</td>
+								<td>{{ "{:,}".format(count) }}</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<div class="row m-2">
+			<div class="col">
+				<u>Most downloaded NPDC data</u>
+			</div>
+		</div>
+
+		<div class="row m-2 mt-4">
+			<div class="col-8">
+				<table class="table">
+					<thead>
+						<tr>
+							<th scope="col">NPDC ID</th>
+							<th scope="col"># genomes downloaded</th>
+							<th scope="col"># BGCs downloaded</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for npdc_id, count_genomes, count_bgcs in user_downloads %}
+							<tr>
+								<td>{{ status }}</td>
+								<td>{{ "{:,}".format(count_genomes) }}</td>
+								<td>{{ "{:,}".format(count_bgcs) }}</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		
+	{% endif %}
+{% endblock %}
