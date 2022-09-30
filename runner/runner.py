@@ -92,7 +92,7 @@ def autobackup():
     backup_folder = path.abspath(path.join(path.dirname(path.dirname(__file__)), "instance", "backups"))
 
     while True:
-        all_backups = sorted(glob.glob(path.join(backup_folder, "backup-*")), reverse=True)
+        all_backups = [path.basename(fp) for fp in sorted(glob.glob(path.join(backup_folder, "backup-*")), reverse=True)]
         do_backup = False
         backup_name = "backup-{}".format(datetime.now().strftime("%Y-%m-%d"))
 
