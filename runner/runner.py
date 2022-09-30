@@ -5,6 +5,8 @@ from time import sleep
 import subprocess
 from sys import argv
 from os import path
+from datetime import datetime
+import glob
 
 from runner_config import conf
 
@@ -85,6 +87,40 @@ def start_downloadserver(num_threads, use_srun):
     return
 
 
+def autobackup():
+
+    backup_folder = path.abspath(path.join(path.dirname(path.dirname(__file__)), "instance", "backups"))
+
+    while True:
+        all_backups = sorted(glob.glob(path.join(backup_folder, "backup-*")), reverse=True)
+        do_backup = False
+        backup_name = "backup-{}".format(datetime.now().strftime("%Y-%m-%d"))
+
+        if len(all_backups) < 1:
+            do_backup = True
+        elif all_backups[0] < backup_name:
+            do_backup = True
+
+        if do_backup:
+            print("BACKING UP DBs.....")
+            subprocess.run("mkdir {}".format(
+                path.join(backup_folder, backup_name)
+            ), shell=True)
+            subprocess.run("cp {} {}".format(
+                path.abspath(path.join(path.dirname(path.dirname(__file__)), "instance", "accounts.db")),
+                path.join(backup_folder, backup_name, "accounts.db")
+            ), shell=True)
+            subprocess.run("cp {} {}".format(
+                path.abspath(path.join(path.dirname(path.dirname(__file__)), "instance", "queries.db")),
+                path.join(backup_folder, backup_name, "queries.db")
+            ), shell=True)
+            
+
+        sleep(60)
+
+    return
+
+
 def main():
 
     process_webserver = Process(
@@ -113,6 +149,11 @@ def main():
             conf["downloadserver_use_srun"])
         )
     process_downloadserver.start()
+
+    process_autobackup = Process(
+        target=autobackup
+    )
+    process_autobackup.start()
 
     process_webserver.join()
     process_blastserver.join()

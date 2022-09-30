@@ -12,3 +12,6 @@ instance/strain_pictures/*
 !instance/tmp_download
 instance/tmp_download/*
 !instance/tmp_download/dummy.txt
+!instance/backups
+instance/backups/*
+!instance/backups/dummy.txt
