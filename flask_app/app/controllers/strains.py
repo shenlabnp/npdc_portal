@@ -128,7 +128,12 @@ def page_strains_detail(npdc_id):
             strain_data["collection_date"] = datetime.strftime(
                 datetime.strptime(strain_data["collection_date"], "%Y-%m-%d"), "%B %-m, %Y"
             )
-
+        
+        try:
+            strain_data["ecology"] = [comment.split("found in '")[1].rstrip("'") for comment in strain_data["comment"].split(";") if comment.lstrip().startswith("found in '")]
+        except:
+            strain_data["ecology"] = []
+            
         strain_data["picture_available"] = path.exists(path.join(conf["strain_pictures_folder_path"], "{}.jpg".format(strain_data["npdc_id"])))
 
         strain_data = strain_data.replace("", "n/a").to_dict()
