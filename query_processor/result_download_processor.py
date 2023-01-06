@@ -96,6 +96,8 @@ def main():
                             "cds.nt_start as loc_start",
                             "cds.nt_end as loc_end",
                             "cds.strand as strand",
+                            "cds.locus_tag as locus_tag",
+                            "cds.annotation as annotation",
                             "bgcs.region_num as bgc",
                             "bgcs.gcf as gcf",
                             "bgcs_cached.name_class as bgc_class",
