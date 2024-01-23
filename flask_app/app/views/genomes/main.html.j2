@@ -110,7 +110,7 @@
           {
             targets: 4,
             render: function(data, type, row, meta) {
-              return data.toFixed(1) + " %";
+              return Number(data).toFixed(1) + " %";
             }
           },
           {
