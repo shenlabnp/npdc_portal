@@ -60,6 +60,9 @@ def portal():
             path.realpath(__file__)), "app", "static")
     )
 
+    # enable Flask debug mode
+    app.config['DEBUG'] = True
+
     # secret key for session
     app.secret_key = open(conf["session_key_path"], "r").read().rstrip("\n")
 

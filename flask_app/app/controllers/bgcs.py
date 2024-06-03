@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-from flask import render_template, request, session, redirect, url_for, flash, send_file
+from flask import render_template, request, session, redirect, url_for, flash, send_file, current_app
 import sqlite3
 import pandas as pd
 from os import path
 from datetime import datetime
+import re
 
 # import global config
 from ..config import conf
@@ -14,6 +15,8 @@ from ..session import check_logged_in
 from flask import Blueprint
 blueprint = Blueprint('bgcs', __name__)
 
+# import functions
+from app.utils import construct_numeric_filter
 
 @blueprint.route("/bgcs")
 def page_bgcs():
@@ -216,7 +219,6 @@ def get_arrower_objects():
 
     return result
 
-
 @blueprint.route("/api/bgcs/get_overview", methods=["GET"])
 def get_overview():
     """ for bgcs overview tables """
@@ -224,10 +226,26 @@ def get_overview():
     result["draw"] = request.args.get('draw', type=int)
     limit = request.args.get('length', type=int)
     offset = request.args.get('start', type=int)
+    search_value = request.args.get('search[value]', default="", type=str)
+
+    # Column mapping
+    column_mapping = {
+        "NPDC No.": "npdc_id",
+        "Taxonomy": "bgc_name",
+        "Mash cluster": "mash_species",
+        "BGC": "bgc_region_contig",
+        "GCF": "gcf",
+        "BGC quality": "fragmented_status",
+        "BGC class": "name_class",
+        "Num. of genes": "num_cds",
+        "Size (kb)": "bgc_size_kb",
+        "MIBiG hit": "mibig_hit_display"
+    }
+
+    default_numeric_columns = ["npdc_id", "gcf", "num_cds", "bgc_size_kb"]
 
     with sqlite3.connect(conf["db_path"]) as con:
         cur = con.cursor()
-
         sql_filter = "1"
         sql_filter_params = []
         if request.args.get("exclude_bgcs", "") != "":
@@ -239,15 +257,61 @@ def get_overview():
             sql_filter_params.append(request.args.get("genome_id"))
         if request.args.get("gcf", "") != "":
             sql_filter += " and gcf=?"
-            sql_filter_params.append(request.args.get("gcf"))            
+            sql_filter_params.append(request.args.get("gcf"))
+
+        if search_value:
+            is_numeric_search = search_value.replace('.', '', 1).isdigit()
+            parts = re.split(r'\s+and\s+', search_value, flags=re.IGNORECASE)
+            for part in parts:
+                part_handled = False
+                part = part.strip()
+                if '[' in part and ']' in part:
+                    term, user_column_with_bracket = part.split('[', 1)
+                    user_column = user_column_with_bracket.rsplit(']', 1 )[0].strip()
+                    term = term.strip()
+                    db_column = column_mapping.get(user_column, None )
+                    if db_column:
+                        if db_column in default_numeric_columns:
+                            numeric_filter, numeric_params = construct_numeric_filter(term, db_column)
+                            sql_filter += numeric_filter
+                            sql_filter_params.extend(numeric_params)
+                            part_handled = True
+                        elif db_column == "name_class":
+                            search_terms = term.split("|")
+                            for search_term in search_terms:
+                                sql_filter += f" AND name_class LIKE ?"
+                                sql_filter_params.append(f"%{search_term}%")
+                            part_handled = True
+                        else:
+                            sql_filter += f" and {db_column} LIKE ?".format(db_column=db_column)
+                            sql_filter_params.append(f"%{term}%")
+                            part_handled = True
+                        
+                if not part_handled:
+                    generic_filter = " OR ".join([f"{col} LIKE ?" for col in column_mapping.values()])
+                    sql_filter += f" and ({generic_filter})"
+                    sql_filter_params.extend([f"%{part}%"] * len(column_mapping))
 
         # fetch total records
         result["recordsTotal"] = cur.execute((
-            "select seq"
-            " from sqlite_sequence"
-            " where name like 'bgcs'"
+            "select count(id)"
+            " from bgcs"
+            " where 1"
         )).fetchall()[0][0]
 
+        sql_query = ''.join([
+            "SELECT COUNT(bgc_id) FROM (",
+            "SELECT bgcs.*, bgcs_cached.* FROM bgcs",
+            " LEFT JOIN bgcs_cached ON bgcs.id = bgcs_cached.bgc_id",
+            " WHERE 1",
+            f" AND {sql_filter}" if sql_filter != "" else "",
+            " GROUP BY bgcs.id",
+            ")"
+        ])
+            
+        current_app.logger.info(f"Final SQL Query: {sql_query}")
+        current_app.logger.info(f"SQL Parameters: {sql_filter_params}")
+        
         # fetch total records (filtered)
         result["recordsFiltered"] = len(cur.execute("".join([
             "select bgcs.*, bgcs_cached.*",
@@ -255,30 +319,41 @@ def get_overview():
             " where 1",
             (" and " + sql_filter) if sql_filter != "" else "",
         ]), tuple([*sql_filter_params])).fetchall())
-
+        
         result["data"] = []
-
+        
         query_result = pd.read_sql_query("".join([
-            "select bgcs.*, bgcs_cached.*",
-            " from bgcs left join bgcs_cached on bgcs.id=bgcs_cached.bgc_id"
-            " where 1",
-            (" and " + sql_filter) if sql_filter != "" else "",
-            " order by contig_num, nt_start asc"
-            " limit ? offset ?"
-        ]), con, params=tuple([*sql_filter_params, *[limit, offset]]))
+             "SELECT bgcs.id, bgcs.genome_id, bgcs.contig_num, bgcs.region_num, ",  
+             "bgcs.nt_start, bgcs.nt_end, bgcs.fragmented, bgcs.gcf, bgcs.orig_identifier, bgcs.bgc_size_kb, bgcs.fragmented_status, ",  
+             "bgcs_cached.bgc_id, bgcs_cached.npdc_id, bgcs_cached.genus, bgcs_cached.species, ",  
+             "bgcs_cached.mash_species, bgcs_cached.id_class, bgcs_cached.name_class, ", 
+             "bgcs_cached.num_cds, bgcs_cached.mibig_hit_id, bgcs_cached.mibig_hit_name, ",
+             " bgcs_cached.mibig_hit_pct, bgcs_cached.bgc_name, bgcs_cached.bgc_region_contig, bgcs_cached.mibig_hit_display  ",  
+             "FROM bgcs ",
+             "LEFT JOIN bgcs_cached ON bgcs.id = bgcs_cached.bgc_id ", 
+             "WHERE 1=1 ",  
+             (f" AND {sql_filter}" if sql_filter != "" else ""),  
+             " ORDER BY bgcs.contig_num, bgcs.nt_start ASC ", 
+             " LIMIT ? OFFSET ?"  
+        ]), con, params=tuple([*sql_filter_params, limit, offset]))
+
         for idx, row in query_result.iterrows():
             result["data"].append([
                 (row["genome_id"], row["npdc_id"]),
-                row["genus"] + " spp." if row["species"] == "" else row["species"],
+                # row["genus"] + " spp." if row["species"] == "" else row["species"],
+                row["bgc_name"],
                 row["mash_species"],
                 row["contig_num"],
-                (row["id"], row["npdc_id"], row["contig_num"], row["orig_identifier"]),
+                (row["id"], row["npdc_id"], row["contig_num"], row["orig_identifier"], row["bgc_region_contig"]),
+                # row["bgc_region_contig"],  # not working
                 row["gcf"],
-                row["fragmented"],
+                (row["fragmented"], row["fragmented_status"]),
+                # row["fragmented_status"],
                 list(set(row["name_class"].split("|"))),
-                (row["nt_end"] - row["nt_start"]) / 1000,
+                # (row["nt_end"] - row["nt_start"]) / 1000,
+                row["bgc_size_kb"],
                 row["num_cds"],
-                (row["mibig_hit_id"], row["mibig_hit_name"], row["mibig_hit_pct"], conf["knowncb_cutoff"])
+                (row["mibig_hit_id"], row["mibig_hit_name"], row["mibig_hit_pct"], row['mibig_hit_display'], conf["knowncb_cutoff"])
             ])
 
     return result
