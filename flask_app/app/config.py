@@ -10,7 +10,8 @@ conf = {
     )
 }
 
-conf["db_path"] = path.join(conf["instance_folder"], "db_data/npdc_portal.db")
+conf["db_path_original"] = path.join(conf["instance_folder"], "db_data/npdc_portal.db")
+conf["db_path"] = path.join(conf["instance_folder"], "db_data/npdc_portal_searchable.db")
 conf["cds_fasta_path"] = path.join(conf["instance_folder"], "db_data/npdc_portal.fasta")
 conf["genome_folder_path"] = path.join(conf["instance_folder"], "db_data/genome_files/")
 conf["bgc_folder_path"] = path.join(conf["instance_folder"], "db_data/bgc_files/")
