@@ -2,6 +2,15 @@
 {% block content %}
   {% include "basic_header.html.j2" %}
 
+  <!-- Instructions for using the search bar -->
+  <div class="row">
+    <div class="col">
+      <div class="alert alert-info">
+        <strong>Using the search bar:</strong><br>The general format of a search query is: &lt;query&gt;[&lt;column name&gt;]<br>For example, Streptomyces[Taxonomy] will query the Taxonomy column for the word Streptomyces.<br>Filter more than one column by using "and".<br>For example, searching both Taxonomy and Num. of genes would look like this: Streptomyces[Taxonomy] and 10[Num. of genes]<br>The NPDC No., GC content, Num. of BGCs, and Known BGC hits columns only accept numerical entries. Do not include "NPDC-" or "%" in your search.<br>Numerical searching allows filtering for a range of numbers using - and to filter with &lt; and &gt;<br>For example, filtering the Num. of BGCs could look like: 2-5[Num. of BGCs], &lt;6[Num. of BGCs], or &gt;3[Num. of BGCs]<br>The Assembly quality column only accepts “high”, “good”, “fair”, or “fragmented”.
+      </div>
+    </div>
+  </div>
+
   <div class="row d-none">
     <div class="col">
       <div class="alert alert alert-primary">
@@ -41,8 +50,8 @@
       <table id="table_strains" class="table table-striped table-bordered table-hover nowrap">
         <thead class="thead-light">
           <tr>
-            <th>Detail</th>
-            <th>Name</th>
+            <th>NPDC No.</th>
+            <th>Taxonomy</th>
             <th>Mash cluster</th>
             <th>Assembly quality</th>
             <th>GC content</th>
@@ -58,9 +67,18 @@
 
   <script type="text/javascript">
     $(document).ready(function(){
+            function debounce(func, delay) {
+            let debounceTimer;
+            return function() {
+              const context = this;
+              const args = arguments;
+              clearTimeout(debounceTimer);
+              debounceTimer = setTimeout(() => func.apply(context, args), delay);
+            };
+          }
 
-      $("#table_strains").DataTable({
-        searching: false,
+      var table = $("#table_strains").DataTable({
+        searching: true,
         ordering:  false,
         serverSide: true,
         responsive: false,
@@ -110,18 +128,27 @@
           {
             targets: 4,
             render: function(data, type, row, meta) {
-              return Number(data).toFixed(1) + " %";
+              console.log("Data for rendering:", data);
+              let numericData = parseFloat(data);
+              if (!isNaN(numericData)) {
+                return numericData.toFixed(1) + " %";
+              } else {
+                return "N/A"; 
             }
+           }
           },
           {
             targets: 6,
             render: function(data, type, row, meta) {
-              return data.length;
+              return data; // data is now directly the count of unique BGC names
             }
           }
         ]
       });
+    $("div.dataTables_filter input").css('width', '500px');
+    $('#table_strains_filter input').unbind().on('keyup input', debounce(function() {
+        table.search(this.value).draw();
+    }, 500)); // 500 ms delay
     });
   </script>
-
 {% endblock %}

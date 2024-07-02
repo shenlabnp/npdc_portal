@@ -1,11 +1,23 @@
 {% extends "layout.html.j2" %}
 {% block content %}
   {% include "basic_header.html.j2" %}
-
+  <!-- Instructions for using the search bar -->
+  <div class="row">
+    <div class="col">
+      <div class="alert alert-info">
+        <strong>Using the search bar:</strong><br>The general format of a search query is: &lt;query&gt;[&lt;column name&gt;]<br>For example, Streptomyces[Taxonomy] will query the Taxonomy column for the word Streptomyces.<br>Filter more than one column by using "an
+d".<br>For example, searching both Taxonomy and Num. of genes would look like this: Streptomyces[Taxonomy] and 10[Num. of genes]<br>The NPDC No., GCF, Num. of genes, and Size (kb) columns only accept numerical entries. Do not include "NPDC-" or "GCF-" prefixes in yo
+ur search.<br>Numerical searching allows filtering for a range of numbers using - and to filter with &lt; and &gt;<br>For example, filtering the Num. of genes could look like: 2-5[Num. of genes], &lt;6[Num. of genes], or &gt;3[Num. of genes]<br>The BGC quality colum
+n only accepts "complete" or "fragmented".<br>The BGC class column allow list searches where items are linked together with a pipe "|".<br>For example: NRPS|indole[BGC class] does an inclusive search for NRPS and indole in the BGC class column.<br>The MIBiG hit colu
+mn only accepts BGC IDs, for example: BGC0000271[MIBiG hit] 
+      </div>
+    </div>
+  </div>
   <div class="row d-none">
     <div class="col">
       <div class="alert alert alert-primary">
-          Our genomes database currently includes X strain genomes from X species (calculated by Mash cluster). X,XXX of the genomes are Actinobacterial, mostly from the genera xxx (x%), xxx (x%), and xxx (x %). Among the most underrepresented genera are x (x genomes), x (x genomes), x (x genomes), and x (x genomes).
+          Our genomes database currently includes X strain genomes from X species (calculated by Mash cluster). X,XXX of the genomes are Actinobacterial, mostly from the genera xxx (x%), xxx (x%), and xxx (x %). Among the most underrepresented genera are x (x genome
+s), x (x genomes), x (x genomes), and x (x genomes).
       </div>
     </div>
   </div>
@@ -14,6 +26,7 @@
       <div class="bs-component">
         <div class="accordion">
           <div class="accordion-item">
+            <th>Num. of genes</th>
             <h2 class="accordion-header" id="headingOne">
               <button class="accordion-button collapsed" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
                 <strong>Filtering</strong>
@@ -41,8 +54,8 @@
       <table id="list_bgcs" class="table table-striped table-bordered table-hover nowrap">
         <thead class="thead-light">
           <tr>
-            <th>Genome</th>
-            <th>Name</th>
+            <th>NPDC No.</th>
+            <th>Taxonomy</th>
             <th>Mash cluster</th>
             <th>Contig</th>
             <th>BGC</th>
@@ -58,8 +71,18 @@
         </tbody>
         <script type="text/javascript">
           $(document).ready(function(){
-            $("#list_bgcs").DataTable({
-              searching: false,
+          function debounce(func, delay) {
+            let debounceTimer;
+            return function() {
+              const context = this;
+              const args = arguments;
+              clearTimeout(debounceTimer);
+              debounceTimer = setTimeout(() => func.apply(context, args), delay);
+            };
+          }
+
+           var table =  $("#list_bgcs").DataTable({
+              searching: true,
               ordering:  false,
               serverSide: true,
               responsive: false,
@@ -93,7 +116,7 @@
                 {
                   targets:4,
                   render: function(data, type, row, meta) {
-                    let [bgc_id, npdc_id, contig_num, region_name] = data;
+                    let [bgc_id, npdc_id, contig_num, region_name, bgc_region_contig] = data;
                     let bgc_num = parseInt(region_name.split("region")[1], 10);
                     let label = "NPDC-" + npdc_id + ":" + "r" + contig_num + "c" + bgc_num;                      
                     return "<a href=\"{{ url_for('root.page') }}bgcs/view/" + bgc_id + "\"><button class=\"btn btn-primary\">" + label + "</button></a>";
@@ -108,12 +131,13 @@
                 {
                   targets: 6,
                   render: function(data, type, row, meta) {
-                    let html_text = "";
+                    console.log(data);
+                    let [fragmented, fragmented_status] = data;
                     let badge_class = {
                       1: ["fragmented", "rounded-pill bg-warning"],
                       0: ["complete", "rounded-pill bg-success"]
                     };
-                    html_text += "<span class='badge m-1 " + badge_class[data][1] + "'>" + badge_class[data][0] + "</span>";
+                    let html_text = "<span class='badge m-1 " + badge_class[fragmented][1] + "'>" + badge_class[fragmented][0] + "</span>";
                     return html_text;
                   }
                 },
@@ -131,15 +155,22 @@
                 {
                   "targets": 10,
                   render: function(data, type, row, meta) {
-                    let [mibig_id, mibig_name, mibig_pct, cb_cutoff] = data;
-                    let html_text = "n/a";
+                    let [mibig_id, mibig_name, mibig_pct, mibig_hit_display, cb_cutoff] = data;
+                    let html_text = "<div style='max-width: 150px;'>n/a</div>";
 
                     if (mibig_id > -1) {
-                      html_text = "<a href='https://mibig.secondarymetabolites.org/repository/BGC" + String(mibig_id).padStart(7, '0') + "'>" + mibig_name + "</a>" + " (" + mibig_pct + "%)";
+                      let url = "https://mibig.secondarymetabolites.org/repository/BGC" + String(mibig_id).padStart(7, '0');
+                      html_text = `<div style='max-width: 150px;'>
+                                      <a href='${url}'>
+                                        <span style='display: block; word-wrap: break-word;'>${mibig_name}</span>
+                                        <span style='display: block; word-wrap: break-word;'>(BGC${String(mibig_id).padStart(7, '0')})</span>
+                                      </a>
+                                      <span style='display: block;'>(${mibig_pct}%)</span>
+                                   </div>`;
                       if (mibig_pct >= cb_cutoff) {
-                        html_text = "<strong style='color: #222266;'>" + html_text + "</strong>";
+                        html_text = `<strong style='color: #222266;'>${html_text}</strong>`;
                       } else {
-                        html_text = "<i style='color: #999999;'>" + html_text + "</i>";
+                        html_text = `<i style='color: #999999;'>${html_text}</i>`;
                       }
                     }
 
@@ -149,10 +180,13 @@
               ]
             });
             $("#list_bgcs").width("100%");
+    $("div.dataTables_filter input").css('width', '500px');
+    $('#table_strains_filter input').unbind().on('keyup input', debounce(function() {
+        table.search(this.value).draw();
+    }, 500)); // 500 ms delay
           });
         </script>
       </table>
     </div>
   </div>
-
 {% endblock %}

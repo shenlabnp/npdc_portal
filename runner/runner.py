@@ -18,7 +18,7 @@ def start_webserver(num_threads, port):
         try:
             print("starting WEBSERVER")
             cmd = (
-                "gunicorn -w {} -b 0.0.0.0:{} \"npdc:portal()\"".format(
+                "gunicorn -w {} -b 0.0.0.0:{} --log-level debug \"npdc:portal()\"".format(
                     num_threads,
                     port
                 )

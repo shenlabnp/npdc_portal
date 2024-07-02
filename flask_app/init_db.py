@@ -45,7 +45,7 @@ if __name__ == "__main__":
                 con.commit()
 
     # check and generate npdc_db cache tables
-    with sqlite3.connect(conf["db_path"]) as con:
+    with sqlite3.connect(conf["db_path_original"]) as con:
         cur = con.cursor()
         generate_new_cache = False
         logs_cache_generation = pd.read_sql_query((
@@ -73,5 +73,4 @@ if __name__ == "__main__":
                     conf["knowncb_cutoff"]
                 ),
             }]).to_sql("logs", con, index=False, if_exists="append")
-
     print("done.")
